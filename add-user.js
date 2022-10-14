@@ -1,5 +1,5 @@
 // @ts-check
-const { parseArgumentsAndOptions, createLogger } = require('./util');
+const { parseArgumentsAndOptions, createLogger, getPaths, readConfig } = require('./util');
 const { randomUUID } = require('crypto');
 const { env } = require('process');
 const { writeFileSync } = require('fs');
@@ -8,31 +8,24 @@ const { resolve } = require('path');
 function addUser() {
     const { showError, showInfo, showOk } = createLogger();
 
-    let configFilePath = env.V2RAY_CONFIG ?? '/usr/local/etc/v2ray/config.json';
+    let {configPath} = getPaths();
     let {
         cliArguments: [ email ],
-        cliOptions: { protocol = 'vmess' }
+        cliOptions: { protocol = 'vmess', tag }
     } = parseArgumentsAndOptions();
 
     
     if (String(email ?? '').length == 0)
-        return showInfo(`usage: node add-user [email] --protocol=vmess`);
+        return showInfo(`usage: node add-user [email] --protocol=vmess --tag=proxy`);
 
-    showInfo(`Add user "${email}" for protocol "${protocol}"`);
+    showInfo(`Add user "${email}" for protocol "${protocol}"${tag ? ` with tagged [${tag}]` : ''}`);
 
-    /** @type {any} */
-    let config;
-
-    try {
-        config = require(resolve(configFilePath));
-    } catch {
-        return showError(`Cannot read configuration file from "${configFilePath}"`)
-    }
+    let config = readConfig(configPath);
 
     if (Array.isArray(config.inbounds) == false)
         return showError('No inbounds defined in configuration');
 
-    let inbound = config.inbounds.find(x => x.protocol == protocol);
+    let inbound = config.inbounds?.find(x => x.protocol == protocol && (!tag || x.tag == tag));
 
     if (!inbound)
         return showError(`No inbound found for protocol "${protocol}"`);
@@ -52,7 +45,7 @@ function addUser() {
     inbound.settings.clients = users;
 
     // Write config
-    writeFileSync(configFilePath, JSON.stringify(config, null, 2));
+    writeFileSync(configPath, JSON.stringify(config, null, 2));
 
     showOk(`User added successful`);
     showInfo(`User ID : ${id}`);

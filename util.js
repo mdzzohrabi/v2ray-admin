@@ -1,5 +1,37 @@
 // @ts-check
 
+const { resolve } = require('path');
+
+/**
+ * Type definitions
+ * @typedef {{
+ *      log?: {
+ *          logLevel?: string
+ *      },
+ *      routing?: {
+ *          domainStrategy?: string,
+ *          rules?: { type?: string, ip?: string[], outboundTag?: string }[]
+ *      },
+ *      inbounds?: {
+ *          listen?: string,
+ *          port?: number,
+ *          protocol?: string,
+ *          settings?: {
+ *              clients?: { id?: string, email?: string, level?: number }[]
+ *          },
+ *          streamSettings?: {
+ *              network?: string,
+ *              security?: string
+ *          },
+ *          tag?: string
+ *      }[],
+ *      outbounds?: {
+ *          protocol?: string,
+ *          tag?: string
+ *      }[]
+ * }} V2RayConfig
+ */
+
 function parseArgumentsAndOptions() {
     let { argv } = require('process');
 
@@ -53,4 +85,26 @@ const createLogger = (before = '', after = '') => ({
     showWarn: (...args) => showWarn(before, ...args, after)
 });
 
-module.exports = { parseArgumentsAndOptions, createLogger };
+function getPaths() {
+    let { env } = require('process');
+    return {
+        configPath: env.V2RAY_CONFIG ?? '/usr/local/etc/v2ray/config.json',
+        accessLogPath: env.V2RAY_ACCESS_LOG ?? '/var/log/v2ray/access.log',
+        errorLogPath: env.V2RAY_ERROR_LOG ?? '/var/log/v2ray/error.log',
+    }
+}
+
+/**
+ * Read v2ray configuration
+ * @param {string} configPath 
+ * @returns {V2RayConfig}
+ */
+function readConfig(configPath) {
+    try {
+        return require(resolve(configPath));
+    } catch {
+        throw Error(`Cannot read configuration file from "${configPath}"`);
+    }
+}
+
+module.exports = { parseArgumentsAndOptions, createLogger, getPaths, readConfig };
