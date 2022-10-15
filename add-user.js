@@ -49,6 +49,10 @@ function addUser() {
 
     showOk(`User added successful`);
     showInfo(`User ID : ${id}`);
+
+    let clientConfig = {"add":"171.22.27.137","aid":"0","host":"","id":id,"net":"ws","path":"","port":"10808","ps":"VIP-" + user.email,"scy":"chacha20-poly1305","sni":"","tls":"","type":"","v":"2"}
+
+    showInfo(`Client Config : ${Buffer.from(JSON.stringify(clientConfig)).toString('base64')}`)
 }
 
 addUser();
