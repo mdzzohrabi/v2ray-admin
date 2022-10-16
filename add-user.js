@@ -1,9 +1,8 @@
 // @ts-check
 const { parseArgumentsAndOptions, createLogger, getPaths, readConfig } = require('./util');
 const { randomUUID } = require('crypto');
-const { env } = require('process');
 const { writeFileSync } = require('fs');
-const { resolve } = require('path');
+const qrCode = require('qrcode-terminal');
 
 function addUser() {
     const { showError, showInfo, showOk } = createLogger();
@@ -51,8 +50,10 @@ function addUser() {
     showInfo(`User ID : ${id}`);
 
     let clientConfig = {"add":"171.22.27.137","aid":"0","host":"","id":id,"net":"ws","path":"","port":"10808","ps":"VIP-" + user.email,"scy":"chacha20-poly1305","sni":"","tls":"","type":"","v":"2"}
+    let strClientConfig = `${protocol}://${Buffer.from(JSON.stringify(clientConfig)).toString('base64')}`;
 
-    showInfo(`Client Config : wmess://${Buffer.from(JSON.stringify(clientConfig)).toString('base64')}`)
+    showInfo(`Client Config : ${strClientConfig}`);
+    qrCode.generate(strClientConfig, { small: true });
 }
 
 addUser();

@@ -1,10 +1,7 @@
 // @ts-check
 const { parseArgumentsAndOptions, createLogger, getPaths, readConfig } = require('./util');
-const { randomUUID } = require('crypto');
-const { env } = require('process');
-const { open } = require('fs/promises');
-const { resolve } = require('path');
 const nReadLines = require('n-readlines');
+const qrCodeTerminal= require('qrcode-terminal');
 
 async function users() {
     const { showError, showInfo, showOk } = createLogger();
@@ -38,8 +35,12 @@ async function users() {
     showInfo(`User Level : ${user.level}`);
 
     let clientConfig = {"add":"171.22.27.137","aid":"0","host":"","id":user.id,"net":"ws","path":"","port":"10808","ps":"VIP-" + user.email,"scy":"chacha20-poly1305","sni":"","tls":"","type":"","v":"2"}
+    let strClientConfig = `${protocol}://${Buffer.from(JSON.stringify(clientConfig)).toString('base64')}`;
 
-    showInfo(`User Config : ${protocol}://${Buffer.from(JSON.stringify(clientConfig)).toString('base64')}`);
+    showInfo(`User Config : ${strClientConfig}`);
+    qrCodeTerminal.generate(strClientConfig, { small: true });
+    // let qrCodeUrl = await qrCode.toString(strClientConfig);
+    // showInfo(`QR Code : ${qrCodeUrl}`);
 
     // 2022/10/14 01:57:05 171.22.27.137:52678 accepted tcp:app-measurement.com:443 [blocked] email: user18
     let file = new nReadLines(accessLogPath);
