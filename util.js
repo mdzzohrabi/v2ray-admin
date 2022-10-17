@@ -1,6 +1,8 @@
 // @ts-check
+// Load envrionment configuration
+require('dotenv').config();
 
-const { resolve } = require('path');
+const { resolve, join } = require('path');
 
 /**
  * Type definitions
@@ -31,6 +33,26 @@ const { resolve } = require('path');
  *      }[]
  * }} V2RayConfig
  */
+
+/**
+ * Cache read/write
+ * @param {string}  key
+ * @param {any}     value
+ */
+async function cache(key, value = undefined) {
+    try {
+        const {env} = require('process');
+        const {readFile, writeFile} = require('fs/promises');
+        let cachePath = resolve(join(env.CACHE_DIR ?? 'var', key));
+        if (typeof value !== 'undefined') {
+            await writeFile(cachePath, JSON.stringify(value));
+        } else {
+            return JSON.parse((await readFile(cachePath)).toString('utf-8'));
+        }
+    } catch (err) {
+        return null;
+    }
+}
 
 function parseArgumentsAndOptions() {
     let { argv } = require('process');
@@ -101,10 +123,51 @@ function getPaths() {
  */
 function readConfig(configPath) {
     try {
-        return require(resolve(configPath));
+        const {readFileSync} = require('fs');
+        return JSON.parse(readFileSync(resolve(configPath)).toString('utf-8'));
     } catch {
         throw Error(`Cannot read configuration file from "${configPath}"`);
     }
 }
 
-module.exports = { parseArgumentsAndOptions, createLogger, getPaths, readConfig };
+/**
+ * 
+ * @param {string} accessLogPath Access Log Path
+ * @returns {Promise<{ [user: string]: { firstConnect: Date, lastConnect: Date } }>}
+ */
+async function readLogFile(accessLogPath) {
+
+    /**
+     * @type {{ [user: string]: { firstConnect: Date, lastConnect: Date } }}
+     */
+    let usages = await cache('usages') ?? {};
+    let readedBytes = await cache('log-read-bytes') ?? 0;
+
+    let stream = require('fs').createReadStream(accessLogPath, {
+        start: readedBytes
+    });
+
+    let lineReader = require('readline').createInterface({
+        input: stream
+    });
+
+    for await  (const line of lineReader) {
+        let [date, time, clientAddress, status, destination, route, email, user] = line.split(' ');
+        if (!user) continue;
+        user = user.trim();
+        let usage = usages[user] = usages[user] ?? {};
+        let dateTime = new Date(date + ' ' + time);
+        if (!usage.firstConnect || dateTime < usage.firstConnect)
+            usage.firstConnect = dateTime;
+
+        if (!usage.lastConnect || dateTime > usage.lastConnect)
+            usage.lastConnect = dateTime;
+    }
+
+    await cache('usages', usages);
+    await cache('log-read-bytes', readedBytes + stream.bytesRead);
+
+    return usages;
+}
+
+module.exports = { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile };

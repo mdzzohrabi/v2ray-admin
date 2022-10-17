@@ -1,6 +1,5 @@
 // @ts-check
-const { parseArgumentsAndOptions, createLogger, getPaths, readConfig } = require('./util');
-const nReadLines = require('n-readlines');
+const { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile } = require('./util');
 const qrCodeTerminal= require('qrcode-terminal');
 
 async function users() {
@@ -41,29 +40,8 @@ async function users() {
     qrCodeTerminal.generate(strClientConfig, { small: true });
     // let qrCodeUrl = await qrCode.toString(strClientConfig);
     // showInfo(`QR Code : ${qrCodeUrl}`);
-
-    // 2022/10/14 01:57:05 171.22.27.137:52678 accepted tcp:app-measurement.com:443 [blocked] email: user18
-    let file = new nReadLines(accessLogPath);
-
-    /** @type {Buffer | boolean} */
-    let buffer;
-
-    let usages = {};
-
-    while (buffer = file.next()) {
-        let [date, time, clientAddress, status, destination, route, email, user] = buffer.toString('utf-8').split(' ');
-        if (!user) continue;
-        user = user.trim();
-        let usage = usages[user] = usages[user] ?? {};
-        let dateTime = new Date(date + ' ' + time);
-        if (!usage.firstConnect || dateTime < usage.firstConnect)
-            usage.firstConnect = dateTime;
-
-        if (!usage.lastConnect || dateTime > usage.lastConnect)
-            usage.lastConnect = dateTime;
-    }
-
-    let usage = usages[user.email];
+    let usages = await readLogFile(accessLogPath);
+    let usage = user.email ? usages[user.email] : {};
 
     showInfo(`First Connect : ${usage?.firstConnect}`);
     showInfo(`Last Connect : ${usage?.lastConnect}`);
