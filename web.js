@@ -29,6 +29,11 @@ let {showInfo} = createLogger();
 //   res.status(401).send('Authentication required.') // custom message
 // });
 
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    next();
+});
+
 app.get('/config', async (req, res) => {
     let {configPath} = getPaths();
     let config = readConfig(configPath);

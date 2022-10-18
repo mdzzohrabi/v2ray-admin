@@ -1,5 +1,5 @@
 // @ts-check
-const { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile } = require('./util');
+const { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile, getUserConfig } = require('./util');
 const qrCodeTerminal= require('qrcode-terminal');
 
 async function users() {
@@ -32,17 +32,11 @@ async function users() {
     showInfo(`User : ${user.email}`);
     showInfo(`User ID : ${user.id}`);
     showInfo(`User Level : ${user.level}`);
-
-    let clientConfig = {"add":"171.22.27.137","aid":"0","host":"","id":user.id,"net":"ws","path":"","port":"10808","ps":"VIP-" + user.email,"scy":"chacha20-poly1305","sni":"","tls":"","type":"","v":"2"}
-    let strClientConfig = `${protocol}://${Buffer.from(JSON.stringify(clientConfig)).toString('base64')}`;
-
+    let {strClientConfig} = getUserConfig(user, protocol);
     showInfo(`User Config : ${strClientConfig}`);
     qrCodeTerminal.generate(strClientConfig, { small: true });
-    // let qrCodeUrl = await qrCode.toString(strClientConfig);
-    // showInfo(`QR Code : ${qrCodeUrl}`);
     let usages = await readLogFile(accessLogPath);
     let usage = user.email ? usages[user.email] : {};
-
     showInfo(`First Connect : ${usage?.firstConnect ? new Date(usage?.firstConnect).toLocaleString() : undefined}`);
     showInfo(`Last Connect : ${usage?.lastConnect ? new Date(usage?.lastConnect).toLocaleString() : undefined}`);
 }

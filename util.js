@@ -2,37 +2,11 @@
 // Load envrionment configuration
 require('dotenv').config();
 
+const { randomUUID } = require('crypto');
 const { resolve, join } = require('path');
-
-/**
- * Type definitions
- * @typedef {{
- *      log?: {
- *          logLevel?: string
- *      },
- *      routing?: {
- *          domainStrategy?: string,
- *          rules?: { type?: string, ip?: string[], outboundTag?: string }[]
- *      },
- *      inbounds?: {
- *          listen?: string,
- *          port?: number,
- *          protocol?: string,
- *          settings?: {
- *              clients?: { id?: string, email?: string, level?: number }[]
- *          },
- *          streamSettings?: {
- *              network?: string,
- *              security?: string
- *          },
- *          tag?: string
- *      }[],
- *      outbounds?: {
- *          protocol?: string,
- *          tag?: string
- *      }[]
- * }} V2RayConfig
- */
+const { writeFile, readFile } = require('fs/promises');
+const { readFileSync, createReadStream } = require('fs');
+const { env, argv } = require('process');
 
 /**
  * Cache read/write
@@ -41,8 +15,6 @@ const { resolve, join } = require('path');
  */
 async function cache(key, value = undefined) {
     try {
-        const {env} = require('process');
-        const {readFile, writeFile} = require('fs/promises');
         let cachePath = resolve(join(env.CACHE_DIR ?? 'var', key));
         if (typeof value !== 'undefined') {
             await writeFile(cachePath, JSON.stringify(value));
@@ -55,8 +27,6 @@ async function cache(key, value = undefined) {
 }
 
 function parseArgumentsAndOptions() {
-    let { argv } = require('process');
-
     // Command-line Arguments
     const cliArguments = [];
 
@@ -98,6 +68,7 @@ function parseArgumentsAndOptions() {
 const showError = (...err) => console.error(`[Error]`, ...err);
 const showOk = (...message) => console.log('[OK]', ...message);
 const showInfo = (...message) => console.log('[Info]', ...message);
+const showDebug = (...message) => console.log('[Debug]', ...message);
 const showWarn = (...message) => console.log('[Warning]', ...message);
 
 const createLogger = (before = '', after = '') => ({
@@ -123,7 +94,6 @@ function getPaths() {
  */
 function readConfig(configPath) {
     try {
-        const {readFileSync} = require('fs');
         return JSON.parse(readFileSync(resolve(configPath)).toString('utf-8'));
     } catch {
         throw Error(`Cannot read configuration file from "${configPath}"`);
@@ -143,7 +113,7 @@ async function readLogFile(accessLogPath) {
     let usages = await cache('usages') ?? {};
     let readedBytes = await cache('log-read-bytes') ?? 0;
 
-    let stream = require('fs').createReadStream(accessLogPath, {
+    let stream = createReadStream(accessLogPath, {
         start: readedBytes
     });
 
@@ -170,4 +140,73 @@ async function readLogFile(accessLogPath) {
     return usages;
 }
 
-module.exports = { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile };
+/**
+ * Invariant
+ * @param {any} expr Expression
+ * @param {string} message Error Message
+ * @param  {...any} params Error Message Params
+ */
+function invariant(expr, message, ...params) {
+    if (!expr) {
+        let index = 0;
+        let error = Error(message.replace(/%s/g, () => params[index--]));
+        error['framesToPop'] = 1; // we don't care about invariant's own frame
+        throw error;
+    }
+}
+
+/**
+ * Add user to a protocol
+ * @param {string} configPath Config path
+ * @param {string} email Email
+ * @param {string} protocol Protocol
+ * @param {string?} tag Tag
+ * @returns {Promise<V2RayConfigInboundClient>}
+ */
+async function addUser(configPath, email, protocol, tag = null) {
+    invariant(!!email, `Email must not be empty`);
+
+    showInfo(`Add user "${email}" for protocol "${protocol}"${tag ? ` with tagged [${tag}]` : ''}`);
+
+    // Configuration
+    let config = readConfig(configPath);
+
+    invariant(Array.isArray(config.inbounds), 'No inbounds defined in configuration');
+
+    let inbound = config.inbounds?.find(x => x.protocol == protocol && (!tag || x.tag == tag));
+
+    if (!inbound)
+        throw Error(`No inbound found for protocol "${protocol}"`);
+
+    let id = randomUUID();
+
+    let user = { id, email, level: 0 };
+    let users = inbound.settings?.clients ?? [];
+
+    if (!Array.isArray(users))
+        throw Error(`settings.clients is not in valid format for protocol "${protocol}"`);
+
+    users.push(user);
+
+    // Add Clients
+    if (!inbound?.settings) inbound.settings = {};
+    inbound.settings.clients = users;
+
+    // Write config
+    await writeFile(configPath, JSON.stringify(config, null, 2));
+
+    return user;
+}
+
+/**
+ * Get client configuration
+ * @param {V2RayConfigInboundClient} user Client
+ * @param {string} protocol
+ */
+function getUserConfig(user, protocol) {
+    let clientConfig = {"add":"171.22.27.137","aid":"0","host":"","id":user.id,"net":"ws","path":"","port":"10808","ps":"VIP-" + user.email,"scy":"chacha20-poly1305","sni":"","tls":"","type":"","v":"2"}
+    let strClientConfig = `${protocol}://${Buffer.from(JSON.stringify(clientConfig)).toString('base64')}`;
+    return {clientConfig, strClientConfig};
+}
+
+module.exports = { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile, addUser, getUserConfig };
