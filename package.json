@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
+  "types": "types.d.ts",
   "dependencies": {
     "@types/express": "^4.17.14",
     "@types/node": "^18.8.5",

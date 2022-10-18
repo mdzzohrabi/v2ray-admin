@@ -186,6 +186,10 @@ async function addUser(configPath, email, protocol, tag = null) {
     if (!Array.isArray(users))
         throw Error(`settings.clients is not in valid format for protocol "${protocol}"`);
 
+    if (users.find(x => x.email == email)) {
+        throw Error(`User "${email}" already exists`)
+    }
+
     users.push(user);
 
     // Add Clients

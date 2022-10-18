@@ -1,7 +1,7 @@
 // @ts-check
 const express = require('express');
 const { env } = require('process');
-const { getPaths, readConfig, createLogger, readLogFile } = require('./util');
+const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser } = require('./util');
 
 let app = express();
 let {showInfo} = createLogger();
@@ -28,11 +28,14 @@ let {showInfo} = createLogger();
 //   res.set('WWW-Authenticate', 'Basic realm="401"') // change this
 //   res.status(401).send('Authentication required.') // custom message
 // });
-
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', '*');
+    res.setHeader('Access-Control-Allow-Methods', '*');
     next();
 });
+
+app.use(express.json());
 
 app.get('/config', async (req, res) => {
     let {configPath} = getPaths();
@@ -53,6 +56,18 @@ app.get('/usages', async (req, res) => {
     let {accessLogPath} = getPaths();
     let usages = await readLogFile(accessLogPath);
     res.json(usages);
+});
+
+app.post('/client_config', (req, res) => {
+    /** @type {V2RayConfigInboundClient} */
+    let user = req.body;
+    let protocol = req.query.protocol?.toString();
+
+    if (!user || !user.id || !user.email || !protocol) return res.status(500).json({ error: 'Invalid request' });
+
+    let {strClientConfig} = getUserConfig(user, protocol);
+
+    res.json({ config: strClientConfig });
 });
 
 app.post('/restart', async (req, res) => {
@@ -90,6 +105,19 @@ app.get('/inbounds', async (req, res) => {
     }
 
     res.json(inbounds);
+});
+
+app.post('/user', async (req, res) => {
+    try {
+        let {email, protocol} = req.body;
+        if (!email) return res.json({ error: 'Email not entered' });
+        if (!protocol) return res.json({ error: 'Protocol not entered' });
+        let {configPath} = getPaths();
+        let result = await addUser(configPath, email, protocol);
+        res.json({ ok: true, id: result.id });
+    } catch (err) {
+        res.json({ error: err.message });
+    }
 });
 
 app.listen(env.WEB_PORT ?? 8080, () =>  showInfo(`Server started on port ${env.WEB_PORT ?? 8080}`));
