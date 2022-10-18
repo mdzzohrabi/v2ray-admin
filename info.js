@@ -43,8 +43,8 @@ async function users() {
     let usages = await readLogFile(accessLogPath);
     let usage = user.email ? usages[user.email] : {};
 
-    showInfo(`First Connect : ${usage?.firstConnect?.toLocaleString()}`);
-    showInfo(`Last Connect : ${usage?.lastConnect?.toLocaleString()}`);
+    showInfo(`First Connect : ${usage?.firstConnect ? new Date(usage?.firstConnect).toLocaleString() : undefined}`);
+    showInfo(`Last Connect : ${usage?.lastConnect ? new Date(usage?.lastConnect).toLocaleString() : undefined}`);
 }
 
 users();
