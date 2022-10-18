@@ -28,8 +28,8 @@ async function users() {
         let users = inbound.settings?.clients ?? [];
         for (let user of users) {
             let usage = user.email ? usages[user.email] : {};
-            user['firstConnect'] = usage?.firstConnect;
-            user['lastConnect'] = usage?.lastConnect;
+            user['firstConnect'] = usage?.firstConnect?.toLocaleString();
+            user['lastConnect'] = usage?.lastConnect?.toLocaleString();
         }
         console.table(users);
     }
