@@ -180,7 +180,7 @@ async function addUser(configPath, email, protocol, tag = null) {
 
     let id = randomUUID();
 
-    let user = { id, email, level: 0 };
+    let user = { id, email, level: 0, createDate: new Date() };
     let users = inbound.settings?.clients ?? [];
 
     if (!Array.isArray(users))

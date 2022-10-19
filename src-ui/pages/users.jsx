@@ -39,7 +39,6 @@ export default function UsersPage() {
                 setError(result.error);
             } else {
                 setUsername('');
-                setProtocol('');
                 refreshInbounds();
                 setMessage('User added');
             }
@@ -54,13 +53,13 @@ export default function UsersPage() {
 
     return <Container>
         <div className="flex my-3">
-            <h2 className="font-bold px-3 py-3">Add User</h2>
-            <div className="self-center">
-                <label htmlFor="userName" className="px-3">Username</label>
+            <h2 className="font-bold px-3 py-3 whitespace-nowrap">Add User</h2>
+            <div className="self-center flex-nowrap flex">
+                <label htmlFor="userName" className="px-3 self-center">Username</label>
                 <input value={username} onChange={(e) => setUsername(e.currentTarget.value)} disabled={isLoading} className="border-gray-500 border-solid border-2 rounded-md" type="text" id="userName"/>
-                <label htmlFor="protocol" className="px-3">Protocol</label>
+                <label htmlFor="protocol" className="px-3 self-center">Protocol</label>
                 <input value={protocol} onChange={(e) => setProtocol(e.currentTarget.value)} disabled={isLoading} className="border-gray-500 border-solid border-2 rounded-md" type="text" id="protocol"/>
-                <button onClick={() => addUser()} disabled={isLoading} type="button" className="bg-slate-300 rounded-lg px-3 py-1 ml-2 delay-200 hover:bg-blue-300">Add User</button>
+                <button onClick={() => addUser()} disabled={isLoading} type="button" className="bg-slate-300 whitespace-nowrap rounded-lg px-3 py-1 ml-2 delay-200 hover:bg-blue-300">Add User</button>
                 { message || error ?
                 <div className={classNames("message px-3 py-2 bg-slate-100 mt-2 rounded-md text-sm", { 'bg-red-100': !!error })}>{message || error}</div> : null }
             </div>
