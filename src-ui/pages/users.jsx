@@ -98,7 +98,7 @@ export default function UsersPage() {
                             <td colSpan={5} className="uppercase font-bold bg-slate-100 px-4 py-3">{i.protocol}</td>
                         </tr>
                         {i.settings?.clients?.map(u => {
-                            if (!showAll && u.email?.startsWith('user')) return;
+                            if (!showAll && !u.email?.startsWith('user')) return;
                             return <tr key={u.id}>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3">{u.email}</td>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3">{u.id}</td>
