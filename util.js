@@ -213,4 +213,22 @@ function getUserConfig(user, protocol) {
     return {clientConfig, strClientConfig};
 }
 
-module.exports = { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile, addUser, getUserConfig };
+function restartService() {
+    return new Promise((done, reject) => {
+        const {spawn} = require('child_process');
+        let result = spawn('servicectl restart v2ray');
+        let output = '';
+        result.stdout.on('data', buffer => {
+            output += buffer.toString('utf-8');
+        });
+        result.once('exit', () => {
+            done(output);
+        });    
+        
+        result.once('error', (err) => {
+            reject(err)
+        });    
+    })
+}
+
+module.exports = { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile, addUser, getUserConfig, restartService };

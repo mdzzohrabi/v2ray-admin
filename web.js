@@ -1,7 +1,7 @@
 // @ts-check
 const express = require('express');
 const { env } = require('process');
-const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser } = require('./util');
+const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser, restartService } = require('./util');
 
 let app = express();
 let {showInfo} = createLogger();
@@ -32,10 +32,20 @@ app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
     res.setHeader('Access-Control-Allow-Methods', '*');
+    if (req.method == 'OPTIONS') return res.end();
     next();
 });
 
 app.use(express.json());
+
+app.use((req, res, next) => {
+    if (!req.headers.authorization)
+        return res.status(401).send('Authentication required');
+    let token = Buffer.from(req.headers.authorization?.split(' ')[1] ?? '', 'base64').toString('utf-8');
+    if (token == env.WEB_TOKEN)
+        next();
+    else res.status(401).send('Authentication failed');
+});
 
 app.get('/config', async (req, res) => {
     let {configPath} = getPaths();
@@ -71,15 +81,7 @@ app.post('/client_config', (req, res) => {
 });
 
 app.post('/restart', async (req, res) => {
-    const {spawn} = require('child_process');
-    let result = spawn('servicectl restart v2ray');
-    let output = '';
-    result.stdout.on('data', buffer => {
-        output += buffer.toString('utf-8');
-    });
-    result.once('exit', () => {
-        res.end(output);
-    });
+    restartService().then(result => res.end(result));
 });
 
 app.get('/inbounds', async (req, res) => {
@@ -115,6 +117,7 @@ app.post('/user', async (req, res) => {
         let {configPath} = getPaths();
         let result = await addUser(configPath, email, protocol);
         res.json({ ok: true, id: result.id });
+        restartService();
     } catch (err) {
         res.json({ error: err.message });
     }
