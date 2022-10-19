@@ -127,10 +127,10 @@ async function readLogFile(accessLogPath) {
         user = user.trim();
         let usage = usages[user] = usages[user] ?? {};
         let dateTime = new Date(date + ' ' + time);
-        if (!usage.firstConnect || dateTime < usage.firstConnect)
+        if (!usage.firstConnect || dateTime < new Date(usage.firstConnect))
             usage.firstConnect = dateTime;
 
-        if (!usage.lastConnect || dateTime > usage.lastConnect)
+        if (!usage.lastConnect || dateTime > new Date(usage.lastConnect))
             usage.lastConnect = dateTime;
     }
 
