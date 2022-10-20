@@ -5,6 +5,9 @@ module.exports = {
       "./components/**/*.{js,ts,jsx,tsx}",
     ],
     theme: {
+      fontFamily: {
+        sans: ['SegoeUI', 'system-ui', 'segoe-ui', '"PT Sans"', 'sans-serif']
+      }
     //   extend: {
     //     colors: {
     //       white: "#FFF",

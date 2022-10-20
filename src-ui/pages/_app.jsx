@@ -1,5 +1,6 @@
 import { AppContextContainer } from '../components/app-context';
 import { CheckConfig } from '../components/check-config';
+import { Toaster } from 'react-hot-toast';
 import '../styles/globals.scss';
 
 function MyApp({ Component, pageProps }) {
@@ -7,6 +8,7 @@ function MyApp({ Component, pageProps }) {
     <CheckConfig>
       <Component {...pageProps} />
     </CheckConfig>
+    <Toaster/>
   </AppContextContainer> 
 }
 

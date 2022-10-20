@@ -117,7 +117,7 @@ app.post('/user', async (req, res) => {
         let {configPath} = getPaths();
         let result = await addUser(configPath, email, protocol);
         res.json({ ok: true, id: result.id });
-        restartService();
+        restartService().catch(console.error);
     } catch (err) {
         res.json({ error: err.message });
     }

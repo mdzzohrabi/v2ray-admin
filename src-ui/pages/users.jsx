@@ -1,26 +1,21 @@
 // @ts-check
 /// <reference types="../../types"/>
-import { Container } from "../components/container";
-import useSWR from 'swr';
-import { serverRequest } from "../util";
-import { DateView } from "../components/date-view";
-import { Copy } from "../components/copy";
-import React, { useCallback, useContext, useRef, useState } from 'react';
-import classNames from "classnames";
 import Head from "next/head";
-import { AppContext } from "../components/app-context";
 import { useRouter } from "next/router";
+import React, { Fragment, useCallback, useContext, useState } from 'react';
+import useSWR from 'swr';
+import { AddUser } from "../components/add-user";
+import { AppContext } from "../components/app-context";
+import { Container } from "../components/container";
+import { Copy } from "../components/copy";
+import { DateView } from "../components/date-view";
+import { serverRequest } from "../util";
 
 export default function UsersPage() {
 
     let context = useContext(AppContext);
     let router = useRouter();
-
     let [isLoading, setLoading] = useState(false);
-    let [username, setUsername] = useState('');
-    let [protocol, setProtocol] = useState('');
-    let [message, setMessage] = useState('');
-    let [error, setError] = useState('');
     let showAll = router.query.all == '1';
 
     /**
@@ -34,30 +29,6 @@ export default function UsersPage() {
     let {data: usages} = useSWR('/usages', serverRequest.bind(this, context.server));
 
 
-    const addUser = useCallback(async () => {
-        try {
-            setError('');
-            setMessage('');
-            setLoading(true);
-            let result = await serverRequest(context.server, '/user', {
-                email: username, protocol
-            });
-            if (result.error) {
-                setError(result.error);
-            } else {
-                setUsername('');
-                refreshInbounds();
-                setMessage('User added');
-            }
-        }
-        catch (err) {
-            setError(err);
-        } finally {
-            setLoading(false);
-        }
-
-    }, [username, protocol, refreshInbounds, setError, setMessage]);
-
     const showQRCode = useCallback(async (protocol, user) => {
         let config = await serverRequest(context.server, '/client_config?protocol=' + protocol, user).then(data => data.config)
         let link = `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=` + encodeURIComponent(config);
@@ -68,19 +39,7 @@ export default function UsersPage() {
         <Head>
             <title>Users</title>
         </Head>
-        <div className="flex my-3">
-            <h2 className="font-bold px-3 py-3 whitespace-nowrap">Add User</h2>
-            <div className="self-center flex-nowrap flex">
-                <label htmlFor="userName" className="px-3 self-center">Username</label>
-                <input value={username} onChange={(e) => setUsername(e.currentTarget.value)} disabled={isLoading} className="border-gray-500 border-solid border-2 rounded-md" type="text" id="userName"/>
-                <label htmlFor="protocol" className="px-3 self-center">Protocol</label>
-                <input value={protocol} onChange={(e) => setProtocol(e.currentTarget.value)} disabled={isLoading} className="border-gray-500 border-solid border-2 rounded-md" type="text" id="protocol"/>
-                <button onClick={() => addUser()} disabled={isLoading} type="button" className="bg-slate-300 whitespace-nowrap rounded-lg px-3 py-1 ml-2 delay-200 hover:bg-blue-300">Add User</button>
-                { message || error ?
-                <div className={classNames("message px-3 py-2 bg-slate-100 mt-2 rounded-md text-sm", { 'bg-red-100': !!error })}>{message || error}</div> : null }
-            </div>
-        </div>
-
+        <AddUser disabled={isLoading} onRefresh={refreshInbounds} setLoading={setLoading} protocols={inbounds?.map(i => i.protocol ?? '') ?? []}/>
         <table className="w-full">
             <thead>
                 <tr>
@@ -93,7 +52,7 @@ export default function UsersPage() {
             </thead>
             <tbody>
                 {!inbounds || isLoading ? <tr><td colSpan={5} className="px-3 py-4">Loading ...</td></tr> : inbounds.map(i => {
-                    return <>
+                    return <Fragment key={"inbound-" + i.protocol}>
                         <tr key={"inbound-" + i.protocol}>
                             <td colSpan={5} className="uppercase font-bold bg-slate-100 px-4 py-3">{i.protocol}</td>
                         </tr>
@@ -111,7 +70,7 @@ export default function UsersPage() {
                                 </td>
                             </tr>
                         })}
-                    </>
+                    </Fragment>
                 })}
             </tbody>
         </table>
