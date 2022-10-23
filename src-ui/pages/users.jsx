@@ -10,6 +10,7 @@ import { AppContext } from "../components/app-context";
 import { Container } from "../components/container";
 import { Copy } from "../components/copy";
 import { DateView } from "../components/date-view";
+import { Editable } from "../components/editable";
 import { serverRequest } from "../util";
 
 export default function UsersPage() {
@@ -56,6 +57,26 @@ export default function UsersPage() {
         }
     }, [router]);
 
+    const setMaxConnection = useCallback(async (protocol, user, value) => {
+        let result = await serverRequest(context.server, '/max_connections', {email: user.email, protocol, value});
+        if (result?.ok) {
+            toast.success('Max connection changed');
+            refreshInbounds();
+        } else {
+            toast.error(result?.error ?? 'Cannot change user settings');
+        }
+    }, [router]);
+
+    const setUsername = useCallback(async (protocol, user, value) => {
+        let result = await serverRequest(context.server, '/change_username', {email: user.email, protocol, value});
+        if (result?.ok) {
+            toast.success('Username changed');
+            refreshInbounds();
+        } else {
+            toast.error(result?.error ?? 'Cannot change user settings');
+        }
+    }, [router]);
+
     return <Container>
         <Head>
             <title>Users</title>
@@ -66,6 +87,7 @@ export default function UsersPage() {
                 <tr>
                     <th className="px-1 py-2 border-b-2 border-b-blue-900">User</th>
                     <th className="px-1 py-2 border-b-2 border-b-blue-900">ID</th>
+                    <th className="px-1 py-2 border-b-2 border-b-blue-900">Max Connections</th>
                     <th className="px-1 py-2 border-b-2 border-b-blue-900">DeActive Date</th>
                     <th className="px-1 py-2 border-b-2 border-b-blue-900">First connect</th>
                     <th className="px-1 py-2 border-b-2 border-b-blue-900">Last connect</th>
@@ -81,8 +103,9 @@ export default function UsersPage() {
                         {i.settings?.clients?.map(u => {
                             if (!showAll && !u.email?.startsWith('user')) return;
                             return <tr key={u.id}>
-                                <td className="whitespace-nowrap border-b-2 py-1 px-3">{u.email}</td>
+                                <td className="whitespace-nowrap border-b-2 py-1 px-3"><Editable onEdit={value => setUsername(i.protocol, u, value)} value={u.email}>{u.email}</Editable></td>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3">{u.id}</td>
+                                <td className="whitespace-nowrap border-b-2 py-1 px-3"><Editable onEdit={value => setMaxConnection(i.protocol, u, value)} value={u.maxConnections ?? 1}>{u.maxConnections ?? 1}</Editable></td>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3"><DateView date={u.deActiveDate}/><span className="block text-gray-500">{u.deActiveReason}</span></td>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3"><DateView date={usages ? usages[u.email ?? '']?.firstConnect : null}/></td>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3"><DateView date={usages ? usages[u.email ?? '']?.lastConnect : null}/></td>

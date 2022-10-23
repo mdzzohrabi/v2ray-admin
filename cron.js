@@ -1,5 +1,5 @@
 // @ts-check
-const { getPaths, parseArgumentsAndOptions, readLogLines, readConfig, findUser, setUserActive, writeConfig, createLogger } = require("./util");
+const { getPaths, parseArgumentsAndOptions, readLogLines, readConfig, findUser, setUserActive, writeConfig, createLogger, restartService } = require("./util");
 
 const {
     cliArguments: [],
@@ -58,8 +58,10 @@ async function cronCommand() {
             hasChange = true;
         }
     }
-    if (hasChange)
+    if (hasChange) {
         await writeConfig(configPath, configBeforeUpdate);
+        restartService().catch(console.error);
+    }
 
     if (print)
         console.table(result.filter(x => x.hasMultipleAccess));
