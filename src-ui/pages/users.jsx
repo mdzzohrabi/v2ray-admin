@@ -105,7 +105,7 @@ export default function UsersPage() {
                             return <tr key={u.id}>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3"><Editable onEdit={value => setUsername(i.protocol, u, value)} value={u.email}>{u.email}</Editable></td>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3">{u.id}</td>
-                                <td className="whitespace-nowrap border-b-2 py-1 px-3"><Editable onEdit={value => setMaxConnection(i.protocol, u, value)} value={u.maxConnections ?? 1}>{u.maxConnections ?? 1}</Editable></td>
+                                <td className="whitespace-nowrap border-b-2 py-1 px-3"><Editable onEdit={value => setMaxConnection(i.protocol, u, value)} value={u.maxConnections ?? 2}>{u.maxConnections ?? 2}</Editable></td>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3"><DateView date={u.deActiveDate}/><span className="block text-gray-500">{u.deActiveReason}</span></td>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3"><DateView date={usages ? usages[u.email ?? '']?.firstConnect : null}/></td>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3"><DateView date={usages ? usages[u.email ?? '']?.lastConnect : null}/></td>
