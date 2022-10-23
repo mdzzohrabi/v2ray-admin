@@ -23,5 +23,5 @@ export function Copy({ data, children, copiedText = 'Copied !' }) {
         toast.success("Config copied to clipboard")
         setTimeout(() => setCopied(false), 2000);
     }, [data]);
-    return <span className="cursor-pointer text-blue-600" onClick={copyData}>{ loading ? 'Loading ...' : copied ? copiedText : children }</span>
+    return <span className="cursor-pointer text-sm text-blue-600" onClick={copyData}>{ loading ? 'Loading ...' : copied ? copiedText : children }</span>
 }

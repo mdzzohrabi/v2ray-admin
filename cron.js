@@ -1,5 +1,5 @@
 // @ts-check
-const { getPaths, parseArgumentsAndOptions, readLogLines, readConfig, findUser } = require("./util");
+const { getPaths, parseArgumentsAndOptions, readLogLines, readConfig, findUser, setUserActive, writeConfig, createLogger } = require("./util");
 
 async function cronCommand() {
 
@@ -8,9 +8,11 @@ async function cronCommand() {
         cliOptions: {print}
     } = parseArgumentsAndOptions();
 
+    let {showInfo, showError, showWarn} = createLogger();
+
     
-    let fromDate = new Date('2022/10/23 15:15:20');
-    fromDate.setMinutes(fromDate.getMinutes() - 30);
+    let fromDate = new Date('2022/10/15 21:31:36');
+    fromDate.setMinutes(fromDate.getMinutes() - 3000000);
     
     let {accessLogPath, configPath,} = getPaths();
     let config = readConfig(configPath);
@@ -40,7 +42,7 @@ async function cronCommand() {
     for (let userName in users) {
         let ips = users[userName];
         let user = findUser(config, userName);
-        if (!user) continue;
+        if (!user || !!user.deActiveDate) continue;
         let hasMultipleAccess = Object.values(ips).length > (user['maxConnections'] ?? 1);
         result.push({
             user: userName,
@@ -48,6 +50,18 @@ async function cronCommand() {
             ips: Object.keys(ips)
         });
     }
+
+    let configBeforeUpdate = readConfig(configPath);
+    let hasChange = false;
+    for (let user of result) {
+        if (user.hasMultipleAccess) {
+            showInfo(`De-active user ${user.user} due to multiple ip access (${user.ips.length} ips)`);
+            setUserActive(configBeforeUpdate, user.user, false);
+            hasChange = true;
+        }
+    }
+    if (hasChange)
+        await writeConfig(configPath, configBeforeUpdate);
 
     if (print)
         console.table(result.filter(x => x.hasMultipleAccess));

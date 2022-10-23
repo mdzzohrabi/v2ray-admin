@@ -273,13 +273,10 @@ async function deleteUser(configPath, email, protocol, tag = null) {
         // @ts-ignore
         inbound.settings.clients = newClients;
 
-        writeConfig(configPath, config);
+        await writeConfig(configPath, config);
     } else {
         throw Error(`settings.clients is not in valid format for protocol "${protocol}"`);
     }
-
-    // Write config
-    await writeFile(configPath, JSON.stringify(config, null, 2));
 }
 
 /**
@@ -302,8 +299,24 @@ function setUserActive(config, email, active) {
     let user = findUser(config, email);
     if (!user)
         throw Error(`User ${email} not found`);
+        
+    let badUserRule = config?.routing?.rules?.find(x => x.outboundTag == "baduser");
     if (active) {
-        user['deActiveDate'] = undefined;
+        delete user.deActiveDate;
+        if (badUserRule) {
+            let index = badUserRule.user?.indexOf(email) ?? -1;
+            if (index >= 0) {
+                badUserRule.user?.splice(index, 1);
+            }
+        }
+    } else {
+        user.deActiveDate = new Date().toString();
+        if (badUserRule) {
+            if (Array.isArray(badUserRule.user))
+                badUserRule.user.push(email);
+            else
+                badUserRule.user = [email];
+        }
     }
 }
 
@@ -327,4 +340,4 @@ function restartService() {
     })
 }
 
-module.exports = { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile, addUser, getUserConfig, restartService, readLogLines, findUser };
+module.exports = { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile, addUser, getUserConfig, restartService, readLogLines, findUser, setUserActive, writeConfig, deleteUser };

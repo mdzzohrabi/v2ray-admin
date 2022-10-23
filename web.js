@@ -1,7 +1,7 @@
 // @ts-check
 const express = require('express');
 const { env } = require('process');
-const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser, restartService } = require('./util');
+const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser, restartService, findUser, setUserActive, writeConfig, deleteUser } = require('./util');
 
 let app = express();
 let {showInfo} = createLogger();
@@ -83,6 +83,35 @@ app.post('/client_config', (req, res) => {
 app.post('/restart', async (req, res) => {
     restartService().then(result => res.end(result));
 });
+
+app.post('/active', async (req, res) => {
+    try {
+        let {email, protocol, active} = req.body;
+        if (!email) return res.json({ error: 'Email not entered' });
+        let {configPath} = getPaths();
+        let config = readConfig(configPath);
+        setUserActive(config, email, active);
+        await writeConfig(configPath, config);
+        res.json({ ok: true });
+    } catch (err) {
+        res.json({ error: err.message });
+        console.error(err);
+    }
+});
+
+app.post('/remove_user', async (req, res) => {
+    try {
+        let {email, protocol, tag} = req.body;
+        if (!email) return res.json({ error: 'Email not entered' });
+        let {configPath} = getPaths();
+        await deleteUser(configPath, email, protocol, tag);
+        res.json({ ok: true });
+    } catch (err) {
+        res.json({ error: err.message });
+        console.error(err);
+    }
+});
+
 
 app.get('/inbounds', async (req, res) => {
 

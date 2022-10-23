@@ -12,6 +12,9 @@ interface V2RayConfigInboundClient {
     id?: string
     email?: string
     level?: number
+    deActiveDate?: string
+    maxConnections?: number
+    deActiveReason?: string
 }
 
 interface V2RayConfigInboundSettings {
