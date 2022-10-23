@@ -1,18 +1,16 @@
 // @ts-check
 const { getPaths, parseArgumentsAndOptions, readLogLines, readConfig, findUser, setUserActive, writeConfig, createLogger } = require("./util");
 
-async function cronCommand() {
+const {
+    cliArguments: [],
+    cliOptions: {print = false, delay = 5}
+} = parseArgumentsAndOptions();
 
-    const {
-        cliArguments: [],
-        cliOptions: {print}
-    } = parseArgumentsAndOptions();
+let {showInfo, showError, showWarn} = createLogger();
 
-    let {showInfo, showError, showWarn} = createLogger();
-
-    
-    let fromDate = new Date('2022/10/15 21:31:36');
-    fromDate.setMinutes(fromDate.getMinutes() - 3000000);
+async function cronCommand() {    
+    let fromDate = new Date();
+    fromDate.setMinutes(fromDate.getMinutes() - 30);
     
     let {accessLogPath, configPath,} = getPaths();
     let config = readConfig(configPath);
@@ -68,4 +66,13 @@ async function cronCommand() {
 
 }
 
-cronCommand();
+async function runCron() {
+    showInfo(`Run cron ${new Date().toLocaleString()}`);
+    try {
+        await cronCommand();
+    } finally {
+        setTimeout(runCron, delay * 60 * 1000);
+    }
+}
+
+runCron();
