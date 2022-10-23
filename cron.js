@@ -66,6 +66,8 @@ async function cronCommand() {
     if (print)
         console.table(result.filter(x => x.hasMultipleAccess));
 
+    showInfo('Complete.')
+
 }
 
 async function runCron() {
