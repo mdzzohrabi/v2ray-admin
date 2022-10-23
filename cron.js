@@ -24,6 +24,8 @@ async function cronCommand() {
         users[user][clientIp] = dateTime;
     }
 
+    let result = [];
+
     // Check bad users
     for (let user in users) {
         let ips = users[user];
@@ -33,12 +35,15 @@ async function cronCommand() {
             let found = dates.find(x => x != date && Math.abs(x.getTime() - date.getTime()) <= range);
             if (found) hasMultipleAccess = true;
         }
-        // @ts-ignore
-        users[user].multiAccess = hasMultipleAccess;
+        result.push({
+            user,
+            hasMultipleAccess,
+            ips: Object.keys(ips)
+        });
     }
 
     if (print)
-        console.table(users);
+        console.table(result);
 
 }
 
