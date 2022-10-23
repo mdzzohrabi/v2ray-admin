@@ -54,7 +54,7 @@ async function cronCommand() {
     for (let user of result) {
         if (user.hasMultipleAccess) {
             showInfo(`De-active user ${user.user} due to multiple ip access (${user.ips.length} ips)`);
-            setUserActive(configBeforeUpdate, user.user, false);
+            setUserActive(configBeforeUpdate, user.user, false, `Used by ${user.ips.length} ips`);
             hasChange = true;
         }
     }

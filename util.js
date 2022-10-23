@@ -294,8 +294,9 @@ function getUserConfig(user, protocol) {
  * @param {V2RayConfig} config
  * @param {string} email
  * @param {boolean} active
+ * @param {string | undefined} reason
  */
-function setUserActive(config, email, active) {
+function setUserActive(config, email, active, reason = undefined) {
     let user = findUser(config, email);
     if (!user)
         throw Error(`User ${email} not found`);
@@ -303,6 +304,7 @@ function setUserActive(config, email, active) {
     let badUserRule = config?.routing?.rules?.find(x => x.outboundTag == "baduser");
     if (active) {
         delete user.deActiveDate;
+        delete user.deActiveReason;
         if (badUserRule) {
             let index = badUserRule.user?.indexOf(email) ?? -1;
             if (index >= 0) {
@@ -311,6 +313,7 @@ function setUserActive(config, email, active) {
         }
     } else {
         user.deActiveDate = new Date().toString();
+        user.deActiveReason = reason;
         if (badUserRule) {
             if (Array.isArray(badUserRule.user))
                 badUserRule.user.push(email);
