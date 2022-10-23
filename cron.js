@@ -9,6 +9,8 @@ async function cronCommand() {
     } = parseArgumentsAndOptions();
 
     let range = 1000 * 60 * 30; // 30 Minutes
+    let fromDate = new Date();
+    fromDate.setMinutes(fromDate.getMinutes() - 30);
 
     let {accessLogPath, configPath, errorLogPath} = getPaths();
     /**
@@ -19,6 +21,7 @@ async function cronCommand() {
 
     for await (let line of lines) {
         let {user, dateTime, clientAddress} = line;
+        if (dateTime < fromDate) continue;
         let clientIp = clientAddress.split(':')[0];
         users[user] = users[user] ?? {};
         users[user][clientIp] = dateTime;
