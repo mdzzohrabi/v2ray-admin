@@ -1,10 +1,11 @@
+/// <reference types="./types"/>
 // @ts-check
 // Load envrionment configuration
 require('dotenv').config();
 
 const { randomUUID } = require('crypto');
 const { resolve, join } = require('path');
-const { writeFile, readFile } = require('fs/promises');
+const { writeFile, readFile, copyFile } = require('fs/promises');
 const { readFileSync, createReadStream } = require('fs');
 const { env, argv } = require('process');
 
@@ -101,6 +102,23 @@ function readConfig(configPath) {
 }
 
 /**
+ * Write v2ray config
+ * @param {string} configPath Config path
+ * @param {any} config Config
+ * @returns 
+ */
+async function writeConfig(configPath, config) {
+    try {
+        let path = resolve(configPath);
+        let backupPath = resolve(configPath + '.backup-' + Date.now());
+        await copyFile(path, backupPath);
+        return await writeFile(path, JSON.stringify(config, null, 2));
+    } catch {
+        throw Error(`Cannot write configuration file from "${configPath}"`);
+    }
+}
+
+/**
  * 
  * @param {string} accessLogPath Access Log Path
  * @returns {Promise<{ [user: string]: { firstConnect: Date, lastConnect: Date } }>}
@@ -111,7 +129,29 @@ async function readLogFile(accessLogPath) {
      * @type {{ [user: string]: { firstConnect: Date, lastConnect: Date } }}
      */
     let usages = await cache('usages') ?? {};
-    let readedBytes = await cache('log-read-bytes') ?? 0;
+    let lines = readLogLines(accessLogPath, 'log-read-bytes');
+
+    for await  (const line of lines) {
+        let {user, dateTime} = line;
+        let usage = usages[user] = usages[user] ?? {};
+        if (!usage.firstConnect || dateTime < new Date(usage.firstConnect))
+            usage.firstConnect = dateTime;
+
+        if (!usage.lastConnect || dateTime > new Date(usage.lastConnect))
+            usage.lastConnect = dateTime;
+    }
+
+    await cache('usages', usages);
+    return usages;
+}
+
+/**
+ * 
+ * @param {string} accessLogPath 
+ * @param {string | undefined} cacheKey 
+ */
+async function *readLogLines(accessLogPath, cacheKey = undefined) {
+    let readedBytes = cacheKey ? await cache(cacheKey) ?? 0 : 0;
 
     let stream = createReadStream(accessLogPath, {
         start: readedBytes
@@ -121,23 +161,15 @@ async function readLogFile(accessLogPath) {
         input: stream
     });
 
-    for await  (const line of lineReader) {
+    for await (const line of lineReader) {
         let [date, time, clientAddress, status, destination, route, email, user] = line.split(' ');
         if (!user) continue;
         user = user.trim();
-        let usage = usages[user] = usages[user] ?? {};
         let dateTime = new Date(date + ' ' + time);
-        if (!usage.firstConnect || dateTime < new Date(usage.firstConnect))
-            usage.firstConnect = dateTime;
-
-        if (!usage.lastConnect || dateTime > new Date(usage.lastConnect))
-            usage.lastConnect = dateTime;
+        yield {date, time, clientAddress, status, destination, route, email, user, dateTime};
     }
-
-    await cache('usages', usages);
-    await cache('log-read-bytes', readedBytes + stream.bytesRead);
-
-    return usages;
+    if (cacheKey)
+        await cache(cacheKey, readedBytes + stream.bytesRead);
 }
 
 /**
@@ -197,9 +229,47 @@ async function addUser(configPath, email, protocol, tag = null) {
     inbound.settings.clients = users;
 
     // Write config
-    await writeFile(configPath, JSON.stringify(config, null, 2));
+    await writeConfig(configPath, config);
 
     return user;
+}
+
+/**
+ * Delete user
+ * @param {string} configPath 
+ * @param {string} email 
+ * @param {string} protocol 
+ * @param {string?} tag 
+ */
+async function deleteUser(configPath, email, protocol, tag = null) {
+    invariant(!!email, `Email must not be empty`);
+
+    showInfo(`Remove user "${email}" from protocol "${protocol}"${tag ? ` with tagged [${tag}]` : ''}`);
+
+    // Configuration
+    let config = readConfig(configPath);
+
+    let inbound = config?.inbounds?.find(x => x.protocol == protocol && (!tag || x.tag == tag));
+    let clients = inbound?.settings?.clients;
+    let newClients = clients?.filter(u => u.email != email);
+
+    if (Array.isArray(newClients)) {
+        let found = clients?.find(u => u.email == email);
+
+        if (!found) {
+            throw Error(`User "${email}" not found`);
+        }
+
+        // @ts-ignore
+        inbound.settings.clients = newClients;
+
+        writeConfig(configPath, config);
+    } else {
+        throw Error(`settings.clients is not in valid format for protocol "${protocol}"`);
+    }
+
+    // Write config
+    await writeFile(configPath, JSON.stringify(config, null, 2));
 }
 
 /**
@@ -215,20 +285,22 @@ function getUserConfig(user, protocol) {
 
 function restartService() {
     return new Promise((done, reject) => {
-        const {spawn} = require('child_process');
-        let result = spawn('servicectl restart v2ray');
+        const {exec} = require('child_process');
+        let result = exec('systemctl restart v2ray');
+        if (!result) return reject();
         let output = '';
-        result.stdout.on('data', buffer => {
+        result?.stdout?.on('data', buffer => {
             output += buffer.toString('utf-8');
         });
-        result.once('exit', () => {
+
+        result?.once('exit', () => {
             done(output);
         });    
         
-        result.once('error', (err) => {
+        result?.once('error', (err) => {
             reject(err)
         });    
     })
 }
 
-module.exports = { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile, addUser, getUserConfig, restartService };
+module.exports = { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile, addUser, getUserConfig, restartService, readLogLines };
