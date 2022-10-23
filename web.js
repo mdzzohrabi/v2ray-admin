@@ -126,7 +126,7 @@ app.post('/change_username', async (req, res) => {
         let config = readConfig(configPath);
         let user = findUser(config, email);
         if (!user) throw Error('User not found');
-        user.email = (value);
+        user.email = String(value);
         await writeConfig(configPath, config);
         res.json({ ok: true });
         restartService().catch(console.error);

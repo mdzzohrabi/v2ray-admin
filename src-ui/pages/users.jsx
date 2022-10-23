@@ -95,21 +95,21 @@ export default function UsersPage() {
                 </tr>
             </thead>
             <tbody>
-                {!inbounds || isLoading ? <tr><td colSpan={6} className="px-3 py-4">Loading ...</td></tr> : inbounds.map(i => {
+                {!inbounds || isLoading ? <tr><td colSpan={7} className="px-3 py-4">Loading ...</td></tr> : inbounds.map(i => {
                     return <Fragment key={"inbound-" + i.protocol}>
                         <tr key={"inbound-" + i.protocol}>
-                            <td colSpan={6} className="uppercase font-bold bg-slate-100 px-4 py-3">{i.protocol}</td>
+                            <td colSpan={7} className="uppercase font-bold bg-slate-100 px-4 py-3">{i.protocol}</td>
                         </tr>
                         {i.settings?.clients?.map(u => {
                             if (!showAll && !u.email?.startsWith('user')) return;
                             return <tr key={u.id}>
-                                <td className="whitespace-nowrap border-b-2 py-1 px-3"><Editable onEdit={value => setUsername(i.protocol, u, value)} value={u.email}>{u.email}</Editable></td>
-                                <td className="whitespace-nowrap border-b-2 py-1 px-3">{u.id}</td>
-                                <td className="whitespace-nowrap border-b-2 py-1 px-3"><Editable onEdit={value => setMaxConnection(i.protocol, u, value)} value={u.maxConnections ?? 2}>{u.maxConnections ?? 2}</Editable></td>
-                                <td className="whitespace-nowrap border-b-2 py-1 px-3"><DateView date={u.deActiveDate}/><span className="block text-gray-500">{u.deActiveReason}</span></td>
-                                <td className="whitespace-nowrap border-b-2 py-1 px-3"><DateView date={usages ? usages[u.email ?? '']?.firstConnect : null}/></td>
-                                <td className="whitespace-nowrap border-b-2 py-1 px-3"><DateView date={usages ? usages[u.email ?? '']?.lastConnect : null}/></td>
-                                <td className="whitespace-nowrap border-b-2 py-1 px-3">
+                                <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3"><Editable onEdit={value => setUsername(i.protocol, u, value)} value={u.email}>{u.email}</Editable></td>
+                                <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3">{u.id}</td>
+                                <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3"><Editable onEdit={value => setMaxConnection(i.protocol, u, value)} value={u.maxConnections ?? 2}>{u.maxConnections ?? 2}</Editable></td>
+                                <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3"><DateView date={u.deActiveDate}/><span className="block text-gray-500">{u.deActiveReason}</span></td>
+                                <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3"><DateView date={usages ? usages[u.email ?? '']?.firstConnect : null}/></td>
+                                <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3"><DateView date={usages ? usages[u.email ?? '']?.lastConnect : null}/></td>
+                                <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3">
                                     <span onClick={() => showQRCode(i.protocol, u)} className="text-sm cursor-pointer text-blue-700">QR Code</span>
                                     {' | '}
                                     <Copy data={() => serverRequest(context.server, '/client_config?protocol=' + i.protocol, u).then(data => data.config)}>Copy Config</Copy>

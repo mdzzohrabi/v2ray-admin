@@ -58,7 +58,7 @@ async function cronCommand() {
             hasChange = true;
         }
     }
-    if (hasChange) {
+    if (hasChange && !print) {
         await writeConfig(configPath, configBeforeUpdate);
         restartService().catch(console.error);
     }
@@ -73,7 +73,8 @@ async function runCron() {
     try {
         await cronCommand();
     } finally {
-        setTimeout(runCron, delay * 60 * 1000);
+        if (delay > 0)
+            setTimeout(runCron, delay * 60 * 1000);
     }
 }
 
