@@ -188,6 +188,16 @@ function invariant(expr, message, ...params) {
 }
 
 /**
+ * Find user in all inbounds
+ * @param {V2RayConfig} config Config
+ * @param {string} email Email
+ * @returns {V2RayConfigInboundClient | undefined}
+ */
+function findUser(config, email) {
+    return config?.inbounds?.map(x => x.settings?.clients?.find(u => u.email == email)).filter(x => !!x).pop();
+}
+
+/**
  * Add user to a protocol
  * @param {string} configPath Config path
  * @param {string} email Email
@@ -283,6 +293,20 @@ function getUserConfig(user, protocol) {
     return {clientConfig, strClientConfig};
 }
 
+/**
+ * @param {V2RayConfig} config
+ * @param {string} email
+ * @param {boolean} active
+ */
+function setUserActive(config, email, active) {
+    let user = findUser(config, email);
+    if (!user)
+        throw Error(`User ${email} not found`);
+    if (active) {
+        user['deActiveDate'] = undefined;
+    }
+}
+
 function restartService() {
     return new Promise((done, reject) => {
         const {exec} = require('child_process');
@@ -303,4 +327,4 @@ function restartService() {
     })
 }
 
-module.exports = { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile, addUser, getUserConfig, restartService, readLogLines };
+module.exports = { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile, addUser, getUserConfig, restartService, readLogLines, findUser };
