@@ -3,7 +3,7 @@ const { getPaths, parseArgumentsAndOptions, readLogLines, readConfig, findUser, 
 
 const {
     cliArguments: [],
-    cliOptions: {print = false, delay = 5}
+    cliOptions: {print = false, delay = 5, reactive = true}
 } = parseArgumentsAndOptions();
 
 let {showInfo, showError, showWarn} = createLogger();
@@ -51,6 +51,8 @@ async function cronCommand() {
 
     let configBeforeUpdate = readConfig(configPath);
     let hasChange = false;
+
+    // De-active users
     for (let user of result) {
         if (user.hasMultipleAccess) {
             showInfo(`De-active user ${user.user} due to multiple ip access (${user.ips.length} ips)`);
@@ -58,6 +60,22 @@ async function cronCommand() {
             hasChange = true;
         }
     }
+    
+    // Active users
+    let usersToActive = [];
+    for (let inbound of configBeforeUpdate?.inbounds ?? []) {
+        for (let user of inbound?.settings?.clients ?? []) {
+            if (!!user.deActiveDate && user.deActiveReason?.includes('Used by ') && !result.find(x => x.hasMultipleAccess && x.user == user.email)) {
+                showInfo(`Re-active user ${user.email} due to normal usage`);
+                usersToActive.push(user.email);
+                hasChange = true;
+            }
+        }
+    }
+
+    for (let user of usersToActive)
+        setUserActive(configBeforeUpdate, user ?? '', true);
+
     if (hasChange && !print) {
         await writeConfig(configPath, configBeforeUpdate);
         restartService().catch(console.error);
