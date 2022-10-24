@@ -111,7 +111,6 @@ app.post('/max_connections', async (req, res) => {
         user.maxConnections = Number(value);
         await writeConfig(configPath, config);
         res.json({ ok: true });
-        restartService().catch(console.error);
     } catch (err) {
         res.json({ error: err.message });
         console.error(err);

@@ -25,10 +25,10 @@ export default function UsersPage() {
      */
     let {data: inbounds, mutate: refreshInbounds} = useSWR('/inbounds', serverRequest.bind(this, context.server));
 
-    /**
-     * @type {import("swr").SWRResponse<{ [user: string]: { firstConnect?: Date, lastConnect?: Date }}>}
-     */
-    let {data: usages} = useSWR('/usages', serverRequest.bind(this, context.server));
+    // /**
+    //  * @type {import("swr").SWRResponse<{ [user: string]: { firstConnect?: Date, lastConnect?: Date }}>}
+    //  */
+    // let {data: usages} = useSWR('/usages', serverRequest.bind(this, context.server));
 
 
     const showQRCode = useCallback(async (protocol, user) => {
@@ -107,8 +107,8 @@ export default function UsersPage() {
                                 <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3">{u.id}</td>
                                 <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3"><Editable onEdit={value => setMaxConnection(i.protocol, u, value)} value={u.maxConnections ?? 2}>{u.maxConnections ?? 2}</Editable></td>
                                 <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3"><DateView date={u.deActiveDate}/><span className="block text-gray-500">{u.deActiveReason}</span></td>
-                                <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3"><DateView date={usages ? usages[u.email ?? '']?.firstConnect : null}/></td>
-                                <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3"><DateView date={usages ? usages[u.email ?? '']?.lastConnect : null}/></td>
+                                <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3"><DateView date={u['firstConnect']}/></td>
+                                <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3"><DateView date={u['lastConnect']}/></td>
                                 <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3">
                                     <span onClick={() => showQRCode(i.protocol, u)} className="text-sm cursor-pointer text-blue-700">QR Code</span>
                                     {' | '}
