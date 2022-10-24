@@ -32,7 +32,7 @@ async function cronCommand() {
     }
 
     /**
-     * @type {{ user: string, hasMultipleAccess: boolean, ips: string[] }[]}
+     * @type {{ user: string, hasMultipleAccess: boolean, ips: string[], deActive: boolean }[]}
      */
     let result = [];
 
@@ -40,12 +40,13 @@ async function cronCommand() {
     for (let userName in users) {
         let ips = users[userName];
         let user = findUser(config, userName);
-        if (!user || !!user.deActiveDate) continue;
+        if (!user) continue;
         let hasMultipleAccess = Object.values(ips).length > (user['maxConnections'] ?? 2);
         result.push({
             user: userName,
             hasMultipleAccess,
-            ips: Object.keys(ips)
+            ips: Object.keys(ips),
+            deActive: !user.deActiveDate
         });
     }
 
@@ -54,7 +55,7 @@ async function cronCommand() {
 
     // De-active users
     for (let user of result) {
-        if (user.hasMultipleAccess) {
+        if (user.hasMultipleAccess && user.deActive) {
             showInfo(`De-active user ${user.user} due to multiple ip access (${user.ips.length} ips)`);
             setUserActive(configBeforeUpdate, user.user, false, `Used by ${user.ips.length} ips`);
             hasChange = true;
