@@ -1,5 +1,5 @@
 // @ts-check
-const { getPaths, parseArgumentsAndOptions, readLogLines, readConfig, findUser, setUserActive, writeConfig, createLogger, restartService } = require("./util");
+const { getPaths, parseArgumentsAndOptions, readLogLines, readConfig, findUser, setUserActive, writeConfig, createLogger, restartService, cache,  } = require("./util");
 
 const {
     cliArguments: [],
@@ -9,8 +9,9 @@ const {
 let {showInfo, showError, showWarn} = createLogger();
 
 async function cronCommand() {    
-    let fromDate = new Date();
-    fromDate.setMinutes(fromDate.getMinutes() - 30);
+    let fromDate = new Date('2022/10/23 15:15:20');
+    let rangeMinutes = 30;
+    fromDate.setMinutes(fromDate.getMinutes() - rangeMinutes);
     
     let {accessLogPath, configPath,} = getPaths();
     let config = readConfig(configPath);
@@ -19,17 +20,30 @@ async function cronCommand() {
      * @type {{ [user: string]: { [ip: string]: Date } }}
      */
     let users = {};
-    let lines = readLogLines(accessLogPath);
+    let lines = readLogLines(accessLogPath, `last-${rangeMinutes}-minutes-bytes`);
+    let lastMinutesRecords = await cache(`last-${rangeMinutes}-minutes`) ?? [];
 
     for await (let line of lines) {
-        let {user, dateTime, clientAddress,status} = line;
+        let {dateTime, status} = line;
         if (status != 'accepted') continue;
         if (dateTime < fromDate) continue;
+        lastMinutesRecords.push(line);
+    }
+    let removed = [];
+    for (let line of lastMinutesRecords) {
+        let {clientAddress, user, dateTime} = line;
+        if (dateTime < fromDate) {
+            removed.push(line);
+            continue;
+        }
         let splits = clientAddress.split(':');
         let clientIp = splits[splits.length - 2];
         users[user] = users[user] ?? {};
         users[user][clientIp] = dateTime;
     }
+    
+    lastMinutesRecords = lastMinutesRecords.filter(x => !removed.includes(x));
+    await cache(`last-${rangeMinutes}-minutes`, lastMinutesRecords);
 
     /**
      * @type {{ user: string, hasMultipleAccess: boolean, ips: string[], deActive: boolean }[]}
