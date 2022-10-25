@@ -9,7 +9,7 @@ const {
 let {showInfo, showError, showWarn} = createLogger();
 
 async function cronCommand() {    
-    let fromDate = new Date('2022/10/23 15:15:20');
+    let fromDate = new Date();
     let rangeMinutes = 30;
     fromDate.setMinutes(fromDate.getMinutes() - rangeMinutes);
     
