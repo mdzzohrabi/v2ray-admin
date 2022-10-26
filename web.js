@@ -1,7 +1,8 @@
 // @ts-check
+const { randomUUID } = require('crypto');
 const express = require('express');
 const { env } = require('process');
-const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser, restartService, findUser, setUserActive, writeConfig, deleteUser } = require('./util');
+const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser, restartService, findUser, setUserActive, writeConfig, deleteUser, log } = require('./util');
 
 let app = express();
 let {showInfo} = createLogger();
@@ -126,6 +127,25 @@ app.post('/change_username', async (req, res) => {
         let user = findUser(config, email);
         if (!user) throw Error('User not found');
         user.email = String(value);
+        await writeConfig(configPath, config);
+        res.json({ ok: true });
+        restartService().catch(console.error);
+    } catch (err) {
+        res.json({ error: err.message });
+        console.error(err);
+    }
+});
+
+app.post('/regenerate_id', async (req, res) => {
+    try {
+        let {email, protocol} = req.body;
+        if (!email) return res.json({ error: 'Email not entered' });
+        let {configPath} = getPaths();
+        let config = readConfig(configPath);
+        let user = findUser(config, email);
+        if (!user) throw Error('User not found');
+        log(`Generate new id for user ${user.email} (Old ID: ${user.id})`)
+        user.id = randomUUID();
         await writeConfig(configPath, config);
         res.json({ ok: true });
         restartService().catch(console.error);

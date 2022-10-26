@@ -5,7 +5,7 @@ require('dotenv').config();
 
 const { randomUUID } = require('crypto');
 const { resolve, join } = require('path');
-const { writeFile, readFile, copyFile } = require('fs/promises');
+const { writeFile, readFile, copyFile, appendFile } = require('fs/promises');
 const { readFileSync, createReadStream } = require('fs');
 const { env, argv } = require('process');
 
@@ -24,6 +24,15 @@ async function cache(key, value = undefined) {
         }
     } catch (err) {
         return null;
+    }
+}
+
+async function log(string) {
+    try {
+        let cachePath = resolve(env.LOG ?? 'var/log.log');
+        await appendFile(cachePath, new Date() + ' - ' + string + "\n");
+    } catch (err) {
+        console.error(err);
     }
 }
 
@@ -343,4 +352,4 @@ function restartService() {
     })
 }
 
-module.exports = { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile, addUser, getUserConfig, restartService, readLogLines, findUser, setUserActive, writeConfig, deleteUser, cache };
+module.exports = { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile, addUser, getUserConfig, restartService, readLogLines, findUser, setUserActive, writeConfig, deleteUser, cache, log };
