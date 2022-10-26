@@ -77,6 +77,16 @@ export default function UsersPage() {
         }
     }, [router]);
 
+    const reGenerateId = useCallback(async (protocol, user) => {
+        let result = await serverRequest(context.server, '/regenerate_id', {email: user.email, protocol});
+        if (result?.ok) {
+            toast.success('ID generated');
+            refreshInbounds();
+        } else {
+            toast.error(result?.error ?? 'Cannot generate new id');
+        }
+    }, [router]);
+
     return <Container>
         <Head>
             <title>Users</title>
@@ -104,7 +114,12 @@ export default function UsersPage() {
                             if (!showAll && !u.email?.startsWith('user')) return;
                             return <tr key={u.id}>
                                 <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3"><Editable onEdit={value => setUsername(i.protocol, u, value)} value={u.email}>{u.email}</Editable></td>
-                                <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3">{u.id}</td>
+                                <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3">
+                                    {u.id}
+                                    <div className="block">
+                                        <span onClick={() => reGenerateId(i.protocol, u)} className="text-sm cursor-pointer text-blue-700">{'ReGenerate ID'}</span>
+                                    </div>
+                                </td>
                                 <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3"><Editable onEdit={value => setMaxConnection(i.protocol, u, value)} value={u.maxConnections ?? 2}>{u.maxConnections ?? 2}</Editable></td>
                                 <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3"><DateView date={u.deActiveDate}/><span className="block text-gray-500">{u.deActiveReason}</span></td>
                                 <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3"><DateView date={u['firstConnect']}/></td>
