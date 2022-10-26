@@ -3,14 +3,14 @@ const { getPaths, parseArgumentsAndOptions, readLogLines, readConfig, findUser, 
 
 const {
     cliArguments: [],
-    cliOptions: {print = false, delay = 5, reactive = true}
+    cliOptions: {print = false, delay = 5, reactive = true, range = 10}
 } = parseArgumentsAndOptions();
 
 let {showInfo, showError, showWarn} = createLogger();
 
 async function cronCommand() {    
     let fromDate = new Date();
-    let rangeMinutes = 30;
+    let rangeMinutes = range;
     fromDate.setMinutes(fromDate.getMinutes() - rangeMinutes);
     
     let {accessLogPath, configPath,} = getPaths();
@@ -32,7 +32,7 @@ async function cronCommand() {
     let removed = [];
     for (let line of lastMinutesRecords) {
         let {clientAddress, user, dateTime} = line;
-        if (dateTime < fromDate) {
+        if (new Date(dateTime) < fromDate) {
             removed.push(line);
             continue;
         }
@@ -77,19 +77,21 @@ async function cronCommand() {
     }
     
     // Active users
-    let usersToActive = [];
-    for (let inbound of configBeforeUpdate?.inbounds ?? []) {
-        for (let user of inbound?.settings?.clients ?? []) {
-            if (!!user.deActiveDate && user.deActiveReason?.includes('Used by ') && !result.find(x => x.hasMultipleAccess && x.user == user.email)) {
-                showInfo(`Re-active user ${user.email} due to normal usage`);
-                usersToActive.push(user.email);
-                hasChange = true;
+    if (reactive) {
+        let usersToActive = [];
+        for (let inbound of configBeforeUpdate?.inbounds ?? []) {
+            for (let user of inbound?.settings?.clients ?? []) {
+                if (!!user.deActiveDate && user.deActiveReason?.includes('Used by ') && !result.find(x => x.hasMultipleAccess && x.user == user.email)) {
+                    showInfo(`Re-active user ${user.email} due to normal usage`);
+                    usersToActive.push(user.email);
+                    hasChange = true;
+                }
             }
         }
-    }
 
-    for (let user of usersToActive)
-        setUserActive(configBeforeUpdate, user ?? '', true);
+        for (let user of usersToActive)
+            setUserActive(configBeforeUpdate, user ?? '', true);
+    }
 
     if (hasChange && !print) {
         await writeConfig(configPath, configBeforeUpdate);
