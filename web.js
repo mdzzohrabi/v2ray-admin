@@ -7,6 +7,10 @@ const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser,
 let app = express();
 let {showInfo} = createLogger();
 
+app.get('/account_deactive', (req, res) => {
+    res.end('Account disabled');
+});
+
 // let users = {
 //     [env.WEB_USERNAME ?? 'admin']: env.WEB_PASSWORD ?? 'admin'
 // };
