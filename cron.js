@@ -3,7 +3,7 @@ const { getPaths, parseArgumentsAndOptions, readLogLines, readConfig, findUser, 
 
 const {
     cliArguments: [],
-    cliOptions: {print = false, delay = 5, reactive = true}
+    cliOptions: {print = false, delay = 5, reactive = true, range = 10}
 } = parseArgumentsAndOptions();
 
 let {showInfo, showError, showWarn} = createLogger();
@@ -12,7 +12,7 @@ async function cronCommand() {
     showInfo(`Start V2Rary Cron`);
     showInfo(`Re-Activate Account: ${reactive ? 'Yes': 'No'}`)
     let fromDate = new Date();
-    let rangeMinutes = 30;
+    let rangeMinutes = range;
     fromDate.setMinutes(fromDate.getMinutes() - rangeMinutes);
     
     let {accessLogPath, configPath,} = getPaths();
@@ -34,7 +34,7 @@ async function cronCommand() {
     let removed = [];
     for (let line of lastMinutesRecords) {
         let {clientAddress, user, dateTime} = line;
-        if (dateTime < fromDate) {
+        if (new Date(dateTime) < fromDate) {
             removed.push(line);
             continue;
         }
@@ -78,8 +78,8 @@ async function cronCommand() {
         }
     }
     
+    // Active users
     if (reactive) {
-        // Active users
         let usersToActive = [];
         for (let inbound of configBeforeUpdate?.inbounds ?? []) {
             for (let user of inbound?.settings?.clients ?? []) {
