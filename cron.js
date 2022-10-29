@@ -8,7 +8,9 @@ const {
 
 let {showInfo, showError, showWarn} = createLogger();
 
-async function cronCommand() {    
+async function cronCommand() {
+    showInfo(`Start V2Rary Cron`);
+    showInfo(`Re-Activate Account: ${reactive ? 'Yes': 'No'}`)
     let fromDate = new Date();
     let rangeMinutes = 30;
     fromDate.setMinutes(fromDate.getMinutes() - rangeMinutes);
@@ -76,20 +78,22 @@ async function cronCommand() {
         }
     }
     
-    // Active users
-    let usersToActive = [];
-    for (let inbound of configBeforeUpdate?.inbounds ?? []) {
-        for (let user of inbound?.settings?.clients ?? []) {
-            if (!!user.deActiveDate && user.deActiveReason?.includes('Used by ') && !result.find(x => x.hasMultipleAccess && x.user == user.email)) {
-                showInfo(`Re-active user ${user.email} due to normal usage`);
-                usersToActive.push(user.email);
-                hasChange = true;
+    if (reactive) {
+        // Active users
+        let usersToActive = [];
+        for (let inbound of configBeforeUpdate?.inbounds ?? []) {
+            for (let user of inbound?.settings?.clients ?? []) {
+                if (!!user.deActiveDate && user.deActiveReason?.includes('Used by ') && !result.find(x => x.hasMultipleAccess && x.user == user.email)) {
+                    showInfo(`Re-active user ${user.email} due to normal usage`);
+                    usersToActive.push(user.email);
+                    hasChange = true;
+                }
             }
         }
-    }
 
-    for (let user of usersToActive)
-        setUserActive(configBeforeUpdate, user ?? '', true);
+        for (let user of usersToActive)
+            setUserActive(configBeforeUpdate, user ?? '', true);
+    }
 
     if (hasChange && !print) {
         await writeConfig(configPath, configBeforeUpdate);
