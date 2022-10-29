@@ -57,7 +57,7 @@ async function cronCommand() {
         let ips = users[userName];
         let user = findUser(config, userName);
         if (!user) continue;
-        let hasMultipleAccess = Object.values(ips).length > (user['maxConnections'] ?? 2);
+        let hasMultipleAccess = Object.values(ips).length > (user['maxConnections'] ?? 3);
         result.push({
             user: userName,
             hasMultipleAccess,

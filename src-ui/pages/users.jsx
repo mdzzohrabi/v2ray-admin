@@ -1,8 +1,9 @@
 // @ts-check
 /// <reference types="../../types"/>
+import classNames from "classnames";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import React, { Fragment, useCallback, useContext, useState } from 'react';
+import React, { Fragment, useCallback, useContext, useMemo, useState } from 'react';
 import toast from "react-hot-toast";
 import useSWR from 'swr';
 import { AddUser } from "../components/add-user";
@@ -18,6 +19,7 @@ export default function UsersPage() {
     let context = useContext(AppContext);
     let router = useRouter();
     let [isLoading, setLoading] = useState(false);
+    let [sort, setSort] = useState('');
     let showAll = router.query.all == '1';
 
     /**
@@ -87,6 +89,8 @@ export default function UsersPage() {
         }
     }, [router]);
 
+    let headClass = 'px-1 py-2 border-b-2 border-b-blue-900';
+
     return <Container>
         <Head>
             <title>Users</title>
@@ -95,13 +99,13 @@ export default function UsersPage() {
         <table className="w-full">
             <thead>
                 <tr>
-                    <th className="px-1 py-2 border-b-2 border-b-blue-900">User</th>
-                    <th className="px-1 py-2 border-b-2 border-b-blue-900">ID</th>
-                    <th className="px-1 py-2 border-b-2 border-b-blue-900">Max Connections</th>
-                    <th className="px-1 py-2 border-b-2 border-b-blue-900">DeActive Date</th>
-                    <th className="px-1 py-2 border-b-2 border-b-blue-900">First connect</th>
-                    <th className="px-1 py-2 border-b-2 border-b-blue-900">Last connect</th>
-                    <th className="px-1 py-2 border-b-2 border-b-blue-900">Client Config</th>
+                    <th onClick={() => setSort('email')} className={classNames(headClass, {'bg-slate-100': sort == 'email'})}>User</th>
+                    <th onClick={() => setSort('id')} className={classNames(headClass, {'bg-slate-100': sort == 'id'})}>ID</th>
+                    <th onClick={() => setSort('maxConnections')} className={classNames(headClass, {'bg-slate-100': sort == 'maxConnections'})}>Max Connections</th>
+                    <th onClick={() => setSort('deActiveDate')} className={classNames(headClass, {'bg-slate-100': sort == 'deActiveDate'})}>DeActive Date</th>
+                    <th onClick={() => setSort('firstConnect')} className={classNames(headClass, {'bg-slate-100': sort == 'firstConnect'})}>First connect</th>
+                    <th onClick={() => setSort('lastConnect')} className={classNames(headClass, {'bg-slate-100': sort == 'lastConnect'})}>Last connect</th>
+                    <th className={classNames(headClass)}>Client Config</th>
                 </tr>
             </thead>
             <tbody>
@@ -110,7 +114,7 @@ export default function UsersPage() {
                         <tr key={"inbound-" + i.protocol}>
                             <td colSpan={7} className="uppercase font-bold bg-slate-100 px-4 py-3">{i.protocol}</td>
                         </tr>
-                        {i.settings?.clients?.map(u => {
+                        {i.settings?.clients?.sort((a, b) => !sort ? 0 : a[sort] == b[sort] ? 0 : a[sort] < b[sort] ? -1 : 1).map(u => {
                             if (!showAll && !u.email?.startsWith('user')) return;
                             return <tr key={u.id}>
                                 <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3"><Editable onEdit={value => setUsername(i.protocol, u, value)} value={u.email}>{u.email}</Editable></td>
@@ -120,7 +124,7 @@ export default function UsersPage() {
                                         <span onClick={() => reGenerateId(i.protocol, u)} className="text-sm cursor-pointer text-blue-700">{'ReGenerate ID'}</span>
                                     </div>
                                 </td>
-                                <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3"><Editable onEdit={value => setMaxConnection(i.protocol, u, value)} value={u.maxConnections ?? 2}>{u.maxConnections ?? 2}</Editable></td>
+                                <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3"><Editable onEdit={value => setMaxConnection(i.protocol, u, value)} value={u.maxConnections ?? 3}>{u.maxConnections ?? 2}</Editable></td>
                                 <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3"><DateView date={u.deActiveDate}/><span className="block text-gray-500">{u.deActiveReason}</span></td>
                                 <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3"><DateView date={u['firstConnect']}/></td>
                                 <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3"><DateView date={u['lastConnect']}/></td>
