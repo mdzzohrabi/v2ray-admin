@@ -229,6 +229,8 @@ async function addUser(configPath, email, protocol, tag = null) {
     if (!inbound)
         throw Error(`No inbound found for protocol "${protocol}"`);
 
+    log(`Add user ${email} to protocol ${protocol}`);
+
     let id = randomUUID();
 
     let user = { id, email, level: 0, createDate: new Date() };
@@ -278,6 +280,7 @@ async function deleteUser(configPath, email, protocol, tag = null) {
         if (!found) {
             throw Error(`User "${email}" not found`);
         }
+        log(`Remove user "${email}"`);
 
         // @ts-ignore
         inbound.settings.clients = newClients;
@@ -294,7 +297,8 @@ async function deleteUser(configPath, email, protocol, tag = null) {
  * @param {string} protocol
  */
 function getUserConfig(user, protocol) {
-    let clientConfig = {"add":"171.22.27.137","aid":"0","host":"","id":user.id,"net":"ws","path":"","port":"10808","ps":"VIP-" + user.email,"scy":"chacha20-poly1305","sni":"","tls":"","type":"","v":"2"}
+    // let clientConfig = {"add":"171.22.27.137","aid":"0","host":"","id":user.id,"net":"ws","path":"","port":"10808","ps":"VIP-" + user.email,"scy":"chacha20-poly1305","sni":"","tls":"","type":"","v":"2"}
+    let clientConfig = {"add":"94.23.168.19","aid":"0","host":"","id":user.id,"net":"ws","path":"","port":"10808","ps":"VIP-" + user.email,"scy":"chacha20-poly1305","sni":"","tls":"","type":"","v":"2"}
     let strClientConfig = `${protocol}://${Buffer.from(JSON.stringify(clientConfig)).toString('base64')}`;
     return {clientConfig, strClientConfig};
 }
@@ -306,6 +310,7 @@ function getUserConfig(user, protocol) {
  * @param {string | undefined} reason
  */
 function setUserActive(config, email, active, reason = undefined) {
+    log(`Set user ${email} to ${active?'active':'de-active'}.${reason? ' reason: ' + reason: ''}`);
     let user = findUser(config, email);
     if (!user)
         throw Error(`User ${email} not found`);
@@ -334,6 +339,7 @@ function setUserActive(config, email, active, reason = undefined) {
 
 function restartService() {
     return new Promise((done, reject) => {
+        log(`Restart v2ray service`);
         const {exec} = require('child_process');
         let result = exec('systemctl restart v2ray');
         if (!result) return reject();

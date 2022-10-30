@@ -1,5 +1,5 @@
 // @ts-check
-const { getPaths, parseArgumentsAndOptions, readLogLines, readConfig, findUser, setUserActive, writeConfig, createLogger, restartService, cache,  } = require("./util");
+const { getPaths, parseArgumentsAndOptions, readLogLines, readConfig, findUser, setUserActive, writeConfig, createLogger, restartService, cache, log,  } = require("./util");
 
 const {
     cliArguments: [],
@@ -73,7 +73,7 @@ async function cronCommand() {
     for (let user of result) {
         if (user.hasMultipleAccess && user.deActive) {
             showInfo(`De-active user ${user.user} due to multiple ip access (${user.ips.length} ips)`);
-            setUserActive(configBeforeUpdate, user.user, false, `Used by ${user.ips.length} ips`);
+            setUserActive(configBeforeUpdate, user.user, false, `Used by ${user.ips.length} ips in ${range} mins ago (${user.ips.join(', ')})`);
             hasChange = true;
         }
     }
