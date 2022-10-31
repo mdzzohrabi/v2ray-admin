@@ -13,6 +13,6 @@ export function DateView({ date }) {
     date = date instanceof Date ? date : new Date(date);
     return <>
         {isEN ? date.toLocaleString() : moment(date).locale('fa').format('YYYY/MM/DD hh:mm:ss a')}
-        <span className='block text-gray-500'>{moment(date).locale('fa').fromNow()}</span>
+        <span className='block text-gray-500 text-rtl'>{moment(date).locale('fa').fromNow()}</span>
     </>;
 }
