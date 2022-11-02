@@ -1,0 +1,17 @@
+vEmail=$1
+vDate=${2:-"1990/01/01"}
+vTime=${3:-"00:00:00"}
+vLog="/var/log/v2ray/access.log"
+
+if test -f "fixture/access.server.log"; then
+    vLog="fixture/access.server.log"
+fi
+
+echo "Log Path: $vLog"
+
+if [ -z $vEmail ]; then
+    echo "sh user-ips user1 2022/01/01 05:10:15"
+else
+    echo 'Search used IPs for "'$vEmail'" that requested after '$vDate' '$vTime
+    awk '/'$vEmail'/ {if ($1 >= "'$vDate'" && $2 >= "'$vTime'") {++logs; split($3,addr, ":"); lastUse[addr[1]] = $1 "\t" $2; ips[addr[1]]++}} END {for (ip in ips) { print ip "|" ips[ip] " records|" lastUse[ip] } print "Total Requests = " logs}' $vLog | column -t -s '|'
+fi

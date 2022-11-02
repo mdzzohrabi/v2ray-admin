@@ -1,0 +1,21 @@
+vEmail=$1
+vDate=${2:-"1990/01/01"}
+vTime=${3:-"00:00:00"}
+vRoot=0
+
+while getopts r:f: flag
+do
+    echo $flag
+    case "${flag}" in
+        r) vRoot=${OPTARG};;
+    esac
+done
+
+echo $vRoot
+
+if [ -z $vEmail ]; then
+    echo "sh user-ips user1 2022/01/01 05:10:15"
+else
+    echo 'Used sites for "'$vEmail'" that requested after '$vDate' '$vTime
+    awk '/'$vEmail'/ {if ($1 >= "'$vDate'" && $2 >= "'$vTime'") {sites[$5]++; lastUse[$5]=$1"\t"$2}} END {for (site in sites) { print site"|"sites[site]"|"lastUse[site] }}' fixture/access.server.log | column -t -s '|'
+fi
