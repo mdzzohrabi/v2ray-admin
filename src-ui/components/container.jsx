@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import classNames from 'classnames';
 
 export function Container({ children }) {
-    return <div className="h-fit min-w-full absolute">
+    return <div className="flex flex-col h-screen">
         <ul className="px-2 py-3 flex">
             <MenuLink href={"/users"} text={"Users"}/>
             <MenuLink href={"/server_config"} text={"Server Config"}/>

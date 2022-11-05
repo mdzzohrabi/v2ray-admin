@@ -107,8 +107,9 @@ export default function UsersPage() {
         </Head>
         <AddUser disabled={isLoading} onRefresh={refreshInbounds} setLoading={setLoading} protocols={inbounds?.map(i => i.protocol ?? '') ?? []}/>
         <table className="w-full">
-            <thead>
+            <thead className="sticky top-0 bg-white shadow-md">
                 <tr>
+                    <th className={classNames(headClass)}>#</th>
                     <th onClick={() => setSort(['email', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-100': sortColumn == 'email'})}>User</th>
                     <th onClick={() => setSort(['id', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-100': sortColumn == 'id'})}>ID</th>
                     <th onClick={() => setSort(['maxConnections', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-100': sortColumn == 'maxConnections'})}>Max Connections</th>
@@ -122,11 +123,11 @@ export default function UsersPage() {
                 {!inbounds || isLoading ? <tr><td colSpan={7} className="px-3 py-4">Loading ...</td></tr> : inbounds.map(i => {
                     return <Fragment key={"inbound-" + i.protocol}>
                         <tr key={"inbound-" + i.protocol}>
-                            <td colSpan={7} className="uppercase font-bold bg-slate-100 px-4 py-3">{i.protocol}</td>
+                            <td colSpan={8} className="uppercase font-bold bg-slate-100 px-4 py-3">{i.protocol}</td>
                         </tr>
-                        {[...(i.settings?.clients ?? [])].sort((a, b) => !sortColumn ? 0 : a[sortColumn] == b[sortColumn] ? 0 : a[sortColumn] < b[sortColumn] ? (sortAsc ? -1 : 1) : (sortAsc ? 1 : -1)).map(u => {
-                            if (!showAll && !u.email?.startsWith('user')) return;
+                        {[...(i.settings?.clients ?? [])].sort((a, b) => !sortColumn ? 0 : a[sortColumn] == b[sortColumn] ? 0 : a[sortColumn] < b[sortColumn] ? (sortAsc ? -1 : 1) : (sortAsc ? 1 : -1)).filter(u => showAll || u.email?.startsWith('user')).map((u, index) => {
                             return <tr key={u.id}>
+                                <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3">{index + 1}</td>
                                 <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3">
                                     <Editable onEdit={value => setUsername(i.protocol, u, value)} value={u.email}>{u.email}</Editable>
                                 </td>
