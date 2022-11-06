@@ -43,7 +43,7 @@ export function AddUser({ disabled = false, onRefresh, setLoading, protocols }) 
 
     }, [username, protocol, onRefresh]);
 
-    return <div className="flex my-3">
+    return <div className="flex my-3 text-sm">
         <h2 className="font-bold px-3 py-3 whitespace-nowrap">Add User</h2>
         <div className="self-center flex-nowrap flex">
             <form onSubmit={addUser}>
@@ -57,7 +57,7 @@ export function AddUser({ disabled = false, onRefresh, setLoading, protocols }) 
                 {protocols?.map(p => <option key={"protocol-" + p} value={p}>{p}</option>)}
             </select>
 
-            <button disabled={disabled} type="submit" className="bg-slate-300 whitespace-nowrap rounded-lg px-3 py-1 ml-2 delay-200 hover:bg-blue-300">Add User</button>
+            <button disabled={disabled} type="submit" className="bg-slate-300 whitespace-nowrap rounded-lg px-3 py-1 ml-2 duration-100 hover:bg-blue-300">Add User</button>
             {/* { message || error ?
             <div className={classNames("message px-3 py-2 bg-slate-100 mt-2 rounded-md text-sm", { 'bg-red-100': !!error })}>{message || error}</div> : null } */}
             </form>

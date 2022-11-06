@@ -1,8 +1,11 @@
+import { useEffect } from "react";
 import { useCallback, useState } from "react";
 
 export function Editable({ value, children, onEdit }) {
     let [isEdit, setEdit] = useState(false);
     let [valueState, setValueState] = useState(value);
+
+    useEffect(() => { setValueState(value) }, [value])
 
     const onSubmit = useCallback((e) => {
         e?.preventDefault();
@@ -10,10 +13,13 @@ export function Editable({ value, children, onEdit }) {
         setEdit(false);
     }, [valueState]);
 
-    if (!isEdit) return <>
-        {children}
-        <span className="text-blue-500 text-sm ml-2 cursor-pointer px-1 rounded-lg hover:bg-slate-600 hover:text-white" onClick={() => setEdit(!isEdit)}>Edit</span>
-    </>;
+    // if (!isEdit) return <>
+    //     {children}
+    //     <span className="text-blue-500 text-sm ml-2 cursor-pointer px-1 rounded-lg hover:bg-slate-600 hover:text-white" onClick={() => setEdit(!isEdit)}>Edit</span>
+    // </>;
+
+    if (!isEdit)
+        return <span className="text-blue-500 ml-2 cursor-pointer px-1 rounded-lg hover:ring-slate-400 hover:ring-1 block" onClick={() => setEdit(!isEdit)}>{children}</span>;
 
     return <form onSubmit={onSubmit}>
         <input type={"text"} value={valueState} onChange={e => setValueState(e.currentTarget.value)} className="ring-1 ring-slate-600 rounded-lg px-1"/>

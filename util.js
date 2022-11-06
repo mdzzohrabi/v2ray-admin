@@ -5,8 +5,8 @@ require('dotenv').config();
 
 const { randomUUID } = require('crypto');
 const { resolve, join } = require('path');
-const { writeFile, readFile, copyFile, appendFile } = require('fs/promises');
-const { readFileSync, createReadStream } = require('fs');
+const { writeFile, readFile, copyFile, appendFile, stat } = require('fs/promises');
+const { readFileSync, createReadStream, fstat } = require('fs');
 const { env, argv } = require('process');
 
 /**
@@ -118,6 +118,7 @@ function readConfig(configPath) {
  */
 async function writeConfig(configPath, config) {
     try {
+        log(`Write V2Ray configuration into "${configPath}"`)
         let path = resolve(configPath);
         let backupPath = resolve(configPath + '.backup-' + Date.now());
         await copyFile(path, backupPath);
@@ -171,14 +172,45 @@ async function *readLogLines(accessLogPath, cacheKey = undefined) {
     });
 
     for await (const line of lineReader) {
-        let [date, time, clientAddress, status, destination, route, email, user] = line.split(' ');
-        if (!user) continue;
-        user = user.trim();
-        let dateTime = new Date(date + ' ' + time);
-        yield {date, time, clientAddress, status, destination, route, email, user, dateTime};
+        let parsed = parseLogLine(line);
+        if (!parsed) continue;
+        yield parsed;
     }
     if (cacheKey)
         await cache(cacheKey, readedBytes + stream.bytesRead);
+}
+
+/**
+ * Parse log line
+ * @param {string} line Log line
+ */
+function parseLogLine(line) {
+    let [date, time, clientAddress, status, destination, route, email, user] = line.split(' ');
+    if (!user) return null;
+    user = user.trim();
+    let dateTime = new Date(date + ' ' + time);
+    return {date, time, clientAddress, status, destination, route, email, user, dateTime};
+}
+
+/**
+ * Read a file line by line
+ * @param {string} filePath Access log path
+ * @param {number | undefined} start Start offset of reading file
+ */
+async function *readLines(filePath, start = undefined) {
+    if (!start)
+        start = (await stat(filePath)).size;
+    let stream = createReadStream(filePath, {
+        start
+    });
+
+    let lineReader = require('readline').createInterface({
+        input: stream
+    });
+
+    for await (const line of lineReader) {
+        yield line;
+    }
 }
 
 /**
@@ -359,4 +391,4 @@ function restartService() {
     })
 }
 
-module.exports = { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile, addUser, getUserConfig, restartService, readLogLines, findUser, setUserActive, writeConfig, deleteUser, cache, log };
+module.exports = { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile, addUser, getUserConfig, restartService, readLogLines, findUser, setUserActive, writeConfig, deleteUser, cache, log, readLines, parseLogLine };

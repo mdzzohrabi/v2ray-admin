@@ -12,6 +12,7 @@ import { Container } from "../components/container";
 import { Copy } from "../components/copy";
 import { DateView } from "../components/date-view";
 import { Editable } from "../components/editable";
+import { Popup } from "../components/popup";
 import { serverRequest } from "../util";
 
 export default function UsersPage() {
@@ -69,6 +70,16 @@ export default function UsersPage() {
         }
     }, [router]);
 
+    const setExpireDays = useCallback(async (protocol, user, value) => {
+        let result = await serverRequest(context.server, '/expire_days', {email: user.email, protocol, value});
+        if (result?.ok) {
+            toast.success('Expire days changed');
+            refreshInbounds();
+        } else {
+            toast.error(result?.error ?? 'Cannot change user settings');
+        }
+    }, [router]);
+
     const setUsername = useCallback(async (protocol, user, value) => {
         let result = await serverRequest(context.server, '/change_username', {email: user.email, protocol, value});
         if (result?.ok) {
@@ -106,13 +117,15 @@ export default function UsersPage() {
             <title>Users</title>
         </Head>
         <AddUser disabled={isLoading} onRefresh={refreshInbounds} setLoading={setLoading} protocols={inbounds?.map(i => i.protocol ?? '') ?? []}/>
-        <table className="w-full">
-            <thead className="sticky top-0 bg-white shadow-md">
+        <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-white shadow-md z-50">
                 <tr>
                     <th className={classNames(headClass)}>#</th>
                     <th onClick={() => setSort(['email', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-100': sortColumn == 'email'})}>User</th>
                     <th onClick={() => setSort(['id', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-100': sortColumn == 'id'})}>ID</th>
+                    <th onClick={() => setSort(['createDate', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-100': sortColumn == 'createDate'})}>Create Date</th>
                     <th onClick={() => setSort(['maxConnections', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-100': sortColumn == 'maxConnections'})}>Max Connections</th>
+                    <th onClick={() => setSort(['expireDays', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-100': sortColumn == 'expireDays'})}>Expire Days</th>
                     <th onClick={() => setSort(['deActiveDate', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-100': sortColumn == 'deActiveDate'})}>DeActive Date</th>
                     <th onClick={() => setSort(['firstConnect', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-100': sortColumn == 'firstConnect'})}>First connect</th>
                     <th onClick={() => setSort(['lastConnect', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-100': sortColumn == 'lastConnect'})}>Last connect</th>
@@ -120,37 +133,46 @@ export default function UsersPage() {
                 </tr>
             </thead>
             <tbody>
-                {!inbounds || isLoading ? <tr><td colSpan={7} className="px-3 py-4">Loading ...</td></tr> : inbounds.map(i => {
+                {!inbounds || isLoading ? <tr><td colSpan={10} className="px-3 py-4">Loading ...</td></tr> : inbounds.map(i => {
                     return <Fragment key={"inbound-" + i.protocol}>
                         <tr key={"inbound-" + i.protocol}>
-                            <td colSpan={8} className="uppercase font-bold bg-slate-100 px-4 py-3">{i.protocol}</td>
+                            <td colSpan={10} className="uppercase font-bold bg-slate-100 px-4 py-3">{i.protocol}</td>
                         </tr>
                         {[...(i.settings?.clients ?? [])].sort((a, b) => !sortColumn ? 0 : a[sortColumn] == b[sortColumn] ? 0 : a[sortColumn] < b[sortColumn] ? (sortAsc ? -1 : 1) : (sortAsc ? 1 : -1)).filter(u => showAll || u.email?.startsWith('user')).map((u, index) => {
-                            return <tr key={u.id}>
-                                <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3">{index + 1}</td>
-                                <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3">
+                            return <tr key={u.id} className="text-[0.78rem]">
+                                <td className="whitespace-nowrap border-b-2 py-1 px-3">{index + 1}</td>
+                                <td className="whitespace-nowrap border-b-2 py-1 px-3">
                                     <Editable onEdit={value => setUsername(i.protocol, u, value)} value={u.email}>{u.email}</Editable>
                                 </td>
-                                <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3">
+                                <td className="whitespace-nowrap border-b-2 py-1 px-3">
                                     <span className="block">{u.id}</span>
                                     <div className="block">
-                                        <span onClick={() => prompt(`Generate ID for ${u.email} ?`, `Generate`, () => reGenerateId(i.protocol, u))} className="text-sm cursor-pointer text-blue-700">{'ReGenerate ID'}</span>
+                                        <span onClick={() => prompt(`Generate ID for ${u.email} ?`, `Generate`, () => reGenerateId(i.protocol, u))} className="cursor-pointer text-blue-700">{'ReGenerate ID'}</span>
                                     </div>
                                 </td>
-                                <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3">
-                                    <Editable onEdit={value => setMaxConnection(i.protocol, u, value)} value={u.maxConnections ?? 3}>{u.maxConnections ?? 3}</Editable>
-                                    </td>
-                                <td className="text-sm border-b-2 py-1 px-3"><DateView date={u.deActiveDate}/><span className="block text-gray-500">{u.deActiveReason}</span></td>
-                                <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3"><DateView date={u['firstConnect']}/></td>
-                                <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3"><DateView date={u['lastConnect']}/></td>
-                                <td className="whitespace-nowrap text-sm border-b-2 py-1 px-3">
-                                    <span onClick={() => showQRCode(i.protocol, u)} className="text-sm cursor-pointer text-blue-700">QR Code</span>
+                                <td className="whitespace-nowrap border-b-2 py-1 px-3"><DateView date={u.createDate}/></td>
+                                <td className="whitespace-nowrap border-b-2 py-1 px-3">
+                                    <Editable onEdit={value => setMaxConnection(i.protocol, u, value)} value={u.maxConnections}>{u.maxConnections}</Editable>
+                                </td>
+                                <td className="whitespace-nowrap border-b-2 py-1 px-3">
+                                    <Editable onEdit={value => setExpireDays(i.protocol, u, value)} value={u.expireDays}>{u.expireDays}</Editable>
+                                </td>
+                                <td className="border-b-2 py-1 px-3">
+                                    <DateView date={u.deActiveDate}/>
+                                    <Popup popup={u.deActiveReason?.length ?? 0 > 30 ? u.deActiveReason : null}>
+                                        <span className="block text-gray-500">{u.deActiveReason?.length ?? 0 > 30 ? u.deActiveReason?.substring(0,30) + '...' : u.deActiveReason}</span>
+                                    </Popup>                                
+                                </td>
+                                <td className="whitespace-nowrap border-b-2 py-1 px-3"><DateView date={u['firstConnect']}/></td>
+                                <td className="whitespace-nowrap border-b-2 py-1 px-3"><DateView date={u['lastConnect']}/></td>
+                                <td className="whitespace-nowrap border-b-2 py-1 px-3">
+                                    <span onClick={() => showQRCode(i.protocol, u)} className="cursor-pointer text-blue-700">QR Code</span>
                                     {' | '}
                                     <Copy data={() => serverRequest(context.server, '/client_config?protocol=' + i.protocol, u).then(data => data.config)}>Copy Config</Copy>
                                     {' | '}
-                                    <span onClick={() => prompt(`Change user ${u.email} ${u.deActiveDate?'active':'de-active'} ?`, u.deActiveDate?'Active':'De-active', () => setActive(i.protocol, u, u.deActiveDate ? true : false))} className="text-sm cursor-pointer text-blue-700">{u.deActiveDate?'Active':'De-Active'}</span>
+                                    <span onClick={() => prompt(`Change user ${u.email} ${u.deActiveDate?'active':'de-active'} ?`, u.deActiveDate?'Active':'De-active', () => setActive(i.protocol, u, u.deActiveDate ? true : false))} className="cursor-pointer text-blue-700">{u.deActiveDate?'Active':'De-Active'}</span>
                                     {' | '}
-                                    <span onClick={() => prompt(`Delete user ${u.email} ?`, `Delete`,() => removeUser(i.protocol, u))} className="text-sm cursor-pointer text-blue-700">{'Remove'}</span>
+                                    <span onClick={() => prompt(`Delete user ${u.email} ?`, `Delete`,() => removeUser(i.protocol, u))} className="cursor-pointer text-blue-700">{'Remove'}</span>
                                 </td>
                             </tr>
                         })}

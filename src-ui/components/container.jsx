@@ -5,6 +5,7 @@ import classNames from 'classnames';
 export function Container({ children }) {
     return <div className="flex flex-col h-screen">
         <ul className="px-2 py-3 flex">
+            <MenuLink href={"/logs"} text={"Logs"}/>
             <MenuLink href={"/users"} text={"Users"}/>
             <MenuLink href={"/server_config"} text={"Server Config"}/>
             <MenuLink href={"/logout"}>Logout</MenuLink>

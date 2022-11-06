@@ -2,10 +2,14 @@
 const { randomUUID } = require('crypto');
 const express = require('express');
 const { env } = require('process');
-const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser, restartService, findUser, setUserActive, writeConfig, deleteUser, log } = require('./util');
+const { Server } = require('socket.io');
+const { createServer } = require('http');
+const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser, restartService, findUser, setUserActive, writeConfig, deleteUser, log, readLines } = require('./util');
 
-let app = express();
 let {showInfo} = createLogger();
+let app = express();
+let server = createServer(app);
+let socket = new Server(server);
 
 app.get('/account_deactive', (req, res) => {
     res.end('Account disabled');
@@ -100,6 +104,23 @@ app.post('/max_connections', async (req, res) => {
     }
 });
 
+app.post('/expire_days', async (req, res) => {
+    try {
+        let {email, protocol, value} = req.body;
+        if (!email) return res.json({ error: 'Email not entered' });
+        let {configPath} = getPaths();
+        let config = readConfig(configPath);
+        let user = findUser(config, email);
+        if (!user) throw Error('User not found');
+        user.expireDays = Number(value);
+        await writeConfig(configPath, config);
+        res.json({ ok: true });
+    } catch (err) {
+        res.json({ error: err.message });
+        console.error(err);
+    }
+});
+
 app.post('/change_username', async (req, res) => {
     try {
         let {email, protocol, value} = req.body;
@@ -169,8 +190,10 @@ app.get('/inbounds', async (req, res) => {
         let users = inbound.settings?.clients ?? [];
         for (let user of users) {
             let usage = user.email ? usages[user.email] : {};
-            user['firstConnect'] = usage?.firstConnect;
+            user.firstConnect = usage?.firstConnect;
             user['lastConnect'] = usage?.lastConnect;
+            user.expireDays = user.expireDays || Number(env.V2RAY_EXPIRE_DAYS) || 30;
+            user.maxConnections = user.maxConnections || Number(env.V2RAY_MAX_CONNECTIONS) || 3;
         }
     }
 
@@ -191,4 +214,19 @@ app.post('/user', async (req, res) => {
     }
 });
 
-app.listen(env.WEB_PORT ?? 8080, () =>  showInfo(`Server started on port ${env.WEB_PORT ?? 8080}`));
+let logWatch = socket.of('/logs');
+
+logWatch.on('connection', async client => {
+    let isDisconnected = false;
+    client.on('disconnect', () => {
+        isDisconnected = true;
+    });
+
+    let {accessLogPath} = getPaths();
+    for await (let line of readLines(accessLogPath)) {
+        if (isDisconnected) break;
+        client.emit('log', line);
+    }
+});
+
+server.listen(env.WEB_PORT ?? 8080, () =>  showInfo(`Server started on port ${env.WEB_PORT ?? 8080}`));
