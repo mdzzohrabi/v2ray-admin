@@ -9,7 +9,13 @@ const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser,
 let {showInfo} = createLogger();
 let app = express();
 let server = createServer(app);
-let socket = new Server(server);
+let socket = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"],
+        allowedHeaders: []
+      }
+});
 
 app.get('/account_deactive', (req, res) => {
     res.end('Account disabled');
@@ -77,7 +83,7 @@ app.post('/active', async (req, res) => {
         if (!email) return res.json({ error: 'Email not entered' });
         let {configPath} = getPaths();
         let config = readConfig(configPath);
-        setUserActive(config, email, active);
+        let user = setUserActive(config, email, active);
         await writeConfig(configPath, config);
         res.json({ ok: true });
         restartService().catch(console.error);
@@ -194,6 +200,7 @@ app.get('/inbounds', async (req, res) => {
             user['lastConnect'] = usage?.lastConnect;
             user.expireDays = user.expireDays || Number(env.V2RAY_EXPIRE_DAYS) || 30;
             user.maxConnections = user.maxConnections || Number(env.V2RAY_MAX_CONNECTIONS) || 3;
+            user.billingStartDate = user.billingStartDate ?? user.firstConnect;
         }
     }
 
@@ -222,11 +229,16 @@ logWatch.on('connection', async client => {
         isDisconnected = true;
     });
 
+    console.log(`New connnection`);
     let {accessLogPath} = getPaths();
-    for await (let line of readLines(accessLogPath)) {
-        if (isDisconnected) break;
-        client.emit('log', line);
+    while (true) {
+        for await (let line of readLines(accessLogPath)) {
+            console.log(line);
+            if (isDisconnected) break;
+            client.emit('log', line);
+        }
     }
+    console.log('Complete');
 });
 
 server.listen(env.WEB_PORT ?? 8080, () =>  showInfo(`Server started on port ${env.WEB_PORT ?? 8080}`));

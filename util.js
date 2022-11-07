@@ -350,6 +350,10 @@ function setUserActive(config, email, active, reason = undefined) {
         
     let badUserRule = config?.routing?.rules?.find(x => x.outboundTag == "baduser");
     if (active) {
+        // Re-new billing date
+        if (user.deActiveReason?.includes('Expired')) {
+            user.billingStartDate = String(new Date());
+        }
         delete user.deActiveDate;
         delete user.deActiveReason;
         if (badUserRule) {
@@ -368,6 +372,8 @@ function setUserActive(config, email, active, reason = undefined) {
                 badUserRule.user = [email];
         }
     }
+
+    return user;
 }
 
 function restartService() {

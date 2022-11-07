@@ -16,7 +16,7 @@ interface V2RayConfigInboundClient {
     maxConnections?: number
     deActiveReason?: string
     expiredDate?: string
-    reActiveDate?: string
+    billingStartDate?: string
     firstConnect?: string
     expireDays?: number
     createDate?: string

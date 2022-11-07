@@ -123,7 +123,7 @@ export default function UsersPage() {
                     <th className={classNames(headClass)}>#</th>
                     <th onClick={() => setSort(['email', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-100': sortColumn == 'email'})}>User</th>
                     <th onClick={() => setSort(['id', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-100': sortColumn == 'id'})}>ID</th>
-                    <th onClick={() => setSort(['createDate', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-100': sortColumn == 'createDate'})}>Create Date</th>
+                    <th onClick={() => setSort(['billingStartDate', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-100': sortColumn == 'billingStartDate'})}>Create Date<br/>Billing Start Date</th>
                     <th onClick={() => setSort(['maxConnections', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-100': sortColumn == 'maxConnections'})}>Max Connections</th>
                     <th onClick={() => setSort(['expireDays', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-100': sortColumn == 'expireDays'})}>Expire Days</th>
                     <th onClick={() => setSort(['deActiveDate', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-100': sortColumn == 'deActiveDate'})}>DeActive Date</th>
@@ -139,8 +139,8 @@ export default function UsersPage() {
                             <td colSpan={10} className="uppercase font-bold bg-slate-100 px-4 py-3">{i.protocol}</td>
                         </tr>
                         {[...(i.settings?.clients ?? [])].sort((a, b) => !sortColumn ? 0 : a[sortColumn] == b[sortColumn] ? 0 : a[sortColumn] < b[sortColumn] ? (sortAsc ? -1 : 1) : (sortAsc ? 1 : -1)).filter(u => showAll || u.email?.startsWith('user')).map((u, index) => {
-                            return <tr key={u.id} className="text-[0.78rem]">
-                                <td className="whitespace-nowrap border-b-2 py-1 px-3">{index + 1}</td>
+                            return <tr key={u.id} className={classNames("text-[0.78rem]",)}>
+                                <td className={classNames("whitespace-nowrap border-b-2 py-1 px-3 border-l-8", { 'border-l-red-700 text-red-900': !!u.deActiveDate })}>{index + 1}</td>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3">
                                     <Editable onEdit={value => setUsername(i.protocol, u, value)} value={u.email}>{u.email}</Editable>
                                 </td>
@@ -150,7 +150,10 @@ export default function UsersPage() {
                                         <span onClick={() => prompt(`Generate ID for ${u.email} ?`, `Generate`, () => reGenerateId(i.protocol, u))} className="cursor-pointer text-blue-700">{'ReGenerate ID'}</span>
                                     </div>
                                 </td>
-                                <td className="whitespace-nowrap border-b-2 py-1 px-3"><DateView date={u.createDate}/></td>
+                                <td className="whitespace-nowrap border-b-2 py-1 px-3">
+                                    <DateView date={u.createDate}/>
+                                    <DateView date={u.billingStartDate}/>
+                                </td>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3">
                                     <Editable onEdit={value => setMaxConnection(i.protocol, u, value)} value={u.maxConnections}>{u.maxConnections}</Editable>
                                 </td>

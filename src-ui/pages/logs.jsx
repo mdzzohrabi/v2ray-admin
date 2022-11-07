@@ -22,7 +22,7 @@ export default function LogPage() {
     let [logs, setLogs] = useState([]);
     let [isConnected, setConnected] = useState(false);
     let socket = useMemo(() => {
-        let socket = io('/logs');
+        let socket = io(context.server.url + '/logs');
         socket.on('connect', () => setConnected(true));
         socket.on('disconnect', () => setConnected(false));
         return socket;
