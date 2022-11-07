@@ -5,8 +5,8 @@ require('dotenv').config();
 
 const { randomUUID } = require('crypto');
 const { resolve, join } = require('path');
-const { writeFile, readFile, copyFile, appendFile, stat } = require('fs/promises');
-const { readFileSync, createReadStream, fstat } = require('fs');
+const { writeFile, readFile, copyFile, appendFile, stat, open, watch } = require('fs/promises');
+const { readFileSync, createReadStream } = require('fs');
 const { env, argv } = require('process');
 
 /**
@@ -214,6 +214,28 @@ async function *readLines(filePath, start = undefined) {
 }
 
 /**
+ * 
+ * @param {string} filePath 
+ * @param {AbortController} abortController 
+ */
+async function *watchFile(filePath, abortController) {
+    const watcher = watch(filePath, { encoding: 'utf8', signal: abortController.signal });
+    
+    for await (const event of watcher) {
+        if (event.eventType == 'change') {
+            let bufferSize = 1024 * 1024;
+            let buffer = Buffer.alloc(bufferSize);
+            let size = (await stat(filePath)).size;
+            let result = await (await open(filePath)).read(buffer, 0, bufferSize, size - bufferSize);
+            if (result.bytesRead > 0)
+            {
+                yield buffer.toString('utf-8').split('\n').pop();
+            }
+        }
+    }
+}
+
+/**
  * Invariant
  * @param {any} expr Expression
  * @param {string} message Error Message
@@ -265,7 +287,7 @@ async function addUser(configPath, email, protocol, tag = null) {
 
     let id = randomUUID();
 
-    let user = { id, email, level: 0, createDate: new Date() };
+    let user = { id, email, level: 0, createDate: String(new Date()) };
     let users = inbound.settings?.clients ?? [];
 
     if (!Array.isArray(users))
@@ -397,4 +419,4 @@ function restartService() {
     })
 }
 
-module.exports = { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile, addUser, getUserConfig, restartService, readLogLines, findUser, setUserActive, writeConfig, deleteUser, cache, log, readLines, parseLogLine };
+module.exports = { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile, addUser, getUserConfig, restartService, readLogLines, findUser, setUserActive, writeConfig, deleteUser, cache, log, readLines, parseLogLine, watchFile };

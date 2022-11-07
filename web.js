@@ -4,7 +4,7 @@ const express = require('express');
 const { env } = require('process');
 const { Server } = require('socket.io');
 const { createServer } = require('http');
-const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser, restartService, findUser, setUserActive, writeConfig, deleteUser, log, readLines } = require('./util');
+const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser, restartService, findUser, setUserActive, writeConfig, deleteUser, log, readLines, watchFile } = require('./util');
 
 let {showInfo} = createLogger();
 let app = express();
@@ -224,6 +224,7 @@ app.post('/user', async (req, res) => {
 let logWatch = socket.of('/logs');
 
 logWatch.on('connection', async client => {
+    let abort = new AbortController();
     let isDisconnected = false;
     client.on('disconnect', () => {
         isDisconnected = true;
@@ -231,12 +232,18 @@ logWatch.on('connection', async client => {
 
     console.log(`New connnection`);
     let {accessLogPath} = getPaths();
-    while (true) {
-        for await (let line of readLines(accessLogPath)) {
-            console.log(line);
-            if (isDisconnected) break;
+    let lines = watchFile(accessLogPath, abort);
+
+    client.on('disconnect', () => abort.abort());
+
+    console.log(`Watch log file`);
+    try {
+        for await (const line of lines) {
+            console.log(`New line `, line);
             client.emit('log', line);
         }
+    } catch (err) {
+        
     }
     console.log('Complete');
 });
