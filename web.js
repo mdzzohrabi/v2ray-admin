@@ -127,6 +127,24 @@ app.post('/expire_days', async (req, res) => {
     }
 });
 
+app.post('/set_info', async (req, res) => {
+    try {
+        let {email, protocol, prop, value} = req.body;
+        if (!email) return res.json({ error: 'Email not entered' });
+        let {configPath} = getPaths();
+        let config = readConfig(configPath);
+        let user = findUser(config, email);
+        if (!user) throw Error('User not found');
+        user[prop] = value;
+        await writeConfig(configPath, config);
+        res.json({ ok: true });
+    } catch (err) {
+        res.json({ error: err.message });
+        console.error(err);
+    }
+});
+
+
 app.post('/change_username', async (req, res) => {
     try {
         let {email, protocol, value} = req.body;
@@ -209,11 +227,13 @@ app.get('/inbounds', async (req, res) => {
 
 app.post('/user', async (req, res) => {
     try {
-        let {email, protocol} = req.body;
+        let {email, protocol, fullName, mobile, emailAddress} = req.body;
         if (!email) return res.json({ error: 'Email not entered' });
         if (!protocol) return res.json({ error: 'Protocol not entered' });
         let {configPath} = getPaths();
-        let result = await addUser(configPath, email, protocol);
+        let result = await addUser(configPath, email, protocol, null, {
+            fullName, mobile, emailAddress
+        });
         res.json({ ok: true, id: result.id });
         restartService().catch(console.error);
     } catch (err) {

@@ -20,6 +20,9 @@ interface V2RayConfigInboundClient {
     firstConnect?: string
     expireDays?: number
     createDate?: string
+    fullName?: string
+    mobile?: string
+    emailAddress?: string
 }
 
 interface V2RayConfigInboundSettings {

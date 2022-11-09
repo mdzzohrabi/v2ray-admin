@@ -1,8 +1,9 @@
+import classNames from "classnames";
 import { useState } from "react";
 import { useCallback } from "react"
 import toast from "react-hot-toast";
 
-export function Copy({ data, children, copiedText = 'Copied !' }) {
+export function Copy({ data, children, copiedText = 'Copied !', notifyText = 'Config copied to clipboard', className = '' }) {
     const [copied, setCopied] = useState(false);
     const [loading, setLoading] = useState(false);
     const copyData = useCallback(async () => {
@@ -20,8 +21,8 @@ export function Copy({ data, children, copiedText = 'Copied !' }) {
         }
         navigator.clipboard.writeText(data);
         setCopied(true);
-        toast.success("Config copied to clipboard")
+        toast.success(notifyText);
         setTimeout(() => setCopied(false), 2000);
     }, [data]);
-    return <span className="cursor-pointer text-blue-600" onClick={copyData}>{ loading ? 'Loading ...' : copied ? copiedText : children }</span>
+    return <span className={classNames("cursor-pointer text-blue-600", className)} onClick={copyData}>{ loading ? 'Loading ...' : copied ? copiedText : children }</span>
 }

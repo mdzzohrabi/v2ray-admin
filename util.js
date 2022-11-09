@@ -266,9 +266,10 @@ function findUser(config, email) {
  * @param {string} email Email
  * @param {string} protocol Protocol
  * @param {string?} tag Tag
+ * @param {Partial<V2RayConfigInboundClient>?} userInfos User information
  * @returns {Promise<V2RayConfigInboundClient>}
  */
-async function addUser(configPath, email, protocol, tag = null) {
+async function addUser(configPath, email, protocol, tag = null, userInfos = null) {
     invariant(!!email, `Email must not be empty`);
 
     showInfo(`Add user "${email}" for protocol "${protocol}"${tag ? ` with tagged [${tag}]` : ''}`);
@@ -287,7 +288,7 @@ async function addUser(configPath, email, protocol, tag = null) {
 
     let id = randomUUID();
 
-    let user = { id, email, level: 0, createDate: String(new Date()) };
+    let user = { id, email, level: 0, createDate: String(new Date()), ...(userInfos ?? {}) };
     let users = inbound.settings?.clients ?? [];
 
     if (!Array.isArray(users))
