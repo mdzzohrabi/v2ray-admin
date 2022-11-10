@@ -267,7 +267,6 @@ logWatch.on('connection', async client => {
 
     try {
         for await (const line of watcher) {
-            console.log(line);
             if (filter && line?.includes(filter))
                 client.emit('log', line);
         }
