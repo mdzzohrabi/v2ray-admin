@@ -1,3 +1,4 @@
+import classNames from "classnames";
 import React, { useEffect } from "react";
 import { useRef } from "react";
 import { useState } from "react"
@@ -17,7 +18,7 @@ function PopupMenuItem({ children, action }) {
  * @param {{
  *      visible?: boolean,
  *      text?: string,
- *      children?: React.ComponentElement<typeof PopupMenuItem>[]
+ *      children?: (React.ComponentElement<typeof PopupMenuItem> | null)[]
  * }} params0 Parameters
  */
 export function PopupMenu({ visible = false, text = 'Actions', children = [] }) {
@@ -29,11 +30,12 @@ export function PopupMenu({ visible = false, text = 'Actions', children = [] }) 
 
     useEffect(() => { if (typeof visible == 'boolean') setVisible(visible) }, [visible, setVisible]);
 
-    return <div className="relative">
-        <span onClick={() => setVisible(!isVisible)} className="cursor-pointer block text-blue-800 hover:underline py-2">{text}</span>
+    return <div className="relative inline-block">
+        <span onClick={() => setVisible(!isVisible)} className={classNames("cursor-pointer block text-blue-800 hover:underline py-1 px-2 rounded-lg", { 'bg-slate-200': isVisible })}>{text}</span>
         {isVisible ? 
         <div ref={refPopup} className="min-w-[10rem] absolute z-20 right-0 top-full bg-white shadow-lg ring-1 ring-black ring-opacity-10 px-2 py-2 rounded-lg">
             {children.map(action => {
+                if (!action) return null;
                 return <div className="py-1 px-2 border-b-[1px] border-b-gray-200 last:border-b-0 hover:bg-cyan-100 cursor-pointer" onClick={() => { action.props.action?.call(this, setVisible) }}>
                     {action.props.children}
                 </div>

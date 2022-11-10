@@ -3,11 +3,13 @@ import { useRouter } from 'next/router';
 import classNames from 'classnames';
 
 export function Container({ children }) {
+    const router = useRouter();
+    const isFull = router.query.all == '1';
     return <div className="flex flex-col h-screen">
         <ul className="px-2 py-3 flex">
-            <MenuLink href={"/logs"} text={"Logs"}/>
-            <MenuLink href={"/users"} text={"Users"}/>
-            <MenuLink href={"/server_config"} text={"Server Config"}/>
+            {isFull ? <MenuLink href={"/logs" + (isFull ? '?all=1' : '')} text={"Logs"}/> : null}
+            <MenuLink href={"/users" + (isFull ? '?all=1' : '')} text={"Users"}/>
+            <MenuLink href={"/server_config" + (isFull ? '?all=1' : '')} text={"Server Config"}/>
             <MenuLink href={"/logout"}>Logout</MenuLink>
         </ul>
         <div className="bg-white block shadow-md rounded-md mt-2 overflow-auto">

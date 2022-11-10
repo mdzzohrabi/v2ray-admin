@@ -25,7 +25,7 @@ export function DateView({ date, className = '', full = false }) {
     }
 
     return <Popup popup={isEN ? date.toLocaleString() : moment(date).locale('fa').format('YYYY/MM/DD hh:mm:ss a')}>
-        <span className={classNames('block text-gray-500 text-rtl', className)}>{moment(date).locale('fa').co)}</span>
+        <span className={classNames('block text-gray-500 text-rtl', className)}>{moment(date).locale('fa').fromNow()}</span>
     </Popup>;
 
 

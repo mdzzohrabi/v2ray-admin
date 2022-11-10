@@ -115,23 +115,25 @@ async function cronCommand() {
     if (print)
         console.table(result.filter(x => x.hasMultipleAccess));
 
+    let defaultExpireDays = expiredays;
 
     // Disable Expired Users
     if (disableexpired) {
         let usages = await readLogFile(accessLogPath);
         let users = configBeforeUpdate?.inbounds?.flatMap(x => x.settings?.clients) ?? [];
         for (let user of users) {
+            let expireDays = user?.expireDays ?? defaultExpireDays;
             let usage = usages[user?.email ?? ''];
             if (!usage?.firstConnect || !!user?.deActiveDate || !user?.email)
                 continue;
             user.firstConnect = String(usage.firstConnect) ?? user.firstConnect;
             let diffTime = Date.now() - new Date(user.billingStartDate ?? usage.firstConnect).getTime();
-            if (diffTime/(1000*60*60*24) > expiredays) {
+            if (diffTime/(1000*60*60*24) > expireDays) {
                 // User expired
                 hasChange = true;
                 user.expiredDate = String(new Date());
-                setUserActive(configBeforeUpdate, user?.email, false, `Expired after ${expiredays} days`);
-                showInfo(`De-active user "${user?.email}" due to expiration after ${expiredays} days`);
+                setUserActive(configBeforeUpdate, user?.email, false, `Expired after ${expireDays} days`);
+                showInfo(`De-active user "${user?.email}" due to expiration after ${expireDays} days`);
             }
         }
     }

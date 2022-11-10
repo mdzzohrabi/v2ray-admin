@@ -12,6 +12,7 @@ import { Container } from "../components/container";
 import { Copy } from "../components/copy";
 import { DateView } from "../components/date-view";
 import { Editable } from "../components/editable";
+import { Info, Infos } from "../components/info";
 import { Popup } from "../components/popup";
 import { PopupMenu } from "../components/popup-menu";
 import { serverRequest } from "../util";
@@ -24,6 +25,7 @@ export default function UsersPage() {
     let [[sortColumn, sortAsc], setSort] = useState(['', true]);
     let showAll = router.query.all == '1';
     let [fullTime, setFullTime] = useState(false);
+    let [filter, setFilter] = useState('');
 
     /**
      * @type {import("swr").SWRResponse<V2RayConfigInbound[]>}
@@ -130,9 +132,9 @@ export default function UsersPage() {
             <title>Users</title>
         </Head>
         <AddUser disabled={isLoading} onRefresh={refreshInbounds} setLoading={setLoading} protocols={inbounds?.map(i => i.protocol ?? '') ?? []}/>
-        <div className="flex flex-row px-3 py-3 border-t-[1px]">
+        <div className="flex flex-row px-3 py-3 border-t-[1px] overflow-auto">
             <div className="flex flex-row px-1 text-sm">
-                <label htmlFor="mobile" className={"py-1 pr-2 self-start font-semibold"}>Sort</label>
+                <label htmlFor="mobile" className={"self-center py-1 pr-2 font-semibold"}>Sort</label>
                 <select value={sortColumn} onChange={e => setSort([ e.currentTarget.value, sortAsc ])} id="sort" className="bg-slate-100 rounded-lg px-2 py-1">
                     <option value="-">-</option>
                     <option value="id">ID</option>
@@ -154,9 +156,13 @@ export default function UsersPage() {
                     <option value={"desc"}>DESC</option>
                 </select>
             </div>
-            <div className="flex flex-row px-1 text-sm">
-                <label htmlFor="fullTime" className={"py-1 pr-2 self-start font-semibold"}>Full Time</label>                
+            <div className="flex flex-row px-2 mx-2 text-sm border-r-[1px] border-l-[1px] border-gray-200">
+                <label htmlFor="fullTime" className={"py-1 pr-2 self-center font-semibold"}>Full Time</label>                
                 <input type={"checkbox"} id="fullTime" onChange={e => setFullTime(e.currentTarget.checked)} checked={fullTime}/>
+            </div>
+            <div className="flex flex-row px-1 text-sm">
+                <label htmlFor="filter" className={"py-1 pr-2 self-center font-semibold"}>Filter</label>                
+                <input type={"text"} id="filter" className="border-gray-500 border-solid border-b-0 bg-slate-100 rounded-md invalid:border-red-500 invalid:ring-red-600 px-2 py-1 focus:outline-blue-500" onChange={e => setFilter(e.currentTarget.value)} value={filter}/>
             </div>
         </div>
         <table className="w-full text-sm">
@@ -164,21 +170,21 @@ export default function UsersPage() {
                 <tr>
                     <th className={classNames(headClass)}>#</th>
                     <th onClick={() => setSort(['email', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-200': sortColumn == 'email'})}>User / FullName</th>
-                    {/* <th onClick={() => setSort(['id', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-100': sortColumn == 'id'})}>ID</th> */}
-                    <th onClick={() => setSort(['maxConnections', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-200': sortColumn == 'maxConnections'})}>Max Connections</th>
-                    <th onClick={() => setSort(['expireDays', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-200': sortColumn == 'expireDays'})}>Expire Days</th>
-                    <th onClick={() => setSort(['deActiveDate', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-200': sortColumn == 'deActiveDate'})}>DeActive Reason</th>
-                    <th onClick={() => setSort(['createDate', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-200': sortColumn == 'createDate'})}>Date</th>
-                    <th className={classNames(headClass)}>Client Config</th>
+                    <th className={classNames(headClass, 'cursor-pointer')}>Infos</th>
+                    <th onClick={() => setSort(['createDate', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-200': sortColumn == 'createDate'})}>Dates</th>
+                    <th className={classNames(headClass)}>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {!inbounds || isLoading ? <tr><td colSpan={10} className="px-3 py-4">Loading ...</td></tr> : inbounds.map(i => {
                     return <Fragment key={"inbound-" + i.protocol}>
                         <tr key={"inbound-" + i.protocol}>
-                            <td colSpan={10} className="uppercase font-bold bg-slate-100 px-4 py-3">{i.protocol}</td>
+                            <td colSpan={5} className="uppercase font-bold bg-slate-100 px-4 py-3">{i.protocol}</td>
                         </tr>
-                        {[...(i.settings?.clients ?? [])].sort((a, b) => !sortColumn ? 0 : a[sortColumn] == b[sortColumn] ? 0 : a[sortColumn] < b[sortColumn] ? (sortAsc ? -1 : 1) : (sortAsc ? 1 : -1)).filter(u => showAll || u.email?.startsWith('user')).map((u, index) => {
+                        {[...(i.settings?.clients ?? [])].sort((a, b) => !sortColumn ? 0 : a[sortColumn] == b[sortColumn] ? 0 : a[sortColumn] < b[sortColumn] ? (sortAsc ? -1 : 1) : (sortAsc ? 1 : -1))
+                        .filter(u => showAll || u.email?.startsWith('user'))
+                        .filter(u => !filter || (u.fullName?.includes(filter) || u.email?.includes(filter)))
+                        .map((u, index) => {
                             return <tr key={u.id} className={classNames("text-[0.78rem]",)}>
                                 <td className={classNames("whitespace-nowrap border-b-2 py-1 px-3 border-l-0", { 'border-l-red-700 text-red-900': !!u.deActiveDate })}>{index + 1}</td>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3">
@@ -189,53 +195,55 @@ export default function UsersPage() {
                                         <div>
                                             <Editable className={"font-semibold"} onEdit={value => setUsername(i.protocol, u, value)} value={u.email}>{u.email}</Editable>
                                             <Editable className="text-gray-600" onEdit={value => setInfo(i.protocol, u, 'fullName', value)} value={u.fullName}>{u.fullName ?? '-'}</Editable>
+                                            {u.deActiveDate ? 
+                                            <Info label={"De-active reason"} className="ml-2">
+                                                <Popup popup={u.deActiveReason?.length ?? 0 > 30 ? u.deActiveReason : null}>
+                                                    <Editable onEdit={value => setInfo(i.protocol, u, 'deActiveReason', value)} value={u.deActiveReason}>{(u.deActiveReason?.length ?? 0) > 30 ? u.deActiveReason?.substring(0,30) + '...' : (u.deActiveReason ?? '-')}</Editable>
+                                                </Popup>
+                                            </Info> : null }
                                         </div>
                                     </div>
                                 </td>
-                                {/* <td className="whitespace-nowrap border-b-2 py-1 px-3">
-                                    <span className="block">{u.id}</span>
-                                    <div className="block">
-                                        <span onClick={() => prompt(`Generate ID for ${u.email} ?`, `Generate`, () => reGenerateId(i.protocol, u))} className="cursor-pointer text-blue-700">{'ReGenerate ID'}</span>
-                                    </div>
-                                </td> */}
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3">
-                                    <Editable onEdit={value => setMaxConnection(i.protocol, u, value)} value={u.maxConnections}>{u.maxConnections}</Editable>
+                                    <Infos>
+                                        <Info label={"Mobile"}>
+                                            <Editable onEdit={value => setInfo(i.protocol, u, 'mobile', value)} value={u.mobile}>{u.mobile ?? 'N/A'}</Editable>
+                                        </Info>
+                                        <Info label={"Email"}>
+                                            <Editable onEdit={value => setInfo(i.protocol, u, 'emailAddress', value)} value={u.emailAddress}>{u.emailAddress ?? 'N/A'}</Editable>
+                                        </Info>
+                                        <Info label={'Max Connections'}>
+                                            <Editable onEdit={value => setMaxConnection(i.protocol, u, value)} value={u.maxConnections}>{u.maxConnections}</Editable>
+                                        </Info>
+                                        <Info label={'Expire Days'}>
+                                        <Editable onEdit={value => setExpireDays(i.protocol, u, value)} value={u.expireDays}>{u.expireDays}</Editable>
+                                        </Info>
+                                    </Infos>
                                 </td>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3">
-                                    <Editable onEdit={value => setExpireDays(i.protocol, u, value)} value={u.expireDays}>{u.expireDays}</Editable>
-                                </td>
-                                <td className="border-b-2 py-1 px-3">
-                                    <Popup popup={u.deActiveReason?.length ?? 0 > 30 ? u.deActiveReason : null}>
-                                        <Editable onEdit={value => setInfo(i.protocol, u, 'deActiveReason', value)} value={u.deActiveReason}>{(u.deActiveReason?.length ?? 0) > 30 ? u.deActiveReason?.substring(0,30) + '...' : (u.deActiveReason ?? '-')}</Editable>
-                                        {/* <span className="block text-gray-500">{u.deActiveReason?.length ?? 0 > 30 ? u.deActiveReason?.substring(0,30) + '...' : u.deActiveReason ?? '-'}</span> */}
-                                    </Popup>
-                                </td>
-                                <td className="whitespace-nowrap border-b-2 py-1 px-3">
-                                    <div className="flex flex-col">
-                                        <div className="flex flex-row">
-                                            <span className="flex-1 text-gray-400">Create</span>
-                                            <DateView full={fullTime} date={u.createDate}/>
-                                        </div>
-                                        <div className="flex flex-row">
-                                            <span className="flex-1 text-gray-400">Billing</span>
-                                            <DateView full={fullTime} date={u.billingStartDate}/>
-                                        </div>
-                                        <div className="flex flex-row">
-                                            <span className="flex-1 text-gray-400">DeActived</span>
-                                            <DateView full={fullTime} date={u.deActiveDate}/>
-                                        </div>
-                                        <div className="flex flex-row">
-                                            <span className="flex-1 text-gray-400">Expired</span>
-                                            <DateView full={fullTime} date={u.expiredDate}/>
-                                        </div>
-                                        <div className="flex flex-row">
-                                            <span className="flex-1 text-gray-400">First Connect</span>
-                                            <DateView full={fullTime} date={u.firstConnect}/>
-                                        </div>
-                                        <div className="flex flex-row">
-                                            <span className="flex-1 text-gray-400">Last Connect</span>
-                                            <DateView full={fullTime} date={u['lastConnect']}/>
-                                        </div>
+                                    <div className="flex flex-col xl:flex-row">
+                                        <Infos className="flex-1">
+                                            <Info label={'Create'}>
+                                                <DateView full={fullTime} date={u.createDate}/>
+                                            </Info>
+                                            <Info label={'Billing'}>
+                                                <DateView full={fullTime} date={u.billingStartDate}/>
+                                            </Info>
+                                            <Info label={'DeActived'}>
+                                                <DateView full={fullTime} date={u.deActiveDate}/>
+                                            </Info>
+                                        </Infos>
+                                        <Infos className="flex-1 xl:ml-2">
+                                            <Info label={'Expired'}>
+                                                <DateView full={fullTime} date={u.expiredDate}/>
+                                            </Info>
+                                            <Info label={'First Connect'}>
+                                                <DateView full={fullTime} date={u.firstConnect}/>
+                                            </Info>
+                                            <Info label={'Last Connect'}>
+                                                <DateView full={fullTime} date={u['lastConnect']}/>
+                                            </Info>
+                                        </Infos>
                                     </div>
                                 </td>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3">
@@ -254,6 +262,10 @@ export default function UsersPage() {
                                         <PopupMenu.Item action={() => prompt(`Generate ID for ${u.email} ?`, `Generate`, () => reGenerateId(i.protocol, u))}>
                                             ReGenerate ID
                                         </PopupMenu.Item>
+                                        {showAll?
+                                        <PopupMenu.Item action={() => router.push(`/logs?all=1&filter=`+u.email)}>
+                                            Logs
+                                        </PopupMenu.Item>: null}
                                     </PopupMenu>
                                     {/* <span onClick={() => showQRCode(i.protocol, u)} className="cursor-pointer text-blue-700">QR Code</span>
                                     {' | '}

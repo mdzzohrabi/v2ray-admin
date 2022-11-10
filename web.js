@@ -135,6 +135,7 @@ app.post('/set_info', async (req, res) => {
         let config = readConfig(configPath);
         let user = findUser(config, email);
         if (!user) throw Error('User not found');
+        log(`Change user "${email}" property "${prop}" from "${user[prop]}" to "${value}"`);
         user[prop] = value;
         await writeConfig(configPath, config);
         res.json({ ok: true });
@@ -245,27 +246,23 @@ let logWatch = socket.of('/logs');
 
 logWatch.on('connection', async client => {
     let abort = new AbortController();
-    let isDisconnected = false;
+    let {accessLogPath} = getPaths();
+
     client.on('disconnect', () => {
-        isDisconnected = true;
+        try {
+            if (!abort.signal.aborted)
+                abort?.abort();
+        } catch {}
     });
 
-    console.log(`New connnection`);
-    let {accessLogPath} = getPaths();
-    let lines = watchFile(accessLogPath, abort);
+    let watcher = watchFile(accessLogPath, abort);
 
-    client.on('disconnect', () => abort.abort());
-
-    console.log(`Watch log file`);
     try {
-        for await (const line of lines) {
-            console.log(`New line `, line);
+        for await (const line of watcher) {
             client.emit('log', line);
         }
     } catch (err) {
-        
     }
-    console.log('Complete');
 });
 
 server.listen(env.WEB_PORT ?? 8080, () =>  showInfo(`Server started on port ${env.WEB_PORT ?? 8080}`));

@@ -52,7 +52,7 @@ export function AddUser({ disabled = false, onRefresh, setLoading, protocols }) 
     let inputClass = "border-gray-500 border-solid border-b-0 bg-slate-100 rounded-md invalid:border-red-500 invalid:ring-red-600 px-2 py-1 focus:outline-blue-500";
     let labelClass = "py-1 self-start font-semibold";
 
-    return <div className="flex my-3 text-sm">
+    return <div className="flex my-3 text-sm overflow-auto">
         <h2 className="font-bold px-3 py-3 whitespace-nowrap">Add User</h2>
         <div className="self-center">
             <form onSubmit={addUser} className="flex flex-row">

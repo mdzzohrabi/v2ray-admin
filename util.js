@@ -220,16 +220,18 @@ async function *readLines(filePath, start = undefined) {
  */
 async function *watchFile(filePath, abortController) {
     const watcher = watch(filePath, { encoding: 'utf8', signal: abortController.signal });
-    
+    const bufferSize = 5 * 1024;
+    const buffer = Buffer.alloc(bufferSize);
     for await (const event of watcher) {
         if (event.eventType == 'change') {
-            let bufferSize = 1024 * 1024;
-            let buffer = Buffer.alloc(bufferSize);
             let size = (await stat(filePath)).size;
-            let result = await (await open(filePath)).read(buffer, 0, bufferSize, size - bufferSize);
+            let handle = await open(filePath);
+            let result = await handle.read(buffer, 0, Math.min(size, bufferSize), Math.max(size - bufferSize, 0));
+            handle.close();
             if (result.bytesRead > 0)
             {
-                yield buffer.toString('utf-8').split('\n').pop();
+                let line = buffer.subarray(0, result.bytesRead).toString('utf-8').split('\n').pop();
+                yield line;
             }
         }
     }
