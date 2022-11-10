@@ -97,7 +97,7 @@ export default function UsersPage() {
     const setInfo = useCallback(async (protocol, user, prop, value) => {
         let result = await serverRequest(context.server, '/set_info', {email: user.email, protocol, value, prop});
         if (result?.ok) {
-            toast.success(prop + ' changed');
+            toast.success(prop + ' changed for user "'+user.email+'"');
             refreshInbounds();
         } else {
             toast.error(result?.error ?? 'Cannot change user '+ prop);
@@ -119,10 +119,10 @@ export default function UsersPage() {
 
     const prompt = useCallback((message, okButton, onClick) => {
         toast.custom(t => {
-            return <div className={"ring-1 ring-black ring-opacity-10 whitespace-nowrap max-w-md w-full shadow-md bg-white flex rounded-lg pointer-events-auto px-3 py-2"}>
-                <span className="flex-1 self-center">{message}</span>
-                <button className="rounded-lg bg-blue-400 px-2 py-1 ml-1 text-white hover:bg-blue-900" onClick={() => { toast.remove(t.id); onClick()}}>{okButton}</button>
-                <button className="rounded-lg bg-slate-100 px-2 py-1 ml-1" onClick={() => toast.remove(t.id)}>Cancel</button>
+            return <div className={"ring-1 ring-black ring-opacity-20 whitespace-nowrap text-sm shadow-lg bg-white flex rounded-lg pointer-events-auto px-3 py-2"}>
+                <span className="flex-1 self-center mr-3">{message}</span>
+                <button className="rounded-lg duration-150 hover:shadow-md bg-blue-400 px-2 py-1 ml-1 text-white hover:bg-blue-900" onClick={() => { toast.remove(t.id); onClick()}}>{okButton}</button>
+                <button className="rounded-lg duration-150 hover:shadow-md bg-slate-100 px-2 py-1 ml-1" onClick={() => toast.remove(t.id)}>Cancel</button>
             </div>
         })
     }, []);
@@ -262,18 +262,14 @@ export default function UsersPage() {
                                         <PopupMenu.Item action={() => prompt(`Generate ID for ${u.email} ?`, `Generate`, () => reGenerateId(i.protocol, u))}>
                                             ReGenerate ID
                                         </PopupMenu.Item>
+                                        <PopupMenu.Item action={() => prompt(`Add 1 Months to Expire Days for user "${u.email}" ?`, `Add Expire Days`, () => setExpireDays(i.protocol, u, Number(u.expireDays ?? 30) + 30))}>
+                                            +1 Months
+                                        </PopupMenu.Item>
                                         {showAll?
                                         <PopupMenu.Item action={() => router.push(`/logs?all=1&filter=`+u.email)}>
                                             Logs
                                         </PopupMenu.Item>: null}
                                     </PopupMenu>
-                                    {/* <span onClick={() => showQRCode(i.protocol, u)} className="cursor-pointer text-blue-700">QR Code</span>
-                                    {' | '}
-                                    <Copy data={() => serverRequest(context.server, '/client_config?protocol=' + i.protocol, u).then(data => data.config)}>Copy Config</Copy>                                    
-                                    {' | '}
-                                    <span onClick={() => prompt(`Change user ${u.email} ${u.deActiveDate?'active':'de-active'} ?`, u.deActiveDate?'Active':'De-active', () => setActive(i.protocol, u, u.deActiveDate ? true : false))} className="cursor-pointer text-blue-700">{u.deActiveDate?'Active':'De-Active'}</span>
-                                    {' | '}
-                                    <span onClick={() => prompt(`Delete user ${u.email} ?`, `Delete`,() => removeUser(i.protocol, u))} className="cursor-pointer text-blue-700">{'Remove'}</span> */}
                                 </td>
                             </tr>
                         })}

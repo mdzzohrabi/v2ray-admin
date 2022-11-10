@@ -12,7 +12,7 @@ export function Container({ children }) {
             <MenuLink href={"/server_config" + (isFull ? '?all=1' : '')} text={"Server Config"}/>
             <MenuLink href={"/logout"}>Logout</MenuLink>
         </ul>
-        <div className="bg-white block shadow-md rounded-md mt-2 overflow-auto">
+        <div className="bg-white block shadow-md rounded-md mt-2">
             {children}
         </div>
     </div>

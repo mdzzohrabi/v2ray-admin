@@ -10,7 +10,7 @@ export function Editable({ value, children, onEdit, className = '' }) {
 
     const onSubmit = useCallback((e) => {
         e?.preventDefault();
-        onEdit?.call(this, [ valueState ]);
+        onEdit?.call(this, valueState);
         setEdit(false);
     }, [valueState]);
 

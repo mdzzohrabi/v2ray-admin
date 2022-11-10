@@ -27,6 +27,18 @@ export default function LogPage() {
         socket?.on('log', (log) => setLogs([...logs, log]));
     }, [logs, setLogs, socket, setConnected]);
 
+    useEffect(() => {
+        socket?.emit('filter', filter);
+    }, [socket, filter]);
+
+    useEffect(() => {
+        return () => {
+            if (socket) {
+                socket.close();
+            }
+        }
+    }, []);
+
     let headClass = 'px-1 py-2 border-b-2 border-b-blue-900';
 
     return <Container>
@@ -52,8 +64,8 @@ export default function LogPage() {
                 <tr>
                     <th colSpan={2} className={classNames('py-1', { 'bg-green-300': isConnected, 'bg-red-300': !isConnected })}>{isConnected ? 'Connected' : 'Disconnected'}</th>
                 </tr>
-                {logs.filter(x => !filter || x.includes(filter)).map(log => {
-                    return <tr>
+                {logs.filter(x => !filter || x.includes(filter)).map((log, index) => {
+                    return <tr key={index}>
                         <td>{log}</td>
                     </tr>;
                 })}
