@@ -100,3 +100,11 @@ interface V2RayConfigRoutingRule {
     outboundTag?: string
     balancerTag?: string
 }
+
+interface Transaction {
+    user?: string
+    remark?: string
+    amount?: number
+    createDate?: string
+    creator?: string
+}

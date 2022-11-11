@@ -26,17 +26,12 @@ export default function UsersPage() {
     let showAll = router.query.all == '1';
     let [fullTime, setFullTime] = useState(false);
     let [filter, setFilter] = useState('');
+    let [statusFilter, setStatusFilter] = useState('');
 
     /**
      * @type {import("swr").SWRResponse<V2RayConfigInbound[]>}
      */
     let {data: inbounds, mutate: refreshInbounds} = useSWR('/inbounds?key=' + btoa(context.server.url), serverRequest.bind(this, context.server));
-
-    // /**
-    //  * @type {import("swr").SWRResponse<{ [user: string]: { firstConnect?: Date, lastConnect?: Date }}>}
-    //  */
-    // let {data: usages} = useSWR('/usages', serverRequest.bind(this, context.server));
-
 
     const showQRCode = useCallback(async (protocol, user) => {
         let config = await serverRequest(context.server, '/client_config?protocol=' + protocol, user).then(data => data.config)
@@ -117,6 +112,33 @@ export default function UsersPage() {
 
     let headClass = 'px-1 py-2 border-b-2 border-b-blue-900 rounded-tl-lg rounded-tr-lg';
 
+    const statusFilters = useMemo(() => {
+        /** @type {{ [name: string]: (user: V2RayConfigInboundClient) => boolean }} */
+        let filters = {
+            'Active': u => !u.deActiveDate,
+            'De-Active': u => !!u.deActiveDate,
+            'Expired': u => !!u.expiredDate || (u.deActiveReason?.includes('Expired') ?? false),
+            'Without FullName': u => !u.fullName,
+            'With FullName': u => !!u.fullName,
+            'Without Mobile': u => !u.mobile,
+            'With Mobile': u => !!u.mobile,
+            'Not Connected (1 Hour)': u => !u['lastConnect'] || (Date.now() - new Date(u['lastConnect']).getTime() >= 1000 * 60 * 60),
+            'Not Connected (10 Hours)': u => !u['lastConnect'] || (Date.now() - new Date(u['lastConnect']).getTime() >= 1000 * 60 * 60 * 10),
+            'Not Connected (1 Day)': u => !u['lastConnect'] || (Date.now() - new Date(u['lastConnect']).getTime() >= 1000 * 60 * 60 * 24),
+            'Not Connected (1 Month)': u => !u['lastConnect'] || (Date.now() - new Date(u['lastConnect']).getTime() >= 1000 * 60 * 60 * 24 * 30),
+            'Connected (1 Hour)': u => !!u['lastConnect'] && (Date.now() - new Date(u['lastConnect']).getTime() <= 1000 * 60 * 60),
+            'Connected (10 Hours)': u => !!u['lastConnect'] && (Date.now() - new Date(u['lastConnect']).getTime() <= 1000 * 60 * 60 * 10),
+            'Connected (1 Day)': u => !!u['lastConnect'] && (Date.now() - new Date(u['lastConnect']).getTime() <= 1000 * 60 * 60 * 24),
+            'Connected (1 Month)': u => !!u['lastConnect'] && (Date.now() - new Date(u['lastConnect']).getTime() <= 1000 * 60 * 60 * 24 * 30),
+            'Recently Created (1 Hour)': u => !!u.createDate && (Date.now() - new Date(u.createDate).getTime() <= 1000 * 60 * 60),
+            'Recently Created (10 Hours)': u => !!u.createDate && (Date.now() - new Date(u.createDate).getTime() <= 1000 * 60 * 60 * 10),
+            'Recently Created (1 Day)': u => !!u.createDate && (Date.now() - new Date(u.createDate).getTime() <= 1000 * 60 * 60 * 24),
+            'Recently Created (1 Month)': u => !!u.createDate && (Date.now() - new Date(u.createDate).getTime() <= 1000 * 60 * 60 * 24 * 30),
+        };
+
+        return filters;
+    }, []);
+
     const prompt = useCallback((message, okButton, onClick) => {
         toast.custom(t => {
             return <div className={"ring-1 ring-black ring-opacity-20 whitespace-nowrap text-sm shadow-lg bg-white flex rounded-lg pointer-events-auto px-3 py-2"}>
@@ -134,7 +156,7 @@ export default function UsersPage() {
         <AddUser disabled={isLoading} onRefresh={refreshInbounds} setLoading={setLoading} protocols={inbounds?.map(i => i.protocol ?? '') ?? []}/>
         <div className="flex flex-row px-3 py-3 border-t-[1px] overflow-auto">
             <div className="flex flex-row px-1 text-sm">
-                <label htmlFor="mobile" className={"self-center py-1 pr-2 font-semibold"}>Sort</label>
+                <label htmlFor="sort" className={"self-center py-1 pr-2 font-semibold"}>Sort</label>
                 <select value={sortColumn} onChange={e => setSort([ e.currentTarget.value, sortAsc ])} id="sort" className="bg-slate-100 rounded-lg px-2 py-1">
                     <option value="-">-</option>
                     <option value="id">ID</option>
@@ -164,10 +186,18 @@ export default function UsersPage() {
                 <label htmlFor="filter" className={"py-1 pr-2 self-center font-semibold"}>Filter</label>                
                 <input type={"text"} id="filter" className="border-gray-500 border-solid border-b-0 bg-slate-100 rounded-md invalid:border-red-500 invalid:ring-red-600 px-2 py-1 focus:outline-blue-500" onChange={e => setFilter(e.currentTarget.value)} value={filter}/>
             </div>
+            <div className="flex flex-row px-1 text-sm">
+                <label htmlFor="statusFilter" className={"self-center py-1 pr-2 pl-2 font-semibold"}>Status</label>
+                <select value={statusFilter} onChange={e => setStatusFilter(e.currentTarget.value)} id="statusFilter" className="bg-slate-100 rounded-lg px-2 py-1">
+                    <option value="-">-</option>
+                    {Object.keys(statusFilters).map(x => <option value={x}>{x}</option>)}
+                </select>
+            </div>
         </div>
+        <div className="">
         <table className="w-full text-sm">
-            <thead className="sticky top-0 bg-white shadow-md z-50">
-                <tr>
+            <thead className="sticky top-0 xl:top-12 bg-white shadow-md z-40">
+                <tr className="bg-white">
                     <th className={classNames(headClass)}>#</th>
                     <th onClick={() => setSort(['email', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-200': sortColumn == 'email'})}>User / FullName</th>
                     <th className={classNames(headClass, 'cursor-pointer')}>Infos</th>
@@ -184,6 +214,7 @@ export default function UsersPage() {
                         {[...(i.settings?.clients ?? [])].sort((a, b) => !sortColumn ? 0 : a[sortColumn] == b[sortColumn] ? 0 : a[sortColumn] < b[sortColumn] ? (sortAsc ? -1 : 1) : (sortAsc ? 1 : -1))
                         .filter(u => showAll || u.email?.startsWith('user'))
                         .filter(u => !filter || (u.fullName?.includes(filter) || u.email?.includes(filter)))
+                        .filter(u => statusFilters[statusFilter] ? statusFilters[statusFilter](u) : true)
                         .map((u, index) => {
                             return <tr key={u.id} className={classNames("text-[0.78rem]",)}>
                                 <td className={classNames("whitespace-nowrap border-b-2 py-1 px-3 border-l-0", { 'border-l-red-700 text-red-900': !!u.deActiveDate })}>{index + 1}</td>
@@ -277,6 +308,7 @@ export default function UsersPage() {
                 })}
             </tbody>
         </table>
+        </div>
     </Container>
     
 }

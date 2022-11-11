@@ -5,14 +5,14 @@ import classNames from 'classnames';
 export function Container({ children }) {
     const router = useRouter();
     const isFull = router.query.all == '1';
-    return <div className="flex flex-col h-screen">
-        <ul className="px-2 py-3 flex">
+    return <div className="flex flex-col h-screen overflow-x-auto w-full">
+        <ul className="px-2 py-3 flex xl:sticky top-0 z-50 bg-slate-100">
             {isFull ? <MenuLink href={"/logs" + (isFull ? '?all=1' : '')} text={"Logs"}/> : null}
             <MenuLink href={"/users" + (isFull ? '?all=1' : '')} text={"Users"}/>
             <MenuLink href={"/server_config" + (isFull ? '?all=1' : '')} text={"Server Config"}/>
             <MenuLink href={"/logout"}>Logout</MenuLink>
         </ul>
-        <div className="bg-white block shadow-md rounded-md mt-2">
+        <div className="bg-white block shadow-md mt-2 min-w-fit">
             {children}
         </div>
     </div>
