@@ -117,7 +117,7 @@ export default function UsersPage() {
         let filters = {
             'Active': u => !u.deActiveDate,
             'De-Active': u => !!u.deActiveDate,
-            'Expired': u => !!u.expiredDate || (u.deActiveReason?.includes('Expired') ?? false),
+            'Expired': u => (u.deActiveReason?.includes('Expired') ?? false),
             'Without FullName': u => !u.fullName,
             'With FullName': u => !!u.fullName,
             'Without Mobile': u => !u.mobile,
@@ -134,6 +134,10 @@ export default function UsersPage() {
             'Recently Created (10 Hours)': u => !!u.createDate && (Date.now() - new Date(u.createDate).getTime() <= 1000 * 60 * 60 * 10),
             'Recently Created (1 Day)': u => !!u.createDate && (Date.now() - new Date(u.createDate).getTime() <= 1000 * 60 * 60 * 24),
             'Recently Created (1 Month)': u => !!u.createDate && (Date.now() - new Date(u.createDate).getTime() <= 1000 * 60 * 60 * 24 * 30),
+            'Expiring (6 Hours)': u => !!u.billingStartDate &&  ((new Date(u.billingStartDate).getTime() + ((u.expireDays ?? 30) * 24 * 60 * 60 * 1000)) - Date.now() <= 1000 * 60 * 60 * 6),
+            'Expiring (24 Hours)': u => !!u.billingStartDate && ((new Date(u.billingStartDate).getTime() + ((u.expireDays ?? 30) * 24 * 60 * 60 * 1000)) - Date.now() <= 1000 * 60 * 60 * 24),
+            'Expiring (3 Days)': u => !!u.billingStartDate &&   ((new Date(u.billingStartDate).getTime() + ((u.expireDays ?? 30) * 24 * 60 * 60 * 1000)) - Date.now() <= 1000 * 60 * 60 * 24 * 3),
+            'Expiring (1 Week)': u => !!u.billingStartDate &&   ((new Date(u.billingStartDate).getTime() + ((u.expireDays ?? 30) * 24 * 60 * 60 * 1000)) - Date.now() <= 1000 * 60 * 60 * 24 * 7),
         };
 
         return filters;

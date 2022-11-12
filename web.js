@@ -5,6 +5,7 @@ const { env } = require('process');
 const { Server } = require('socket.io');
 const { createServer } = require('http');
 const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser, restartService, findUser, setUserActive, writeConfig, deleteUser, log, readLines, watchFile } = require('./util');
+const { getTransactions } = require('./db');
 
 let {showInfo} = createLogger();
 let app = express();
@@ -238,6 +239,15 @@ app.post('/user', async (req, res) => {
         res.json({ ok: true, id: result.id });
         restartService().catch(console.error);
     } catch (err) {
+        res.json({ error: err.message });
+    }
+});
+
+app.get('/transactions', async (req, res) => {
+    try {
+        return await getTransactions();
+    }
+    catch (err) {
         res.json({ error: err.message });
     }
 });

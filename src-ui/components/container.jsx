@@ -8,6 +8,7 @@ export function Container({ children }) {
     return <div className="flex flex-col h-screen overflow-x-auto w-full">
         <ul className="px-2 py-3 flex xl:sticky top-0 z-50 bg-slate-100">
             {isFull ? <MenuLink href={"/logs" + (isFull ? '?all=1' : '')} text={"Logs"}/> : null}
+            <MenuLink href={"/transactions" + (isFull ? '?all=1' : '')} text={"Transactions"}/>
             <MenuLink href={"/users" + (isFull ? '?all=1' : '')} text={"Users"}/>
             <MenuLink href={"/server_config" + (isFull ? '?all=1' : '')} text={"Server Config"}/>
             <MenuLink href={"/logout"}>Logout</MenuLink>

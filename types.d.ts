@@ -102,9 +102,17 @@ interface V2RayConfigRoutingRule {
 }
 
 interface Transaction {
+    id?: number
     user?: string
     remark?: string
     amount?: number
     createDate?: string
     creator?: string
+}
+
+interface V2RayDb {
+    idCounter?: {
+        transactions?: number
+    },
+    transactions?: Transaction[];
 }

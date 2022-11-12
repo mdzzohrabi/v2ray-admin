@@ -6,8 +6,26 @@ require('dotenv').config();
 const { randomUUID } = require('crypto');
 const { resolve, join } = require('path');
 const { writeFile, readFile, copyFile, appendFile, stat, open, watch } = require('fs/promises');
-const { readFileSync, createReadStream } = require('fs');
+const { readFileSync, createReadStream, write } = require('fs');
 const { env, argv } = require('process');
+
+/**
+ * Check file exists async
+ * @param {string} filePath File path
+ * @returns {Promise<boolean>}
+ */
+async function existsAsync(filePath) {
+    try {
+        return (await stat(filePath)).isFile();
+    }
+    catch {
+        return false;
+    }
+}
+
+function cacheDir() {
+    return env.CACHE_DIR ?? 'var';
+}
 
 /**
  * Cache read/write
@@ -16,7 +34,7 @@ const { env, argv } = require('process');
  */
 async function cache(key, value = undefined) {
     try {
-        let cachePath = resolve(join(env.CACHE_DIR ?? 'var', key));
+        let cachePath = resolve(join(cacheDir(), key));
         if (typeof value !== 'undefined') {
             await writeFile(cachePath, JSON.stringify(value));
         } else {
@@ -378,6 +396,7 @@ function setUserActive(config, email, active, reason = undefined) {
         // Re-new billing date
         if (user.deActiveReason?.includes('Expired')) {
             user.billingStartDate = String(new Date());
+            log(`Re-active "${email}" from expired`);
         }
         delete user.deActiveDate;
         delete user.deActiveReason;
@@ -422,4 +441,4 @@ function restartService() {
     })
 }
 
-module.exports = { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile, addUser, getUserConfig, restartService, readLogLines, findUser, setUserActive, writeConfig, deleteUser, cache, log, readLines, parseLogLine, watchFile };
+module.exports = { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile, addUser, getUserConfig, restartService, readLogLines, findUser, setUserActive, writeConfig, deleteUser, cache, log, readLines, parseLogLine, watchFile, existsAsync, cacheDir };

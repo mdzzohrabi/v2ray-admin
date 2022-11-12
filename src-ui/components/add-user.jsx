@@ -31,12 +31,15 @@ export function AddUser({ disabled = false, onRefresh, setLoading, protocols }) 
         try {
             setLoading?.call(this, true);
             let result = await serverRequest(context.server, '/user', {
-                email: username?.toLowerCase(), protocol
+                email: username?.toLowerCase(), protocol, fullName, mobile, emailAddress
             });
             if (result.error) {
                 toast.error(result.error);
             } else {
                 setUsername('');
+                setFullName('');
+                setEmailAddress('');
+                setMobile('');
                 onRefresh?.call(this);
                 toast.success("User added successful");
             }
@@ -59,7 +62,7 @@ export function AddUser({ disabled = false, onRefresh, setLoading, protocols }) 
 
             <div className="flex flex-col px-1">
                 <label htmlFor="userName" className={labelClass}>Username</label>
-                <input placeholder="user" pattern={showAll ? '' : '^user[a-z0-9_-]+'} value={username} onChange={(e) => setUsername(e.currentTarget.value)} disabled={disabled} className={inputClass} type="text" id="userName"/>
+                <input placeholder="user" pattern={showAll ? undefined : '^user[a-z0-9_-]+'} value={username} onChange={(e) => setUsername(e.currentTarget.value)} disabled={disabled} className={inputClass} type="text" id="userName"/>
             </div>
 
             <div className="flex flex-col px-1">
