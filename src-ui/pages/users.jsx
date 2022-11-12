@@ -25,6 +25,7 @@ export default function UsersPage() {
     let [[sortColumn, sortAsc], setSort] = useState(['', true]);
     let showAll = router.query.all == '1';
     let [fullTime, setFullTime] = useState(false);
+    let [showId, setShowId] = useState(false);
     let [filter, setFilter] = useState('');
     let [statusFilter, setStatusFilter] = useState('');
 
@@ -134,10 +135,11 @@ export default function UsersPage() {
             'Recently Created (10 Hours)': u => !!u.createDate && (Date.now() - new Date(u.createDate).getTime() <= 1000 * 60 * 60 * 10),
             'Recently Created (1 Day)': u => !!u.createDate && (Date.now() - new Date(u.createDate).getTime() <= 1000 * 60 * 60 * 24),
             'Recently Created (1 Month)': u => !!u.createDate && (Date.now() - new Date(u.createDate).getTime() <= 1000 * 60 * 60 * 24 * 30),
-            'Expiring (6 Hours)': u => !!u.billingStartDate &&  ((new Date(u.billingStartDate).getTime() + ((u.expireDays ?? 30) * 24 * 60 * 60 * 1000)) - Date.now() <= 1000 * 60 * 60 * 6),
-            'Expiring (24 Hours)': u => !!u.billingStartDate && ((new Date(u.billingStartDate).getTime() + ((u.expireDays ?? 30) * 24 * 60 * 60 * 1000)) - Date.now() <= 1000 * 60 * 60 * 24),
-            'Expiring (3 Days)': u => !!u.billingStartDate &&   ((new Date(u.billingStartDate).getTime() + ((u.expireDays ?? 30) * 24 * 60 * 60 * 1000)) - Date.now() <= 1000 * 60 * 60 * 24 * 3),
-            'Expiring (1 Week)': u => !!u.billingStartDate &&   ((new Date(u.billingStartDate).getTime() + ((u.expireDays ?? 30) * 24 * 60 * 60 * 1000)) - Date.now() <= 1000 * 60 * 60 * 24 * 7),
+            'Expiring (6 Hours)': u => !u.deActiveDate && !!u.billingStartDate &&  ((new Date(u.billingStartDate).getTime() + ((u.expireDays ?? 30) * 24 * 60 * 60 * 1000)) - Date.now() <= 1000 * 60 * 60 * 6),
+            'Expiring (24 Hours)': u => !u.deActiveDate && !!u.billingStartDate && ((new Date(u.billingStartDate).getTime() + ((u.expireDays ?? 30) * 24 * 60 * 60 * 1000)) - Date.now() <= 1000 * 60 * 60 * 24),
+            'Expiring (3 Days)': u => !u.deActiveDate && !!u.billingStartDate &&   ((new Date(u.billingStartDate).getTime() + ((u.expireDays ?? 30) * 24 * 60 * 60 * 1000)) - Date.now() <= 1000 * 60 * 60 * 24 * 3),
+            'Expiring (1 Week)': u => !u.deActiveDate && !!u.billingStartDate &&   ((new Date(u.billingStartDate).getTime() + ((u.expireDays ?? 30) * 24 * 60 * 60 * 1000)) - Date.now() <= 1000 * 60 * 60 * 24 * 7),
+            'Re-activated from Expire (1 Week)': u => !!u.billingStartDate && u.billingStartDate != u.firstConnect && (Date.now() - new Date(u.billingStartDate).getTime() <= 1000 * 60 * 60 * 24 * 7)
         };
 
         return filters;
@@ -186,6 +188,10 @@ export default function UsersPage() {
                 <label htmlFor="fullTime" className={"py-1 pr-2 self-center font-semibold"}>Full Time</label>                
                 <input type={"checkbox"} id="fullTime" onChange={e => setFullTime(e.currentTarget.checked)} checked={fullTime}/>
             </div>
+            <div className="flex flex-row pr-2 text-sm border-r-[1px] border-gray-200">
+                <label htmlFor="showId" className={"py-1 pr-2 self-center font-semibold"}>Show ID</label>                
+                <input type={"checkbox"} id="showId" onChange={e => setShowId(e.currentTarget.checked)} checked={showId}/>
+            </div>
             <div className="flex flex-row px-1 text-sm">
                 <label htmlFor="filter" className={"py-1 pr-2 self-center font-semibold"}>Filter</label>                
                 <input type={"text"} id="filter" className="border-gray-500 border-solid border-b-0 bg-slate-100 rounded-md invalid:border-red-500 invalid:ring-red-600 px-2 py-1 focus:outline-blue-500" onChange={e => setFilter(e.currentTarget.value)} value={filter}/>
@@ -215,10 +221,11 @@ export default function UsersPage() {
                         <tr key={"inbound-" + i.protocol}>
                             <td colSpan={5} className="uppercase font-bold bg-slate-100 px-4 py-3">{i.protocol}</td>
                         </tr>
-                        {[...(i.settings?.clients ?? [])].sort((a, b) => !sortColumn ? 0 : a[sortColumn] == b[sortColumn] ? 0 : a[sortColumn] < b[sortColumn] ? (sortAsc ? -1 : 1) : (sortAsc ? 1 : -1))
+                        {[...(i.settings?.clients ?? [])]
                         .filter(u => showAll || u.email?.startsWith('user'))
                         .filter(u => !filter || (u.fullName?.includes(filter) || u.email?.includes(filter)))
                         .filter(u => statusFilters[statusFilter] ? statusFilters[statusFilter](u) : true)
+                        .sort((a, b) => !sortColumn ? 0 : a[sortColumn] == b[sortColumn] ? 0 : a[sortColumn] < b[sortColumn] ? (sortAsc ? -1 : 1) : (sortAsc ? 1 : -1))
                         .map((u, index) => {
                             return <tr key={u.id} className={classNames("text-[0.78rem]",)}>
                                 <td className={classNames("whitespace-nowrap border-b-2 py-1 px-3 border-l-0", { 'border-l-red-700 text-red-900': !!u.deActiveDate })}>{index + 1}</td>
@@ -230,6 +237,7 @@ export default function UsersPage() {
                                         <div>
                                             <Editable className={"font-semibold"} onEdit={value => setUsername(i.protocol, u, value)} value={u.email}>{u.email}</Editable>
                                             <Editable className="text-gray-600" onEdit={value => setInfo(i.protocol, u, 'fullName', value)} value={u.fullName}>{u.fullName ?? '-'}</Editable>
+                                            {showId?<Info className="ml-3" label={"ID"}>{u.id}</Info>:null}
                                             {u.deActiveDate ? 
                                             <Info label={"De-active reason"} className="ml-2">
                                                 <Popup popup={u.deActiveReason?.length ?? 0 > 30 ? u.deActiveReason : null}>
