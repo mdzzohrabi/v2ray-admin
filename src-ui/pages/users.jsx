@@ -131,6 +131,10 @@ export default function UsersPage() {
             'Active': u => !u.deActiveDate,
             'De-Active': u => !!u.deActiveDate,
             'Expired': u => (u.deActiveReason?.includes('Expired') ?? false),
+            'Private': u => !!u.private,
+            'Non-Private': u => !u.private,
+            'Free': u => !!u.free,
+            'Non-Free': u => !u.free,
             'Without FullName': u => !u.fullName,
             'With FullName': u => !!u.fullName,
             'Without Mobile': u => !u.mobile,
@@ -232,15 +236,18 @@ export default function UsersPage() {
             </thead>
             <tbody>
                 {!inbounds || isLoading ? <tr><td colSpan={10} className="px-3 py-4">Loading ...</td></tr> : inbounds.map(i => {
+
+                    let users = [...(i.settings?.clients ?? [])]
+                    .filter(u => showAll || !u.private)
+                    .filter(u => !filter || (u.fullName?.includes(filter) || u.email?.includes(filter)))
+                    .filter(u => statusFilters[statusFilter] ? statusFilters[statusFilter](u) : true)
+                    .sort((a, b) => !sortColumn ? 0 : a[sortColumn] == b[sortColumn] ? 0 : a[sortColumn] < b[sortColumn] ? (sortAsc ? -1 : 1) : (sortAsc ? 1 : -1));
+
                     return <Fragment key={"inbound-" + i.protocol}>
                         <tr key={"inbound-" + i.protocol}>
-                            <td colSpan={5} className="uppercase font-bold bg-slate-100 px-4 py-3">{i.protocol}</td>
+                            <td colSpan={5} className="uppercase font-bold bg-slate-100 px-4 py-3">{i.protocol} ({users.length} users)</td>
                         </tr>
-                        {[...(i.settings?.clients ?? [])]
-                        .filter(u => showAll || !u.private)
-                        .filter(u => !filter || (u.fullName?.includes(filter) || u.email?.includes(filter)))
-                        .filter(u => statusFilters[statusFilter] ? statusFilters[statusFilter](u) : true)
-                        .sort((a, b) => !sortColumn ? 0 : a[sortColumn] == b[sortColumn] ? 0 : a[sortColumn] < b[sortColumn] ? (sortAsc ? -1 : 1) : (sortAsc ? 1 : -1))
+                        {users
                         .map((u, index) => {
                             return <tr key={u.id} className={classNames("text-[0.78rem]",)}>
                                 <td className={classNames("whitespace-nowrap border-b-2 py-1 px-3 border-l-0", { 'border-l-red-700 text-red-900': !!u.deActiveDate })}>{index + 1}</td>
