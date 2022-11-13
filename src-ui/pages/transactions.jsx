@@ -216,7 +216,7 @@ export default function TransactionsPage() {
                         </td>
                         <td className={classNames(styles.td, 'text-center')}>
                             <Editable onEdit={value => editTransaction(t, 'amount', value)} value={t.amount} editable={showAll}>
-                                <span className={classNames("rounded-lg inline-block px-2 text-rtl", { 'bg-green-50 text-green-700': (t.amount ?? 0) >= 0, 'bg-red-50 text-red-700': (t.amount ?? 0) < 0 })}>
+                                <span className={classNames("rounded-lg inline-block px-2 text-rtl", { 'bg-red-50 text-red-700': (t.amount ?? 0) >= 0, 'bg-green-50 text-green-700': (t.amount ?? 0) < 0 })}>
                                     <Price value={t.amount}/>
                                 </span>
                             </Editable>
