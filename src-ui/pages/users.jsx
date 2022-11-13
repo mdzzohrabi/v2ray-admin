@@ -239,7 +239,7 @@ export default function UsersPage() {
 
                     let users = [...(i.settings?.clients ?? [])]
                     .filter(u => showAll || !u.private)
-                    .filter(u => !filter || (u.fullName?.includes(filter) || u.email?.includes(filter)))
+                    .filter(u => !filter || (u.id == filter || u.fullName?.includes(filter) || u.email?.includes(filter)))
                     .filter(u => statusFilters[statusFilter] ? statusFilters[statusFilter](u) : true)
                     .sort((a, b) => !sortColumn ? 0 : a[sortColumn] == b[sortColumn] ? 0 : a[sortColumn] < b[sortColumn] ? (sortAsc ? -1 : 1) : (sortAsc ? 1 : -1));
 
