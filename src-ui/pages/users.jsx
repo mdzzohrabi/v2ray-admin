@@ -12,6 +12,7 @@ import { Container } from "../components/container";
 import { Copy } from "../components/copy";
 import { DateView } from "../components/date-view";
 import { Editable } from "../components/editable";
+import { Field } from "../components/fields";
 import { Info, Infos } from "../components/info";
 import { Popup } from "../components/popup";
 import { PopupMenu } from "../components/popup-menu";
@@ -25,6 +26,7 @@ export default function UsersPage() {
     let [[sortColumn, sortAsc], setSort] = useState(['', true]);
     let showAll = router.query.all == '1';
     let [fullTime, setFullTime] = useState(false);
+    let [precision, setPrecision] = useState(true);
     let [showId, setShowId] = useState(false);
     let [filter, setFilter] = useState('');
     let [statusFilter, setStatusFilter] = useState('');
@@ -77,6 +79,16 @@ export default function UsersPage() {
             refreshInbounds();
         } else {
             toast.error(result?.error ?? 'Cannot change user settings');
+        }
+    }, [router]);
+
+    const addDays = useCallback(async (user, days) => {
+        let result = await serverRequest(context.server, '/add_days', {email: user.email, days});
+        if (result?.ok) {
+            toast.success(`${days} days added to user ${user.email}`);
+            refreshInbounds();
+        } else {
+            toast.error(result?.error ?? 'Cannot change user expire days');
         }
     }, [router]);
 
@@ -192,6 +204,9 @@ export default function UsersPage() {
                 <label htmlFor="showId" className={"py-1 pr-2 self-center font-semibold"}>Show ID</label>                
                 <input type={"checkbox"} id="showId" onChange={e => setShowId(e.currentTarget.checked)} checked={showId}/>
             </div>
+            <Field label="Precision Date" className="text-sm border-r-[1px] border-r-gray-200 pr-2 mr-2 pl-2" horizontal htmlFor="precisionDate" data={precision} dataSetter={setPrecision}>
+                <input type="checkbox" id="precisionDate"/>
+            </Field>
             <div className="flex flex-row px-1 text-sm">
                 <label htmlFor="filter" className={"py-1 pr-2 self-center font-semibold"}>Filter</label>                
                 <input type={"text"} id="filter" className="border-gray-500 border-solid border-b-0 bg-slate-100 rounded-md invalid:border-red-500 invalid:ring-red-600 px-2 py-1 focus:outline-blue-500" onChange={e => setFilter(e.currentTarget.value)} value={filter}/>
@@ -200,7 +215,7 @@ export default function UsersPage() {
                 <label htmlFor="statusFilter" className={"self-center py-1 pr-2 pl-2 font-semibold"}>Status</label>
                 <select value={statusFilter} onChange={e => setStatusFilter(e.currentTarget.value)} id="statusFilter" className="bg-slate-100 rounded-lg px-2 py-1">
                     <option value="-">-</option>
-                    {Object.keys(statusFilters).map(x => <option value={x}>{x}</option>)}
+                    {Object.keys(statusFilters).map((x, index) => <option key={index} value={x}>{x}</option>)}
                 </select>
             </div>
         </div>
@@ -222,7 +237,7 @@ export default function UsersPage() {
                             <td colSpan={5} className="uppercase font-bold bg-slate-100 px-4 py-3">{i.protocol}</td>
                         </tr>
                         {[...(i.settings?.clients ?? [])]
-                        .filter(u => showAll || u.email?.startsWith('user'))
+                        .filter(u => showAll || !u.private)
                         .filter(u => !filter || (u.fullName?.includes(filter) || u.email?.includes(filter)))
                         .filter(u => statusFilters[statusFilter] ? statusFilters[statusFilter](u) : true)
                         .sort((a, b) => !sortColumn ? 0 : a[sortColumn] == b[sortColumn] ? 0 : a[sortColumn] < b[sortColumn] ? (sortAsc ? -1 : 1) : (sortAsc ? 1 : -1))
@@ -234,9 +249,13 @@ export default function UsersPage() {
                                         <div className="items-center flex">
                                             <span className={classNames("rounded-full aspect-square inline-block w-3", { 'bg-red-600': !!u.deActiveDate, 'bg-green-600': !u.deActiveDate })}></span>
                                         </div>
-                                        <div>
-                                            <Editable className={"font-semibold"} onEdit={value => setUsername(i.protocol, u, value)} value={u.email}>{u.email}</Editable>
-                                            <Editable className="text-gray-600" onEdit={value => setInfo(i.protocol, u, 'fullName', value)} value={u.fullName}>{u.fullName ?? '-'}</Editable>
+                                        <div className="flex-1">
+                                            <div className="flex flex-row">
+                                                <Editable className={"font-semibold inline-block"} onEdit={value => setUsername(i.protocol, u, value)} value={u.email}>{u.email}</Editable>
+                                                {u.private?<span className="ml-2 text-xs px-2 py-0 rounded-lg bg-gray-100 text-gray-500 cursor-default">Private</span>:null}
+                                                {u.free?<span className="ml-2 text-xs px-2 py-0 rounded-lg bg-green-100 text-green-500 cursor-default">Free</span>:null}
+                                            </div>
+                                            <Editable className="text-gray-600 inline-block" onEdit={value => setInfo(i.protocol, u, 'fullName', value)} value={u.fullName}>{u.fullName ?? '-'}</Editable>
                                             {showId?<Info className="ml-3" label={"ID"}>{u.id}</Info>:null}
                                             {u.deActiveDate ? 
                                             <Info label={"De-active reason"} className="ml-2">
@@ -259,7 +278,7 @@ export default function UsersPage() {
                                             <Editable onEdit={value => setMaxConnection(i.protocol, u, value)} value={u.maxConnections}>{u.maxConnections}</Editable>
                                         </Info>
                                         <Info label={'Expire Days'}>
-                                        <Editable onEdit={value => setExpireDays(i.protocol, u, value)} value={u.expireDays}>{u.expireDays}</Editable>
+                                        <Editable editable={showAll} onEdit={value => setExpireDays(i.protocol, u, value)} value={u.expireDays}>{u.expireDays}</Editable>
                                         </Info>
                                     </Infos>
                                 </td>
@@ -267,24 +286,24 @@ export default function UsersPage() {
                                     <div className="flex flex-col xl:flex-row">
                                         <Infos className="flex-1">
                                             <Info label={'Create'}>
-                                                <DateView full={fullTime} date={u.createDate}/>
+                                                <DateView precision={precision} full={fullTime} date={u.createDate}/>
                                             </Info>
                                             <Info label={'Billing'}>
-                                                <DateView full={fullTime} date={u.billingStartDate}/>
+                                                <DateView precision={precision} full={fullTime} date={u.billingStartDate}/>
                                             </Info>
                                             <Info label={'DeActived'}>
-                                                <DateView full={fullTime} date={u.deActiveDate}/>
+                                                <DateView precision={precision} full={fullTime} date={u.deActiveDate}/>
                                             </Info>
                                         </Infos>
                                         <Infos className="flex-1 xl:ml-2">
                                             <Info label={'Expired'}>
-                                                <DateView full={fullTime} date={u.expiredDate}/>
+                                                <DateView precision={precision} full={fullTime} date={u.expiredDate}/>
                                             </Info>
                                             <Info label={'First Connect'}>
-                                                <DateView full={fullTime} date={u.firstConnect}/>
+                                                <DateView precision={precision} full={fullTime} date={u.firstConnect}/>
                                             </Info>
                                             <Info label={'Last Connect'}>
-                                                <DateView full={fullTime} date={u['lastConnect']}/>
+                                                <DateView precision={precision} full={fullTime} date={u['lastConnect']}/>
                                             </Info>
                                         </Infos>
                                     </div>
@@ -298,20 +317,26 @@ export default function UsersPage() {
                                         <PopupMenu.Item>
                                             <Copy className="block text-inherit" notifyText={`User "${u.email}" client config copied`} data={() => serverRequest(context.server, '/client_config?protocol=' + i.protocol, u).then(data => data.config)}>Copy Config</Copy>
                                         </PopupMenu.Item>
-                                        <PopupMenu.Item action={() => prompt(`Change user ${u.email} ${u.deActiveDate?'active':'de-active'} ?`, u.deActiveDate?'Active':'De-active', () => setActive(i.protocol, u, u.deActiveDate ? true : false))}>{u.deActiveDate?'Active User':'De-Active User'}</PopupMenu.Item>
-                                        <PopupMenu.Item action={() => prompt(`Delete user ${u.email} ?`, `Delete`,() => removeUser(i.protocol, u))}>
+                                        {showAll || !u.deActiveReason?.includes('Expired') ? <PopupMenu.Item action={() => prompt(`Change user ${u.email} ${u.deActiveDate?'active':'de-active'} ?`, u.deActiveDate?'Active':'De-active', () => setActive(i.protocol, u, u.deActiveDate ? true : false))}>{u.deActiveDate?'Active User':'De-Active User'}</PopupMenu.Item>:null}
+                                        {(showAll || !u.firstConnect) ? <PopupMenu.Item action={() => prompt(`Delete user ${u.email} ?`, `Delete`,() => removeUser(i.protocol, u))}>
                                             Remove User
-                                        </PopupMenu.Item>
+                                        </PopupMenu.Item> : null }
                                         <PopupMenu.Item action={() => prompt(`Generate ID for ${u.email} ?`, `Generate`, () => reGenerateId(i.protocol, u))}>
                                             ReGenerate ID
                                         </PopupMenu.Item>
-                                        <PopupMenu.Item action={() => prompt(`Add 1 Months to Expire Days for user "${u.email}" ?`, `Add Expire Days`, () => setExpireDays(i.protocol, u, Number(u.expireDays ?? 30) + 30))}>
+                                        <PopupMenu.Item action={() => prompt(`Add 1 Months to Expire Days for user "${u.email}" ?`, `Add Expire Days`, () => addDays(u, 30))}>
                                             +1 Months
+                                        </PopupMenu.Item>
+                                        <PopupMenu.Item action={() => router.push(`/transactions?user=${u.email}` + (showAll ? `&all=1` : ''))}>
+                                            Transactions
                                         </PopupMenu.Item>
                                         {showAll?
                                         <PopupMenu.Item action={() => router.push(`/logs?all=1&filter=`+u.email)}>
                                             Logs
                                         </PopupMenu.Item>: null}
+                                        {!u.createDate ? <PopupMenu.Item action={() => prompt(`Set first connect date as create date for user "${u.email}" ?`, `Set Create Date`, () => setInfo(i.protocol, u, 'createDate', u.firstConnect))}>Set First Connect as Create Date</PopupMenu.Item> : null}
+                                        {showAll ? <PopupMenu.Item action={() => prompt(`Set user "${u.email}" ${u.private?"public":"private"}?`, `Change Private`, () => setInfo(i.protocol, u, 'private', !u.private))}>Set {u.private?'Public':'Private'}</PopupMenu.Item> : null}
+                                        {showAll ? <PopupMenu.Item action={() => prompt(`Set user "${u.email}" as ${u.free?"Non-free":"Free"}?`, `Free/Paid`, () => setInfo(i.protocol, u, 'free', !u.free))}>Set {u.free?'Non-Free':'Free'}</PopupMenu.Item> : null}
                                     </PopupMenu>
                                 </td>
                             </tr>

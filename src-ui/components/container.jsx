@@ -1,6 +1,8 @@
+// @ts-check
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import classNames from 'classnames';
+import React from 'react';
 
 export function Container({ children }) {
     const router = useRouter();
@@ -19,7 +21,12 @@ export function Container({ children }) {
     </div>
 }
 
-function MenuLink({ href, text, children }) {
+/**
+ * 
+ * @param {{ children?: any, text?: string, href: string }} param0 
+ * @returns 
+ */
+function MenuLink({ href, text = undefined, children = undefined }) {
     const router = useRouter();
     return <Link href={href}>
         <li className={classNames('px-3 cursor-pointer rounded-lg', { 'hover:bg-white': router.asPath != href }, { 'font-bold bg-slate-800 text-white': router.asPath == href })}>{text ?? children}</li>

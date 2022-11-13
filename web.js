@@ -5,7 +5,7 @@ const { env } = require('process');
 const { Server } = require('socket.io');
 const { createServer } = require('http');
 const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser, restartService, findUser, setUserActive, writeConfig, deleteUser, log, readLines, watchFile } = require('./util');
-const { getTransactions } = require('./db');
+const { getTransactions, addTransaction, saveDb, readDb } = require('./db');
 
 let {showInfo} = createLogger();
 let app = express();
@@ -189,7 +189,7 @@ app.post('/remove_user', async (req, res) => {
         let {email, protocol, tag} = req.body;
         if (!email) return res.json({ error: 'Email not entered' });
         let {configPath} = getPaths();
-        await deleteUser(configPath, email, protocol, tag);
+        let user = await deleteUser(configPath, email, protocol, tag);
         res.json({ ok: true });
         restartService().catch(console.error);
     } catch (err) {
@@ -229,13 +229,20 @@ app.get('/inbounds', async (req, res) => {
 
 app.post('/user', async (req, res) => {
     try {
-        let {email, protocol, fullName, mobile, emailAddress} = req.body;
+        let {email, protocol, fullName, mobile, emailAddress, private, free} = req.body;
         if (!email) return res.json({ error: 'Email not entered' });
         if (!protocol) return res.json({ error: 'Protocol not entered' });
         let {configPath} = getPaths();
         let result = await addUser(configPath, email, protocol, null, {
-            fullName, mobile, emailAddress
+            fullName, mobile, emailAddress, private, free
         });
+        if (!free) {
+            await addTransaction({
+                user: email,
+                amount: Number(env.CREATE_COST ?? 50000),
+                remark: `Create user ${email}`
+            });
+        }
         res.json({ ok: true, id: result.id });
         restartService().catch(console.error);
     } catch (err) {
@@ -245,10 +252,93 @@ app.post('/user', async (req, res) => {
 
 app.get('/transactions', async (req, res) => {
     try {
-        return await getTransactions();
+        res.json(await getTransactions());
     }
     catch (err) {
         res.json({ error: err.message });
+    }
+});
+
+
+app.post('/transactions', async (req, res) => {
+    try {
+        let result = await addTransaction(req.body);
+        res.json({ transaction: result });
+    }
+    catch (err) {
+        res.json({ error: err.message });
+    }
+});
+
+app.post('/remove_transaction', async (req, res) => {
+    try {
+        let {id} = req.body;
+        let db = await readDb();
+        db.transactions = db.transactions?.filter(x => x.id != id) ?? [];
+        saveDb();
+        res.json({ ok: true });
+    }
+    catch (err) {
+        res.json({ error: err.message });
+    }
+});
+
+app.post('/edit_transaction', async (req, res) => {
+    try {
+        let {id, field, value} = req.body;
+        let db = await readDb();
+        let transaction = db.transactions?.find(x => x.id == id);
+        if (!transaction) throw Error(`Transaction not found`);
+        transaction[field] = value;
+        saveDb();
+        res.json({ ok: true });
+    }
+    catch (err) {
+        res.json({ error: err.message });
+    }
+});
+
+app.post('/add_days', async (req, res) => {
+    try {
+        let {email, days} = req.body;
+        if (!email) return res.json({ error: 'Email not entered' });
+        let {configPath} = getPaths();
+        let config = readConfig(configPath);
+        let user = findUser(config, email);
+
+        if (!user) throw Error(`User not found`);
+
+        let isDeActive = !!user?.deActiveDate;
+        let isExpired = user?.deActiveReason?.includes('Expired');
+        let needRestart = false;
+        let cost = (days / 30) * Number(env.MONTH_COST ?? 50000);
+        
+        if (isDeActive && isExpired) {
+            // Active user
+            setUserActive(config, email, true);
+            needRestart = true;
+            user.expireDays = days;
+        }
+        else {
+            user.expireDays = (user.expireDays ?? 30) + days;
+        }
+
+        if (!user?.free) {
+            await addTransaction({
+                amount: cost,
+                user: email,
+                remark: `Add ${days} days (${days/30} months)`
+            });
+        }
+
+        await writeConfig(configPath, config);
+
+        res.json({ ok: true });
+        if (needRestart)
+            restartService().catch(console.error);
+    } catch (err) {
+        res.json({ error: err.message });
+        console.error(err);
     }
 });
 

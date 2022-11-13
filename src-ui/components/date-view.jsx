@@ -1,14 +1,13 @@
 import classNames from 'classnames';
 import moment from 'jalali-moment';
 import { useRouter } from 'next/router';
+import { dateDiff } from '../util';
 import { Popup } from './popup';
 
 /**
  * Date view
- * @param {{ date: Date | string | undefined | null, full?: boolean }} param0 
- * @returns 
  */
-export function DateView({ date, className = '', full = false }) {
+export function DateView({ date, className = '', containerClassName ='', full = false, precision = false }) {
     let router = useRouter();
     let isEN = router.query.date == 'en';
     if (!date) return <>-</>;
@@ -18,14 +17,17 @@ export function DateView({ date, className = '', full = false }) {
     //     <span className='block text-gray-500 text-rtl'>{moment(date).locale('fa').fromNow()}</span>
     // </>;
 
+    let fromNow = precision ? dateDiff(date).text : moment(date).locale('fa').fromNow();
+    let strDate = isEN ? date.toLocaleString() : moment(date).locale('fa').format('YYYY/MM/DD hh:mm:ss a');
+
     if (full) {
-        return <Popup popup={moment(date).locale('fa').fromNow()}>
-            <span className={classNames('block text-gray-900 text-rtl', className)}>{isEN ? date.toLocaleString() : moment(date).locale('fa').format('YYYY/MM/DD hh:mm:ss a')}</span>
+        return <Popup className={containerClassName} popup={<span dir='rtl'>{fromNow}</span>}>
+            <span className={classNames('block text-gray-900 text-rtl', className)}>{strDate}</span>
         </Popup>
     }
 
-    return <Popup popup={isEN ? date.toLocaleString() : moment(date).locale('fa').format('YYYY/MM/DD hh:mm:ss a')}>
-        <span className={classNames('block text-gray-500 text-rtl', className)}>{moment(date).locale('fa').fromNow()}</span>
+    return <Popup popup={strDate} className={containerClassName}>
+        <span className={classNames('block text-gray-500 text-rtl', className)}>{fromNow}</span>
     </Popup>;
 
 

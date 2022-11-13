@@ -23,6 +23,8 @@ interface V2RayConfigInboundClient {
     fullName?: string
     mobile?: string
     emailAddress?: string
+    private?: boolean
+    free?: boolean
 }
 
 interface V2RayConfigInboundSettings {

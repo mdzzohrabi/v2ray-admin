@@ -361,6 +361,7 @@ async function deleteUser(configPath, email, protocol, tag = null) {
         inbound.settings.clients = newClients;
 
         await writeConfig(configPath, config);
+        return found;
     } else {
         throw Error(`settings.clients is not in valid format for protocol "${protocol}"`);
     }

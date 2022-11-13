@@ -2,7 +2,7 @@ import classNames from "classnames";
 import { useEffect } from "react";
 import { useCallback, useState } from "react";
 
-export function Editable({ value, children, onEdit, className = '' }) {
+export function Editable({ value, children, onEdit, className = '', editable = true }) {
     let [isEdit, setEdit] = useState(false);
     let [valueState, setValueState] = useState(value);
 
@@ -18,6 +18,9 @@ export function Editable({ value, children, onEdit, className = '' }) {
     //     {children}
     //     <span className="text-blue-500 text-sm ml-2 cursor-pointer px-1 rounded-lg hover:bg-slate-600 hover:text-white" onClick={() => setEdit(!isEdit)}>Edit</span>
     // </>;
+
+    if (!editable)
+        return children;
 
     if (!isEdit)
         return <span className={classNames("text-blue-500 ml-2 cursor-pointer px-1 rounded-lg hover:ring-slate-400 hover:ring-1 block", className)} onClick={() => setEdit(!isEdit)}>{children}</span>;
