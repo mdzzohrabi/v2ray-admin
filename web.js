@@ -216,7 +216,7 @@ app.get('/inbounds', async (req, res) => {
         let users = inbound.settings?.clients ?? [];
         for (let user of users) {
             let usage = user.email ? usages[user.email] : {};
-            user.firstConnect = usage?.firstConnect;
+            user.firstConnect = user.firstConnect ?? usage?.firstConnect;
             user['lastConnect'] = usage?.lastConnect;
             user.expireDays = user.expireDays || Number(env.V2RAY_EXPIRE_DAYS) || 30;
             user.maxConnections = user.maxConnections || Number(env.V2RAY_MAX_CONNECTIONS) || 3;

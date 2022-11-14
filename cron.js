@@ -126,7 +126,8 @@ async function cronCommand() {
             let usage = usages[user?.email ?? ''];
             if (!usage?.firstConnect || !!user?.deActiveDate || !user?.email)
                 continue;
-            user.firstConnect = String(usage.firstConnect) ?? user.firstConnect;
+            if (!user.firstConnect)
+                user.firstConnect = String(usage.firstConnect) ?? user.firstConnect;
             let diffTime = Date.now() - new Date(user.billingStartDate ?? usage.firstConnect).getTime();
             if (diffTime/(1000*60*60*24) > expireDays) {
                 // User expired
