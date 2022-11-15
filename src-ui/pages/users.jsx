@@ -269,7 +269,7 @@ export default function UsersPage() {
                                         </div>
                                         <div className="flex-1">
                                             <div className="flex flex-row">
-                                                <Editable className={"font-semibold inline-block"} onEdit={value => setUsername(i.protocol, u, value)} value={u.email}>{u.email}</Editable>
+                                                <Editable editable={!u.firstConnect || showAll} className={"font-semibold inline-block"} onEdit={value => setUsername(i.protocol, u, value)} value={u.email}>{u.email}</Editable>
                                                 {u.private?<span className="ml-2 text-xs px-2 py-0 rounded-lg bg-gray-100 text-gray-500 cursor-default">Private</span>:null}
                                                 {u.free?<span className="ml-2 text-xs px-2 py-0 rounded-lg bg-green-100 text-green-500 cursor-default">Free</span>:null}
                                             </div>
