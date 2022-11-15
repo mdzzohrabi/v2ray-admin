@@ -20,7 +20,9 @@ export function Editable({ value, children, onEdit, className = '', editable = t
     // </>;
 
     if (!editable)
-        return children;
+        return <span className={classNames("ml-2 px-1",className)}>
+            {children}
+        </span>;
 
     if (!isEdit)
         return <span className={classNames("text-blue-500 ml-2 cursor-pointer px-1 rounded-lg hover:ring-slate-400 hover:ring-1 block", className)} onClick={() => setEdit(!isEdit)}>{children}</span>;
