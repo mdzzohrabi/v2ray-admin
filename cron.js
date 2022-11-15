@@ -1,5 +1,5 @@
 // @ts-check
-const { getPaths, parseArgumentsAndOptions, readLogLines, readConfig, findUser, setUserActive, writeConfig, createLogger, restartService, cache, log, readLogFile,  } = require("./util");
+const { getPaths, parseArgumentsAndOptions, readLogLines, readConfig, findUser, setUserActive, writeConfig, createLogger, restartService, cache, log, readLogFile, DateUtil } = require("./util");
 
 const {
     cliArguments: [],
@@ -26,7 +26,7 @@ async function cronCommand() {
     showInfo(`Start V2Rary Cron`);
     showInfo(`Re-Activate Account: ${reactive ? 'Yes': 'No'}`);
     showInfo(`Disable expired accounts: ${disableexpired ? 'Yes': 'No'}`);
-    showInfo(`Expire Days: ${expiredays ?? 30}`);
+    showInfo(`Default Expire Days: ${expiredays ?? 30}`);
     let fromDate = new Date();
     let rangeMinutes = range;
     fromDate.setMinutes(fromDate.getMinutes() - rangeMinutes);
@@ -84,6 +84,7 @@ async function cronCommand() {
 
     let configBeforeUpdate = readConfig(configPath);
     let hasChange = false;
+    let isRestartService = false;
 
     // De-active users
     for (let user of result) {
@@ -91,6 +92,7 @@ async function cronCommand() {
             showInfo(`De-active user ${user.user} due to multiple ip access (${user.ips.length} ips)`);
             setUserActive(configBeforeUpdate, user.user, false, `Used by ${user.ips.length} ips in ${range} mins ago (${user.ips.join(', ')})`);
             hasChange = true;
+            isRestartService = true;
         }
     }
     
@@ -103,6 +105,7 @@ async function cronCommand() {
                     showInfo(`Re-active user ${user.email} due to normal usage`);
                     usersToActive.push(user.email);
                     hasChange = true;
+                    isRestartService = true;
                 }
             }
         }
@@ -124,17 +127,31 @@ async function cronCommand() {
         for (let user of users) {
             let expireDays = user?.expireDays ?? defaultExpireDays;
             let usage = usages[user?.email ?? ''];
-            if (!usage?.firstConnect || !!user?.deActiveDate || !user?.email)
+            let billingStartDate = new Date(user?.billingStartDate ?? user?.firstConnect ?? usage?.firstConnect ?? user?.createDate);
+            let expireDate = DateUtil.addDays(billingStartDate, expireDays);
+
+            if (user?.deActiveReason?.includes('Expired') == true || !billingStartDate || !user?.email)
                 continue;
-            if (!user.firstConnect)
+            
+            // Set user first connect
+            if (!user.firstConnect && usage?.firstConnect) {
                 user.firstConnect = String(usage.firstConnect) ?? user.firstConnect;
-            let diffTime = Date.now() - new Date(user.billingStartDate ?? usage.firstConnect).getTime();
-            if (diffTime/(1000*60*60*24) > expireDays) {
+                hasChange = true;
+            }
+
+            // Set billing start date
+            if (!user.billingStartDate && billingStartDate) {
+                user.billingStartDate = billingStartDate?.toString();
+                hasChange = true;
+            }
+
+            if (expireDate && expireDate?.getTime() < Date.now()) {
                 // User expired
                 hasChange = true;
+                isRestartService = true;
                 user.expiredDate = String(new Date());
                 setUserActive(configBeforeUpdate, user?.email, false, `Expired after ${expireDays} days`);
-                showInfo(`De-active user "${user?.email}" due to expiration after ${expireDays} days`);
+                showInfo(`De-active user "${user?.email}" due to expiration at ${expireDate} after ${expireDays} days from ${billingStartDate}`);
             }
         }
     }
@@ -143,7 +160,10 @@ async function cronCommand() {
     if (hasChange && !print) {
         showInfo(`Save configuration changes`);
         await writeConfig(configPath, configBeforeUpdate);
-        restartService().catch(console.error);
+        if (isRestartService) {
+            showInfo(`Restart V2Ray service`);
+            restartService().catch(console.error);
+        }
     }
 
     showInfo('Complete.');

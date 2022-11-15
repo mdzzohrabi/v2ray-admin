@@ -31,8 +31,8 @@ export function stored(key) {
 
 /**
  * 
- * @param {string | Date} date1 
- * @param {string | Date | undefined} date2 
+ * @param {string | number | Date} date1 
+ * @param {string | number | Date | undefined} date2 
  */
 export function dateDiff(date1, date2 = undefined) {
     let d1 = new Date(date1);
@@ -70,7 +70,7 @@ export function dateDiff(date1, date2 = undefined) {
 
     let text = texts.join(' ') + (ago ? ' پیش' : ' مانده');
 
-    return {totalYears, totalMonths, totalDays, totalHours, totalMinutes, totalSeconds, years, months, days, hours, minutes, seconds, text};
+    return {totalYears, totalMonths, totalDays, totalHours, totalMinutes, totalSeconds, years, months, days, hours, minutes, seconds, text, ago};
 }
 
 /**
@@ -85,4 +85,19 @@ export function arrSort(sortColumn, sortAsc) {
                 a[sortColumn] < b[sortColumn] ? 
                     (sortAsc ? -1 : 1) : 
                     (sortAsc ? 1 : -1);
+}
+
+export const DateUtil = {
+
+    /**
+     * Add days to given date
+     * @param {any} date Date
+     * @param {number} days Days to add
+     * @returns 
+     */
+    addDays(date, days) {
+        if (!date) return undefined;
+        return new Date(new Date(date).getTime() + (days * 24 * 60 * 60 * 1000));
+    }
+
 }

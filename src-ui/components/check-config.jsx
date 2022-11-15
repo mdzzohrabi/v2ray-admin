@@ -1,3 +1,4 @@
+// @ts-check
 import { useRouter } from "next/router";
 import { useContext, useEffect } from "react";
 import { AppContext } from "./app-context";

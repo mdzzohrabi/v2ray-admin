@@ -1,14 +1,14 @@
+import { Toaster } from 'react-hot-toast';
 import { AppContextContainer } from '../components/app-context';
 import { CheckConfig } from '../components/check-config';
-import { Toaster } from 'react-hot-toast';
 import '../styles/globals.scss';
 
 function MyApp({ Component, pageProps }) {
   return <AppContextContainer>
-    <CheckConfig>
-      <Component {...pageProps} />
-    </CheckConfig>
-    <Toaster/>
+      <CheckConfig>
+        <Component {...pageProps} />
+      </CheckConfig>
+      <Toaster/>
   </AppContextContainer> 
 }
 

@@ -16,13 +16,13 @@ import { Field } from "../components/fields";
 import { Info, Infos } from "../components/info";
 import { Popup } from "../components/popup";
 import { PopupMenu } from "../components/popup-menu";
-import { serverRequest } from "../util";
+import { styles } from "../styles";
+import { DateUtil, serverRequest } from "../util";
 
 export default function UsersPage() {
 
     let context = useContext(AppContext);
     let router = useRouter();
-    let [isLoading, setLoading] = useState(false);
     let [[sortColumn, sortAsc], setSort] = useState(['', true]);
     let showAll = router.query.all == '1';
     let [fullTime, setFullTime] = useState(false);
@@ -34,7 +34,7 @@ export default function UsersPage() {
     /**
      * @type {import("swr").SWRResponse<V2RayConfigInbound[]>}
      */
-    let {data: inbounds, mutate: refreshInbounds} = useSWR('/inbounds?key=' + btoa(context.server.url), serverRequest.bind(this, context.server));
+    let {data: inbounds, mutate: refreshInbounds, isValidating: isLoading} = useSWR('/inbounds?key=' + btoa(context.server.url), serverRequest.bind(this, context.server));
 
     const showQRCode = useCallback(async (protocol, user) => {
         let config = await serverRequest(context.server, '/client_config?protocol=' + protocol, user).then(data => data.config)
@@ -175,7 +175,7 @@ export default function UsersPage() {
         <Head>
             <title>Users</title>
         </Head>
-        <AddUser disabled={isLoading} onRefresh={refreshInbounds} setLoading={setLoading} protocols={inbounds?.map(i => i.protocol ?? '') ?? []}/>
+        <AddUser disabled={isLoading} onRefresh={refreshInbounds} protocols={inbounds?.map(i => i.protocol ?? '') ?? []}/>
         <div className="flex flex-row px-3 py-3 border-t-[1px] overflow-auto">
             <div className="flex flex-row px-1 text-sm">
                 <label htmlFor="sort" className={"self-center py-1 pr-2 font-semibold"}>Sort</label>
@@ -188,8 +188,9 @@ export default function UsersPage() {
                     <option value="emailAddress">Email</option>
                     <option value="maxConnections">Max Connections</option>
                     <option value="expireDays">Expire Days</option>
-                    <option value="createDate">Create Date</option>
+                    <option value="expireDate">Expire Date</option>
                     <option value="billingStartDate">Billing Start Date</option>
+                    <option value="createDate">Create Date</option>
                     <option value="deActiveDate">De-active Date</option>
                     <option value="deActiveReason">De-active Reason</option>
                     <option value="firstConnect">First Connect</option>
@@ -222,7 +223,13 @@ export default function UsersPage() {
                     {Object.keys(statusFilters).map((x, index) => <option key={index} value={x}>{x}</option>)}
                 </select>
             </div>
+            {showAll?<button className={styles.button} onClick={() => refreshInbounds()}>
+                Reload
+            </button>:null}
         </div>
+        {isLoading ? <div className="absolute bg-slate-900 text-white rounded-lg px-3 py-1 bottom-3 left-3">
+            Loading ...
+        </div> : null }
         <div className="">
         <table className="w-full text-sm">
             <thead className="sticky top-0 xl:top-12 bg-white shadow-md z-40">
@@ -235,9 +242,13 @@ export default function UsersPage() {
                 </tr>
             </thead>
             <tbody>
-                {!inbounds || isLoading ? <tr><td colSpan={10} className="px-3 py-4">Loading ...</td></tr> : inbounds.map(i => {
+                {!inbounds ? <tr><td colSpan={10} className="px-3 py-4">Loading ...</td></tr> : inbounds.map(i => {
 
                     let users = [...(i.settings?.clients ?? [])]
+                    .map(u => {
+                        u['expireDate'] = DateUtil.addDays(u.billingStartDate, u.expireDays ?? 30);
+                        return u;
+                    })
                     .filter(u => showAll || !u.private)
                     .filter(u => !filter || (u.id == filter || u.fullName?.includes(filter) || u.email?.includes(filter)))
                     .filter(u => statusFilters[statusFilter] ? statusFilters[statusFilter](u) : true)
@@ -287,6 +298,11 @@ export default function UsersPage() {
                                         <Info label={'Expire Days'}>
                                         <Editable editable={showAll} onEdit={value => setExpireDays(i.protocol, u, value)} value={u.expireDays}>{u.expireDays}</Editable>
                                         </Info>
+                                        {!u.deActiveDate?
+                                            <Info label={'Until Expire'}>
+                                                <DateView precision={precision} full={fullTime} date={u['expireDate']}/>
+                                            </Info>
+                                        :null}
                                     </Infos>
                                 </td>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3">
