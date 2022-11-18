@@ -353,6 +353,9 @@ export default function UsersPage() {
                                         <PopupMenu.Item action={() => router.push(`/transactions?user=${u.email}` + (showAll ? `&all=1` : ''))}>
                                             Transactions
                                         </PopupMenu.Item>
+                                        <PopupMenu.Item action={() => router.push(`/usages?user=${u.email}` + (showAll ? `&all=1` : ''))}>
+                                            Daily Usages
+                                        </PopupMenu.Item>
                                         {showAll?
                                         <PopupMenu.Item action={() => router.push(`/logs?all=1&filter=`+u.email)}>
                                             Logs

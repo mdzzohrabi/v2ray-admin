@@ -298,15 +298,17 @@ app.post('/edit_transaction', async (req, res) => {
     }
 });
 
-app.get('/daily-usages', async (req, res) => {
+app.get('/daily_usages', async (req, res) => {
     try {
-        let {email} = req.body;
+        let email = String(req.query.email);
         let dailyUsage = await cache('daily-usage') ?? {};
         let result = Object.keys(dailyUsage).map(k => {
             let user = dailyUsage[k][email] ?? {};
+            let outbounds = Object.keys(user).map(tag => ({ tag, ...user[tag] }));
             return {
                 date: k,
-                ...user
+                email,
+                outbounds
             };
         });
 
