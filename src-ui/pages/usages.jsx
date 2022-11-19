@@ -4,10 +4,12 @@ import classNames from "classnames";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import React, { useContext } from 'react';
+import { useState } from "react";
 import useSWR from 'swr';
 import { AppContext } from "../components/app-context";
 import { Container } from "../components/container";
 import { DateView } from "../components/date-view";
+import { Field, FieldsGroup } from "../components/fields";
 import { Info, Infos } from "../components/info";
 import { usePrompt } from "../hooks";
 import { styles } from "../styles";
@@ -19,6 +21,9 @@ export default function UsagesPage() {
     let router = useRouter();
     let showAll = router.query.all == '1';
     let email = router.query.user;
+    let [view, setView] = useState({
+        showDetail: true
+    });
 
     /**
      * @type {import("swr").SWRResponse<any[]>}
@@ -30,7 +35,14 @@ export default function UsagesPage() {
         <Head>
             <title>Usages</title>
         </Head>
-        
+        <FieldsGroup title={"Daily Usages"} data={view} dataSetter={setView} horizontal>
+            <Field label="User" className="border-x-[1px] px-3 mr-2">
+                <span className="text-gray-800 py-1 px-2 rounded-lg bg-yellow-100">{email}</span>
+            </Field>
+            <Field label="Show Detail" htmlFor="showDetail">
+                <input type="checkbox" id="showDetail" />
+            </Field>
+        </FieldsGroup>
         {isLoading ? <div className="absolute bg-slate-900 text-white rounded-lg px-3 py-1 bottom-3 left-3">
             Loading ...
         </div> : null }
@@ -53,25 +65,30 @@ export default function UsagesPage() {
                         <td className={styles.td}>{x.date}</td>
                         {/* <td className={styles.td}>{x.email}</td>     */}
                         <td className={styles.td}>
+                            {view.showDetail ? 
                             <Infos>
                                 {x.outbounds.map(o => {
                                     return <Info label={o.tag}>{new Date(o.firstConnect).toLocaleTimeString()}</Info>
                                 })}
-                            </Infos>
+                            </Infos> : x.outbounds.filter(o => o.tag == 'direct').map(o => new Date(o.firstConnect).toLocaleTimeString()).pop() }
                         </td>
                         <td className={styles.td}>
+                            {view.showDetail ?
                             <Infos>
                                 {x.outbounds.map(o => {
                                     return <Info label={o.tag}>{new Date(o.lastConnect).toLocaleTimeString()}</Info>
                                 })}
                             </Infos>
+                            : x.outbounds.filter(o => o.tag == "direct").map(o => new Date(o.lastConnect).toLocaleTimeString()).pop() }
                         </td>
                         <td className={styles.td}>
+                            {view.showDetail ?
                             <Infos>
                                 {x.outbounds.map(o => {
                                     return <Info label={o.tag}>{o.counter} requests</Info>
                                 })}
                             </Infos>
+                            : x.outbounds.filter(o => o.tag == "direct").map(o => `${o.counter} requests`).pop()}
                         </td>
                     </tr>
                 })}

@@ -16,8 +16,10 @@ import { Field } from "../components/fields";
 import { Info, Infos } from "../components/info";
 import { Popup } from "../components/popup";
 import { PopupMenu } from "../components/popup-menu";
+import { usePrompt } from "../hooks";
 import { styles } from "../styles";
 import { DateUtil, serverRequest } from "../util";
+import ExportJsonExcel from 'js-export-excel';
 
 export default function UsersPage() {
 
@@ -161,15 +163,59 @@ export default function UsersPage() {
         return filters;
     }, []);
 
-    const prompt = useCallback((message, okButton, onClick) => {
-        toast.custom(t => {
-            return <div className={"ring-1 ring-black ring-opacity-20 whitespace-nowrap text-sm shadow-lg bg-white flex rounded-lg pointer-events-auto px-3 py-2"}>
-                <span className="flex-1 self-center mr-3">{message}</span>
-                <button className="rounded-lg duration-150 hover:shadow-md bg-blue-400 px-2 py-1 ml-1 text-white hover:bg-blue-900" onClick={() => { toast.remove(t.id); onClick()}}>{okButton}</button>
-                <button className="rounded-lg duration-150 hover:shadow-md bg-slate-100 px-2 py-1 ml-1" onClick={() => toast.remove(t.id)}>Cancel</button>
-            </div>
+    const prompt = usePrompt();
+
+    const exportExcel = useCallback(() => {
+        console.log('Export Excel');
+        let excel = new ExportJsonExcel({
+            fileName: 'V2Ray-Clients',
+            datas: [
+                {
+                    sheetData: inbounds?.flatMap(x => x.settings?.clients?.map(u => {
+                        let {billingStartDate, createDate, email, emailAddress, mobile, maxConnections, firstConnect, free, fullName, id, deActiveDate, deActiveReason, expireDays, expiredDate } = u;
+                        return {
+                            protocol: x.protocol,
+                            free: free ? 'Free' : 'Paid', 
+                            email,
+                            fullName,
+                            emailAddress, 
+                            mobile, 
+                            createDate: createDate ? new Date(createDate) : null,
+                            firstConnect : firstConnect ? new Date(firstConnect) : null, 
+                            expireDays, 
+                            expireDate: DateUtil.addDays(billingStartDate, expireDays ?? 30),
+                            billingStartDate : billingStartDate ? new Date(billingStartDate) : null, 
+                            maxConnections,
+                            id, 
+                            deActiveDate: deActiveDate ? new Date(deActiveDate) : null, 
+                            deActiveReason, 
+                            expiredDate: expiredDate ? new Date(expiredDate) : null
+                        }
+                    })),
+                    sheetName: 'Clients',
+                    sheetHeader: [
+                        'Protocol',
+                        'Free',
+                        'Username',
+                        'Full Name',
+                        'Email Address',
+                        'Mobile',
+                        'Create Date',
+                        'First Connect',
+                        'Expire Days',
+                        'Expire Date',
+                        'Billing Start Date',
+                        'Max Connections',
+                        'ID',
+                        'De-active Date',
+                        'De-active Reason',
+                        'Expired Date'
+                    ]
+                }
+            ]
         })
-    }, []);
+        excel.saveExcel();
+    }, [inbounds]);
 
     return <Container>
         <Head>
@@ -226,6 +272,7 @@ export default function UsersPage() {
             {showAll?<button className={styles.button} onClick={() => refreshInbounds()}>
                 Reload
             </button>:null}
+            <button className={styles.button} onClick={exportExcel}>Export Excel</button>
         </div>
         {isLoading ? <div className="absolute bg-slate-900 text-white rounded-lg px-3 py-1 bottom-3 left-3">
             Loading ...
