@@ -127,6 +127,14 @@ export default function UsersPage() {
 
     let headClass = 'px-1 py-2 border-b-2 border-b-blue-900 rounded-tl-lg rounded-tr-lg';
 
+    // This line is only for fix tailwind bug that cannot resolve classNames from useCallback elements
+    let el = <div className={"ring-1 ring-black ring-opacity-20 whitespace-nowrap text-sm shadow-lg bg-white flex rounded-lg pointer-events-auto px-3 py-2"}>
+    <span className="flex-1 self-center mr-3"></span>
+
+    <button className="rounded-lg duration-150 hover:shadow-md bg-slate-100 px-2 py-1 ml-1">Cancel</button>
+    <button className="rounded-lg duration-150 hover:shadow-md bg-blue-400 px-2 py-1 ml-1 hover:bg-blue-600">OK</button>
+    </div>
+
     const statusFilters = useMemo(() => {
         /** @type {{ [name: string]: (user: V2RayConfigInboundClient) => boolean }} */
         let filters = {
