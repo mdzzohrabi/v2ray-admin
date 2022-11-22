@@ -8,7 +8,7 @@ import { styles } from "../styles";
 
 /**
  * Fields group
- * @param {React.HTMLAttributes<HTMLDivElement> & { children?: any, title?: string, titleClassName?: string, horizontal?: boolean, data?: any, dataSetter?: Function }} param0 
+ * @param {React.HTMLAttributes<HTMLDivElement> & { children?: any, title?: string, titleClassName?: string, horizontal?: boolean, data?: any, dataSetter?: (value: any) => any }} param0 
  * @returns 
  */
 export function FieldsGroup({ title, children, className, titleClassName, horizontal = false, data = undefined, dataSetter = undefined, ...props }) {

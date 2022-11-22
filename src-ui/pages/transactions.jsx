@@ -105,8 +105,8 @@ export default function TransactionsPage() {
                 </Field>
             </FieldsGroup>
         </form> : null }
-        <div className="flex flex-row lg:flex-col">
-            <FieldsGroup title="Billing" horizontal className="lg:border-b-[1px]">
+        <div className="flex flex-col lg:flex-row">
+            <FieldsGroup title="Billing" horizontal className="border-b-[1px] lg:border-b-0">
                 <Field label="UnPaid" className="rounded-lg bg-red-100 px-3 items-center align-middle">
                     <Price value={transactions?.filter(x => (Number(x.amount) ?? 0) > 0).reduce((result, t) => result + (Number(t.amount) || 0), 0) ?? 0}/>
                 </Field>

@@ -101,3 +101,44 @@ export const DateUtil = {
     }
 
 }
+
+/**
+ * 
+ * @param {any} a 
+ * @param {any} b 
+ */
+export function equals(a, b) {
+    if (a===b) return true;
+    if (typeof a != typeof b) return false;
+    if (Array.isArray(a)) {
+        return a.every((v, i) => v == b[i]);
+    }
+    if (typeof a == 'object') {
+        let aKeys = Object.keys(a);
+        let bKeys = Object.keys(b);
+        if (aKeys.length != bKeys.length) return false;
+        if (aKeys.filter(a => bKeys.includes(a) == false).length > 0) return false;
+        if (bKeys.filter(b => aKeys.includes(b) == false).length > 0) return false;
+        return aKeys.every(k => equals(a[k], b[k]));
+    }
+    return a == b;
+}
+
+/**
+ * Get two object difference
+ * @param {any} base Base object
+ * @param {any} modified Modified object
+ */
+export function objectDiff(base, modified) {
+    let diffs = {};
+    let bKeys = Object.keys(base);
+    let mKeys = Object.keys(modified);
+    mKeys.forEach(key => {
+        if (!bKeys.includes(key)) diffs[key] = modified[key];
+        else if (!equals(modified[key], base[key])) diffs[key] = modified[key];
+    });
+}
+
+export function applyChanges(value, changes) {
+    let result = value;
+}

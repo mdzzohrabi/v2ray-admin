@@ -12,6 +12,7 @@ export function Container({ children }) {
             {isFull ? <MenuLink href={"/logs" + (isFull ? '?all=1' : '')} text={"Logs"}/> : null}
             <MenuLink href={"/transactions" + (isFull ? '?all=1' : '')} text={"Transactions"}/>
             <MenuLink href={"/users" + (isFull ? '?all=1' : '')} text={"Users"}/>
+            {isFull?<MenuLink href={"/configuration" + (isFull ? '?all=1' : '')} text={"Configuration"}/>:null}
             <MenuLink href={"/server_config" + (isFull ? '?all=1' : '')} text={"Server Config"}/>
             <MenuLink href={"/logout"}>Logout</MenuLink>
         </ul>

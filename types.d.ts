@@ -42,12 +42,35 @@ interface V2RayConfigInbound {
     protocol?: string
     settings?: V2RayConfigInboundSettings
     streamSettings?: V2RayConfigInboundStreamSettings
-    tag?: string
+    tag?: string,
+    sniffing?: any
 }
 
 interface V2RayConfigOutbound {
     protocol?: string
     tag?: string
+    settings?: any
+    sendThrough?: string
+    streamSettings?: V2RayConfigStream
+    proxySettings?: V2RayConfigProxy
+    mux?: V2RayConfigMux
+}
+
+interface V2RayConfigProxy {
+    tag?: string,
+    transportLayer?: boolean
+}
+
+interface V2RayConfigMux {
+    enabled?: boolean
+    concurrency?: number
+}
+
+interface V2RayConfigStream {  
+  transport: "tcp" | "udp",
+  transportSettings: any,
+  security: "none" | "auto",
+  securitySettings: any
 }
 
 interface V2RayConfigLog {
@@ -60,7 +83,7 @@ interface V2RayConfigRouting {
     domainStrategy?: "AsIs" | "IPIfNonMatch" | "IPOnDemand",
     domainMatcher?: "linear" | "mph"
     rules?: V2RayConfigRoutingRule[]
-    balancers?: 
+    balancers?: any
 }
 
 interface V2RayConfigApi {

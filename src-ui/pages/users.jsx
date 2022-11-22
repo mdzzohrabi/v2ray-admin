@@ -125,7 +125,7 @@ export default function UsersPage() {
         }
     }, [router]);
 
-    let headClass = 'px-1 py-2 border-b-2 border-b-blue-900 rounded-tl-lg rounded-tr-lg';
+    let headClass = styles.tableHead;
 
     // This line is only for fix tailwind bug that cannot resolve classNames from useCallback elements
     let el = <div className={"ring-1 ring-black ring-opacity-20 whitespace-nowrap text-sm shadow-lg bg-white flex rounded-lg pointer-events-auto px-3 py-2"}>
