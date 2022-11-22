@@ -3,21 +3,187 @@
 import classNames from "classnames";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import React, { useContext } from 'react';
-import { useMemo } from "react";
-import { useEffect } from "react";
-import { useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import useSWR from 'swr';
 import { AppContext } from "../components/app-context";
 import { Container } from "../components/container";
-import { DateView } from "../components/date-view";
 import { useDialog } from "../components/dialog";
 import { Field, FieldsGroup } from "../components/fields";
 import { Info, Infos } from "../components/info";
 import { PopupMenu } from "../components/popup-menu";
-import { usePrompt } from "../hooks";
+import { useArrayDelete, useArrayInsert, useArrayUpdate } from "../hooks";
 import { styles } from "../styles";
 import { serverRequest } from "../util";
+
+/**
+ * 
+ * @param {{ inbound: V2RayConfigInbound, dissmis: any, onEdit: Function }} param0 
+ * @returns 
+ */
+function InboundEditor({ inbound: inboundProp, dissmis, onEdit }) {
+    let [inbound, setInbound] = useState(inboundProp);
+    let ok = useCallback((/** @type {import("react").FormEvent} */ e) => {
+        e?.preventDefault();
+        onEdit(inboundProp, inbound);
+        dissmis();
+    }, [onEdit, inbound, dissmis]);
+    return <div className="bg-white rounded-xl p-2 min-w-[20rem] flex flex-col">
+        <form onSubmit={ok}>
+        <div className="flex flex-row px-1 pb-2">
+            <span className="flex-1 font-bold">Inbound</span>
+            <div>
+                <span onClick={dissmis} className="aspect-square bg-slate-200 rounded-full px-2 py-1 text-gray-600 cursor-pointer hover:bg-slate-900 hover:text-white">X</span>
+            </div>
+        </div>
+        <div>
+            <FieldsGroup data={inbound} dataSetter={setInbound}>
+            <div className="flex flex-row">
+                <Field htmlFor="tag" label="Tag">
+                    <input type="text" id="tag" className={styles.input}/>
+                </Field>
+                <Field label="Protocol" className="flex-1" htmlFor="protocol">
+                    <select id="protocol" className={styles.input}>
+                        <option value="http">HTTP</option>
+                        <option value="vmess">VMess</option>
+                        <option value="vless">VLess</option>
+                        <option value="blackhole">Blackhole</option>
+                        <option value="dns">DNS</option>
+                        <option value="freedom">Freedom</option>
+                        <option value="mtproto">MTProto</option>
+                        <option value="socks">SOCKS</option>
+                        <option value="shadowsocks">Shadowsocks</option>
+                    </select>
+                </Field>
+            </div>
+            <div className="flex flex-row pt-2">
+                <Field label="Listen" htmlFor="listen" className="flex-1">
+                    <input type="text" id="listen" className={styles.input} placeholder={"0.0.0.0"}/>
+                </Field>
+                <Field label="Port" htmlFor="port">
+                    <input type={"number"} id="port" className={styles.input}/>
+                </Field>
+            </div>
+            <div className="flex flex-col">
+                <h3 className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 font-smibold">Stream settings</h3>
+                <div className="flex flex-row">
+                    <Field label="Network" htmlFor="network" className="flex-1" data={inbound?.streamSettings ?? {}} dataSetter={streamSettings => setInbound({ ...inbound, streamSettings })}>
+                        <select className={styles.input} id="network">
+                            <option value="tcp">TCP</option>
+                            <option value="kcp">KCP</option>
+                            <option value="http">HTTP</option>
+                            <option value="domainsocket">DomainSocket</option>
+                            <option value="quic">Quic</option>
+                            <option value="ws">WebSocket</option>
+                        </select>
+                    </Field>
+                    <Field label="Security" htmlFor="security" data={inbound?.streamSettings ?? {}} dataSetter={streamSettings => setInbound({ ...inbound, streamSettings })}>
+                        <select className={styles.input} id="security">
+                            <option value="none">None</option>
+                            <option value="tls">TLS</option>
+                        </select>
+                    </Field>
+                </div>
+            </div>
+            </FieldsGroup>
+            <div className="pt-3 border-t-[1px] mt-3 flex justify-end">
+                <button onClick={ok} className={styles.button}>Edit Inbound</button>
+            </div>
+        </div>
+        </form>
+    </div>
+}
+
+/**
+ * 
+ * @param {{ outbound: V2RayConfigOutbound, dissmis: any, onEdit: Function }} param0 
+ * @returns 
+ */
+ function OutboundEditor({ outbound: outboundProp, dissmis, onEdit }) {
+    let [outbound, setOutbound] = useState(outboundProp);
+    let ok = useCallback((/** @type {import("react").FormEvent} */ e) => {
+        e?.preventDefault();
+        onEdit(outboundProp, outbound);
+        dissmis();
+    }, [onEdit, outbound, dissmis]);
+    return <div className="bg-white rounded-xl p-2 min-w-[20rem] flex flex-col">
+        <form onSubmit={ok}>
+        <div className="flex flex-row px-1 pb-2">
+            <span className="flex-1 font-bold">Outbound</span>
+            <div>
+                <span onClick={dissmis} className="aspect-square bg-slate-200 rounded-full px-2 py-1 text-gray-600 cursor-pointer hover:bg-slate-900 hover:text-white">X</span>
+            </div>
+        </div>
+        <div>
+            <FieldsGroup data={outbound} dataSetter={setOutbound}>
+            <div className="flex flex-row">
+                <Field htmlFor="tag" label="Tag">
+                    <input type="text" id="tag" className={styles.input}/>
+                </Field>
+                <Field label="Protocol" className="flex-1" htmlFor="protocol">
+                    <select id="protocol" className={styles.input}>
+                        <option value="http">HTTP</option>
+                        <option value="vmess">VMess</option>
+                        <option value="vless">VLess</option>
+                        <option value="blackhole">Blackhole</option>
+                        <option value="dns">DNS</option>
+                        <option value="freedom">Freedom</option>
+                        <option value="mtproto">MTProto</option>
+                        <option value="socks">SOCKS</option>
+                        <option value="shadowsocks">Shadowsocks</option>
+                    </select>
+                </Field>
+            </div>
+            <div className="flex flex-row pt-2">
+                <Field label="Send Through" htmlFor="sendThrough" className="flex-1">
+                    <input type="text" id="sendThrough" className={styles.input} placeholder={"127.0.0.1"}/>
+                </Field>
+            </div>
+            <div className="flex flex-col">
+                <h3 className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 font-smibold">
+                    Stream settings
+                    {!!outbound?.proxySettings?.tag ? <span className="italic text-gray-500 ml-2 text-xs px-2 py-1 rounded-lg bg-yellow-100">Ignored because of Proxy</span> : null }
+                </h3>
+                <div className="flex flex-row">
+                    <Field label="Network" htmlFor="network" className="flex-1" data={outbound?.streamSettings ?? {}} dataSetter={streamSettings => setOutbound({ ...outbound, streamSettings })}>
+                        <select className={styles.input} id="network">
+                            <option value="tcp">TCP</option>
+                            <option value="kcp">KCP</option>
+                            <option value="http">HTTP</option>
+                            <option value="domainsocket">DomainSocket</option>
+                            <option value="quic">Quic</option>
+                            <option value="ws">WebSocket</option>
+                        </select>
+                    </Field>
+                    <Field label="Security" htmlFor="security" data={outbound?.streamSettings ?? {}} dataSetter={streamSettings => setOutbound({ ...outbound, streamSettings })}>
+                        <select className={styles.input} id="security">
+                            <option value="none">None</option>
+                            <option value="tls">TLS</option>
+                        </select>
+                    </Field>
+                </div>
+            </div>
+            <div className="flex flex-col">
+                <h3 className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 font-smibold">Proxy settings</h3>
+                <div className="flex flex-row">
+                    <Field label="Proxy Tag" htmlFor="tag" className="flex-1" data={outbound?.proxySettings ?? {}} dataSetter={proxySettings => setOutbound({ ...outbound, proxySettings })}>
+                        <input className={styles.input} type="text" id="tag" placeholder="Proxy Tag" />
+                    </Field>
+                    {/* <Field label="Security" htmlFor="security" data={outbound?.proxySettings ?? {}} dataSetter={proxySettings => setOutbound({ ...outbound, proxySettings })}>
+                        <select className={styles.input} id="security">
+                            <option value="none">None</option>
+                            <option value="tls">TLS</option>
+                        </select>
+                    </Field> */}
+                </div>
+            </div>
+            </FieldsGroup>
+            <div className="pt-3 border-t-[1px] mt-3 flex justify-end">
+                <button onClick={ok} className={styles.button}>Edit Outbound</button>
+            </div>
+        </div>
+        </form>
+    </div>
+}
 
 export default function ConfigurationPage() {
 
@@ -33,25 +199,51 @@ export default function ConfigurationPage() {
 
     let [config, setConfig] = useState(originalConfig);
     
+    // Update config on server configuration changes
     useEffect(() => setConfig(originalConfig), [originalConfig]);
 
-    let diffs = useMemo(() => {
-
-    }, [config, originalConfig]);
-
+    // Not-Available value element
     let NA = <span className="text-gray-400 text-xs">-</span>;
 
-    let inboundDialog = useDialog((/** */ inbound) => {
-        return <div className="bg-white rounded-md p-2">
-            Hello
-        </div>
-    });
+    let inboundDialog = useDialog(
+        /**
+         * 
+         * @param {V2RayConfigInbound} inbound 
+         * @param {Function} onEdit 
+         * @param {Function?} close 
+         * @returns 
+         */
+        (inbound, onEdit, close = null) => <InboundEditor inbound={inbound} dissmis={close} onEdit={onEdit}/>);
 
-    let Inbounds = <div id="config-inbounds" className="rounded-lg border-[1px] flex flex-col flex-1">
+    // Delete inbound
+    let deleteInbound = useArrayDelete(config?.inbounds ?? [], inbounds => setConfig({ ...config, inbounds }));
+    let insertInbound = useArrayInsert(config?.inbounds ?? [], inbounds => setConfig({ ...config, inbounds }));
+    let editInbound = useArrayUpdate(config?.inbounds ?? [], inbounds => setConfig({ ...config, inbounds }));
+
+    let outboundDialog = useDialog((
+        /** @type {V2RayConfigOutbound} */
+        outbound,
+        /** @type {Function} */
+        onEdit,
+        /** @type {Function?} */
+        onClose = null
+    ) => <OutboundEditor outbound={outbound} onEdit={onEdit} dissmis={onClose}/>);
+
+    // Delete inbound
+    let deleteOutbound = useArrayDelete(config?.outbounds ?? [], outbounds => setConfig({ ...config, outbounds }));
+    let insertOutbound = useArrayInsert(config?.outbounds ?? [], outbounds => setConfig({ ...config, outbounds }));
+    let editOutbound = useArrayUpdate(config?.outbounds ?? [], outbounds => setConfig({ ...config, outbounds }));
+
+    let Inbounds = <div id="config-inbounds" className="rounded-lg border-2 flex flex-col flex-1">
         <FieldsGroup title={"Inbounds"} className="text-xs" data={view} dataSetter={setView} horizontal>
-            <Field label="Show Detail" htmlFor="showDetail">
-                <input type="checkbox" id="showDetail" />
-            </Field>
+            <div className="flex flex-row flex-1">
+                <div className="flex-1">
+                    <Field label="Show Detail" htmlFor="showDetail">
+                        <input type="checkbox" id="showDetail" />
+                    </Field>
+                </div>
+                <button onClick={() => inboundDialog.show({}, insertInbound)} className="rounded-lg mr-2 px-3 py-1 duration-150 hover:ring-2 ring-green-200 bg-slate-200 hover:bg-green-700 hover:text-white float-right">+ Add Inbound</button>
+            </div>
         </FieldsGroup>
         {isLoading ? <div className="absolute bg-slate-900 text-white rounded-lg px-3 py-1 bottom-3 left-3">
             Loading ...
@@ -90,9 +282,9 @@ export default function ConfigurationPage() {
                         </td>
                         <td className={classNames(styles.td)}>
                             <PopupMenu>
-                                <PopupMenu.Item action={() => inboundDialog.show(x)}>Edit</PopupMenu.Item>
+                                <PopupMenu.Item action={() => inboundDialog.show(x, editInbound)}>Edit</PopupMenu.Item>
                                 <PopupMenu.Item action={() => router.push('/users?protocol=' + x.protocol + (showAll?'&all=1':''))}>Users</PopupMenu.Item>
-                                <PopupMenu.Item>Delete</PopupMenu.Item>
+                                <PopupMenu.Item action={() => deleteInbound(x)}>Delete</PopupMenu.Item>
                             </PopupMenu>
                         </td>
                     </tr>;
@@ -101,11 +293,38 @@ export default function ConfigurationPage() {
         </table>
     </div>;
 
-    let Outbounds = <div id="config-outbounds" className="rounded-lg border-[1px] flex flex-col flex-1">
+    let Log = <div className="rounded-lg flex flex-col flex-1 border-2">
+        <FieldsGroup title="Log" className="text-xs" data={config?.log} dataSetter={log => setConfig({ ...config, log })} layoutVertical>
+            <div className="p-2">
+                <Field label="Level" htmlFor="level">
+                    <select id="level" className={styles.input}>
+                        <option value="debug">Debug</option>
+                        <option value="info">Info</option>
+                        <option value="warning">Warning</option>
+                        <option value="error">Error</option>
+                        <option value="none">None</option>
+                    </select>
+                </Field>
+                <Field label="Access Log" htmlFor="access" className="flex-1 mt-1">
+                    <input type="text" className={styles.input} placeholder="/var/log/v2ray/access.log" />
+                </Field>
+                <Field label="Error Log" htmlFor="error" className="flex-1 mt-1">
+                    <input type="text" className={styles.input} placeholder="/var/log/v2ray/error.log" />
+                </Field>
+            </div>
+        </FieldsGroup>
+    </div>
+
+    let Outbounds = <div id="config-outbounds" className="rounded-lg border-2 flex flex-col flex-1">
         <FieldsGroup title={"Outbounds"} className="text-xs" data={view} dataSetter={setView} horizontal>
-            <Field label="Show Detail" htmlFor="showDetail">
-                <input type="checkbox" id="showDetail" />
-            </Field>
+            <div className="flex flex-row flex-1">
+                <div className="flex-1">
+                    <Field label="Show Detail" htmlFor="showDetail">
+                        <input type="checkbox" id="showDetail" />
+                    </Field>
+                </div>
+                <button onClick={() => outboundDialog.show({}, insertOutbound)} className="rounded-lg mr-2 px-3 py-1 duration-150 hover:ring-2 ring-green-200 bg-slate-200 hover:bg-green-700 hover:text-white float-right">+ Add Outbound</button>
+            </div>
         </FieldsGroup>
         {isLoading ? <div className="absolute bg-slate-900 text-white rounded-lg px-3 py-1 bottom-3 left-3">
             Loading ...
@@ -143,7 +362,8 @@ export default function ConfigurationPage() {
                         </td>
                         <td className={classNames(styles.td)}>
                             <PopupMenu>
-                                <PopupMenu.Item>Delete</PopupMenu.Item>
+                                <PopupMenu.Item action={() => outboundDialog.show(x, editOutbound)}>Edit</PopupMenu.Item>
+                                <PopupMenu.Item action={() => deleteOutbound(x)}>Delete</PopupMenu.Item>
                             </PopupMenu>
                         </td>
                     </tr>;
@@ -152,7 +372,7 @@ export default function ConfigurationPage() {
         </table>
     </div>;
 
-    let Routing = <div id="config-outbounds" className="rounded-lg border-[1px] flex flex-col flex-1">
+    let Routing = <div id="config-outbounds" className="rounded-lg border-2 flex flex-col flex-1">
         <FieldsGroup title={"Routing"} className="text-xs" horizontal>
             <Field label="Domain Strategy" htmlFor="domainStrategy" data={config?.routing?.domainStrategy} dataSetter={domainStrategy => setConfig({ ...config, routing: { ...config?.routing, domainStrategy } })}>
                 <select className={styles.input} id="domainStrategy">
@@ -212,7 +432,6 @@ export default function ConfigurationPage() {
                         </td>
                         <td className={classNames(styles.td)}>
                             <PopupMenu>
-                                <PopupMenu.Item action={() => inboundDialog.show()}>Edit</PopupMenu.Item>
                                 <PopupMenu.Item>Delete</PopupMenu.Item>
                             </PopupMenu>
                         </td>
@@ -227,8 +446,9 @@ export default function ConfigurationPage() {
             <title>Configuration</title>
         </Head>
         <div className="grid grid-cols-1 p-3 xl:grid-cols-2 gap-3">
-            {Outbounds}
+            {Log}
             {Inbounds}
+            {Outbounds}
             {Routing}
         </div>
     </Container>

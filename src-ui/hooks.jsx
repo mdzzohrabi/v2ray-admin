@@ -24,7 +24,6 @@ export function useOutsideAlerter(ref, callback) {
 }
 
 export function usePrompt() {
-
   return useCallback((message, okButton, onClick) => {
       let clicked = false;
       toast.custom(t => {
@@ -36,4 +35,44 @@ export function usePrompt() {
           </div>
       }, { position: 'top-center' })
   }, []);
+}
+
+/**
+ * @template T
+ * @param {T[]} arr 
+ * @param {(value: T[]) => any} setter 
+ * @returns 
+ */
+export function useArrayDelete(arr, setter) {
+  return useCallback((/** @type {T} */ deletedItem) => {
+    setter(arr.filter(x => x != deletedItem));
+  }, [arr]);
+}
+
+/**
+ * @template T
+ * @param {T[]} arr 
+ * @param {(value: T[]) => any} setter 
+ * @returns 
+ */
+export function useArrayInsert(arr, setter) {
+  return useCallback((_, /** @type {T} */ newItem) => {
+    setter([ ...arr, newItem ]);
+  }, [arr]);
+}
+
+/**
+ * @template T
+ * @param {T[]} arr 
+ * @param {(value: T[]) => any} setter 
+ * @returns 
+ */
+ export function useArrayUpdate(arr, setter) {
+  return useCallback((/** @type {T} */ item, /** @type {T} */ edit) => {
+    console.log(item, edit, arr);
+    let index = arr.indexOf(item);
+    if (index >= 0)
+      arr[index] = edit;
+    setter([ ...arr ]);
+  }, [arr]);
 }
