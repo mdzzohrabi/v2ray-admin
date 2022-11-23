@@ -3,6 +3,7 @@ import React, { useEffect } from "react";
 import { useRef } from "react";
 import { useState } from "react"
 import { useOutsideAlerter } from "../hooks";
+import { styles } from "../styles";
 
 
 /**
@@ -31,7 +32,7 @@ export function PopupMenu({ visible = false, text = 'Actions', children = [] }) 
     useEffect(() => { if (typeof visible == 'boolean') setVisible(visible) }, [visible, setVisible]);
 
     return <div className="relative inline-block">
-        <span onClick={() => setVisible(!isVisible)} className={classNames("cursor-pointer block text-blue-800 hover:underline py-1 px-2 rounded-lg", { 'bg-slate-200': isVisible })}>{text}</span>
+        <span onClick={() => setVisible(!isVisible)} className={classNames(styles.link, { 'bg-slate-200': isVisible })}>{text}</span>
         {isVisible ? 
         <div ref={refPopup} className="min-w-[10rem] absolute z-50 right-0 top-full bg-white shadow-lg ring-1 ring-black ring-opacity-10 px-2 py-2 rounded-lg">
             {(Array.isArray(children) ? children : [children]).map((action, index) => {

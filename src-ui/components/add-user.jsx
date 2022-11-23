@@ -82,7 +82,7 @@ export function AddUser({ disabled = false, onRefresh, setLoading, protocols }) 
             <Field htmlFor="free" label="Free">
                 <input type="checkbox" id="free"/>
             </Field>:null}
-            <button disabled={disabled} type="submit" className="bg-slate-200 whitespace-nowrap rounded-lg px-5 py-1 ml-2 duration-100 hover:bg-blue-300">Add User</button>
+            <button disabled={disabled} type="submit" className={styles.button}>Add User</button>
         </FieldsGroup>
     </form>;
 }

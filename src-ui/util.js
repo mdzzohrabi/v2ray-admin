@@ -111,7 +111,7 @@ export function equals(a, b) {
     if (a===b) return true;
     if (typeof a != typeof b) return false;
     if (Array.isArray(a)) {
-        return a.every((v, i) => v == b[i]);
+        return a.every((v, i) => equals(v, b[i]));
     }
     if (typeof a == 'object') {
         let aKeys = Object.keys(a);
@@ -131,14 +131,110 @@ export function equals(a, b) {
  */
 export function objectDiff(base, modified) {
     let diffs = {};
-    let bKeys = Object.keys(base);
-    let mKeys = Object.keys(modified);
+    let bKeys = Object.keys(base ?? {});
+    let mKeys = Object.keys(modified ?? {});
     mKeys.forEach(key => {
+        // New Node
         if (!bKeys.includes(key)) diffs[key] = modified[key];
+        // Modified Node
         else if (!equals(modified[key], base[key])) diffs[key] = modified[key];
     });
+    bKeys.forEach(key => {
+        // Deleted Node
+        if (!mKeys.includes(key)) diffs[key] = undefined;
+    });
+    return diffs
 }
 
+/**
+ * @typedef {{
+ *      action: 'set' | 'delete',
+ *      value?: any,
+ *      path?: string[]
+ * }} Change
+ */
+
+/**
+ * Get changes actions
+ * @param {any} base Base value
+ * @param {any} modified Modified value
+ * @returns
+ */
+export function getChanges(base, modified, path = []) {
+    /** @type {Change[]} */
+    let changes = [];
+    let typeA = typeof base;
+    let typeB = typeof modified;
+
+    // Types are different
+    if (typeA != typeB) {
+        changes.push({ action: 'set', value: modified, path });
+        return changes;
+    }
+    // Array
+    else if (Array.isArray(base)) {
+        for (let i in modified) {
+            let nodePath = [...path, i];
+            let nodeChanges = getChanges(base[i], modified[i], nodePath);
+            nodeChanges.forEach(change => changes.push(change));
+        }
+        return changes;
+    }
+    // Object
+    else if (typeA == 'object') {
+        let bKeys = Object.keys(base ?? {});
+        let mKeys = Object.keys(modified ?? {});
+        mKeys.forEach(key => {
+            let nodePath = [...path, key];
+            let nodeChanges = getChanges(base[key], modified[key], nodePath);
+            nodeChanges?.forEach(change => changes.push(change));
+        });
+        bKeys.forEach(key => {
+            // Deleted Node
+            if (!mKeys.includes(key)) {
+                changes.push({ action: 'delete', path: [...path, key] });
+            }
+        });
+        return changes;
+    }
+
+    // Modified
+    if (!equals(base, modified)) {
+        changes.push({ action: 'set', value: modified, path });
+        return changes;
+    }
+
+    return changes;
+}
+
+/**
+ * 
+ * @param {any} value Value
+ * @param {Change[]} changes Changes
+ */
 export function applyChanges(value, changes) {
-    let result = value;
+    let result = deepCopy(value);
+    changes?.forEach(change => {
+        switch (change.action) {
+            case 'set': {
+                if (change.path?.length == 0)
+                    result = change.value;
+                else
+                    eval(`result[${change.path?.map(x => typeof x == 'string' ? `"${x}"` : x).join('][')}] = change.value;`);
+                break;
+            }
+        }
+    });
+    return result;
+}
+
+/**
+ * Deep copy of a value
+ * @template T
+ * @param {T} value Value
+ * @returns {T}
+ */
+export function deepCopy(value) {
+    if (typeof value != 'object') return value;
+    return JSON.parse(JSON.stringify(value));
 }

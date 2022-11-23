@@ -434,7 +434,7 @@ function restartService() {
 
         result?.once('exit', () => {
             done(output);
-        });    
+        });
         
         result?.once('error', (err) => {
             reject(err)
@@ -501,4 +501,38 @@ const DateUtil = {
 
 }
 
-module.exports = { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile, addUser, getUserConfig, restartService, readLogLines, findUser, setUserActive, writeConfig, deleteUser, cache, log, readLines, parseLogLine, watchFile, existsAsync, cacheDir, DateUtil };
+/**
+ * 
+ * @param {any} value Value
+ * @param {Change[]} changes Changes
+ */
+ function applyChanges(value, changes) {
+    let result = deepCopy(value);
+    changes?.forEach(change => {
+        switch (change.action) {
+            case 'set': {
+                if (change.path?.length == 0)
+                    result = change.value;
+                else
+                    eval(`result[${change.path?.map(x => typeof x == 'string' ? `"${x}"` : x).join('][')}] = change.value;`);
+                break;
+            }
+            case 'delete': {
+                eval(`delete result[${change.path?.map(x => typeof x == 'string' ? `"${x}"` : x).join('][')}];`);
+                break;
+            }
+        }
+    });
+    return result;
+}
+
+/**
+ * Deep copy of a value
+ * @param {any} value Value
+ */
+function deepCopy(value) {
+    if (typeof value != 'object') return value;
+    return JSON.parse(JSON.stringify(value));
+}
+
+module.exports = { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile, addUser, getUserConfig, restartService, readLogLines, findUser, setUserActive, writeConfig, deleteUser, cache, log, readLines, parseLogLine, watchFile, existsAsync, cacheDir, DateUtil, applyChanges, deepCopy };

@@ -151,3 +151,9 @@ interface V2RayDb {
     },
     transactions?: Transaction[];
 }
+
+interface Change {
+    action: 'set' | 'delete',
+    value?: any,
+    path?: string[]
+}

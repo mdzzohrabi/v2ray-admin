@@ -5,6 +5,7 @@ import React, { createContext } from "react";
 import { useContext } from "react";
 import { useCallback } from "react";
 import { createElement } from "react";
+import { useArrayDelete, useArrayInsert, useArrayUpdate } from "../hooks";
 import { styles } from "../styles";
 
 /**
@@ -12,19 +13,20 @@ import { styles } from "../styles";
  * @type {import("react").Context<{
  * 		horizontal?: boolean,
  * 		data?: T,
- * 		dataSetter?: (value: T) => any
+ * 		dataSetter?: (value: T) => any,
+ * 		unsetEmpty?: boolean
  * }>}
  */
 let FieldContext = createContext({});
 
 /**
  * Fields group
- * @param {React.HTMLAttributes<HTMLDivElement> & { children?: any, title?: string, titleClassName?: string, horizontal?: boolean, data?: any, dataSetter?: (value: any) => any, layoutVertical?: boolean }} param0 
+ * @param {React.HTMLAttributes<HTMLDivElement> & { children?: any, title?: string, titleClassName?: string, horizontal?: boolean, data?: any, dataSetter?: (value: any) => any, layoutVertical?: boolean, unsetEmpty?: boolean }} param0 
  * @returns 
  */
-export function FieldsGroup({ title, children, className, titleClassName, horizontal = false, layoutVertical = false, data = undefined, dataSetter = undefined, ...props }) {
+export function FieldsGroup({ title, children, className, titleClassName, horizontal = false, layoutVertical = false, data = undefined, dataSetter = undefined, unsetEmpty = true, ...props }) {
 
-	let provider = <FieldContext.Provider value={{ horizontal, data, dataSetter }}>
+	let provider = <FieldContext.Provider value={{ horizontal, data, dataSetter, unsetEmpty }}>
 		{children}
 	</FieldContext.Provider>;
 
@@ -32,7 +34,7 @@ export function FieldsGroup({ title, children, className, titleClassName, horizo
 		return provider;
 	}
 	
-	return <div className={classNames("flex text-sm overflow-auto", className)} {...props}>
+	return <div className={classNames("flex overflow-auto", className)} {...props}>
 		{title ? <h2 className={classNames("font-bold px-3 py-3 whitespace-nowrap", titleClassName)}>{title}</h2> : null }
 		<div className="self-center flex-1">
 			<div className={classNames("flex flex-1", { "flex-row": !layoutVertical, 'flex-col': layoutVertical })}>
@@ -44,16 +46,17 @@ export function FieldsGroup({ title, children, className, titleClassName, horizo
 
 /**
  * 
- * @param {{ label?: string, children?: any, className?: string, horizontal?: boolean, htmlFor?: string, data?: any, dataSetter?: Function }} param0 
+ * @param {{ label?: string, children?: any, className?: string, horizontal?: boolean, htmlFor?: string, data?: any, dataSetter?: Function, unsetEmpty?: boolean }} param0 
  * @returns 
  */
-export function Field({ label, children, className = '', horizontal = undefined, htmlFor = '', data = undefined, dataSetter = undefined }) {
+export function Field({ label, children, className = '', horizontal = undefined, htmlFor = '', data = undefined, dataSetter = undefined, unsetEmpty = undefined }) {
 	let context = useContext(FieldContext);
 	let childs = Array.isArray(children) ? children : [children];
 
 	horizontal = horizontal ?? context.horizontal ?? false;
 	data = data ?? context.data;
 	dataSetter = dataSetter ?? context.dataSetter;
+	unsetEmpty = unsetEmpty ?? context.unsetEmpty ?? true;
 
 	let setData = useCallback(/** @param {React.ChangeEvent<HTMLInputElement>} e */ e => {
 		let target = e.currentTarget;
@@ -63,7 +66,13 @@ export function Field({ label, children, className = '', horizontal = undefined,
 			value = target.checked;
 		}
 		if (typeof data == 'object' && htmlFor) {
-			data = { ...data, [htmlFor]: value };
+			if (!value && unsetEmpty) {
+				data = {...data};
+				delete data[htmlFor];
+			}
+			else {
+				data = { ...data, [htmlFor]: value };
+			}
 		} else {
 			data = value;
 		}
@@ -85,4 +94,26 @@ export function Field({ label, children, className = '', horizontal = undefined,
 		<label htmlFor={htmlFor} className={classNames(styles.label, { 'pr-3': horizontal })}>{label}</label>
 		{childs}
 	</div>;
+}
+
+/**
+ * Field Collection
+ * @template T
+ * @param {{
+ * 		data: T[],
+ * 		dataSetter: (value: T[]) => any,
+ * 		children: (props: {
+ * 			items: T[],
+ * 			addItem: (_: any, item: T) => any,
+ * 			deleteItem: (deletedItem: T) => any,
+ * 			updateItem: (item: T, edited: T) => any
+ * 		}) => any
+ * }} param0
+ */
+export function Collection({ data, dataSetter, children }) {
+	let addItem = useArrayInsert(data, dataSetter);
+	let deleteItem = useArrayDelete(data, dataSetter);
+	let updateItem = useArrayUpdate(data, dataSetter);
+
+	return children({ items: data, addItem, deleteItem, updateItem });
 }

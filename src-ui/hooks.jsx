@@ -46,7 +46,7 @@ export function usePrompt() {
 export function useArrayDelete(arr, setter) {
   return useCallback((/** @type {T} */ deletedItem) => {
     setter(arr.filter(x => x != deletedItem));
-  }, [arr]);
+  }, [arr, setter]);
 }
 
 /**
@@ -58,7 +58,7 @@ export function useArrayDelete(arr, setter) {
 export function useArrayInsert(arr, setter) {
   return useCallback((_, /** @type {T} */ newItem) => {
     setter([ ...arr, newItem ]);
-  }, [arr]);
+  }, [arr, setter]);
 }
 
 /**
@@ -69,10 +69,9 @@ export function useArrayInsert(arr, setter) {
  */
  export function useArrayUpdate(arr, setter) {
   return useCallback((/** @type {T} */ item, /** @type {T} */ edit) => {
-    console.log(item, edit, arr);
     let index = arr.indexOf(item);
     if (index >= 0)
       arr[index] = edit;
     setter([ ...arr ]);
-  }, [arr]);
+  }, [arr, setter]);
 }

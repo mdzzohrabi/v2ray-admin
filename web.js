@@ -4,7 +4,7 @@ const express = require('express');
 const { env } = require('process');
 const { Server } = require('socket.io');
 const { createServer } = require('http');
-const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser, restartService, findUser, setUserActive, writeConfig, deleteUser, log, readLines, watchFile, cache } = require('./util');
+const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser, restartService, findUser, setUserActive, writeConfig, deleteUser, log, readLines, watchFile, cache, applyChanges } = require('./util');
 const { getTransactions, addTransaction, saveDb, readDb } = require('./db');
 
 let {showInfo} = createLogger();
@@ -47,12 +47,12 @@ app.get('/config', async (req, res) => {
     res.json(config);
 });
 
-app.put('/config', async (req, res) => {
+app.post('/config', async (req, res) => {
+    let {changes} = req.body;
     let {configPath} = getPaths();
     let config = readConfig(configPath);
-    let {writeFile, copyFile} = require('fs/promises');
-    await copyFile(configPath, configPath + '.backup_' + Date.now());
-    await writeFile(configPath, JSON.stringify({ ...config, ...req.body }));
+    let newConfig = applyChanges(config, changes);
+    await writeConfig(configPath, newConfig);
     res.json({ ok: true });
 });
 
@@ -75,7 +75,7 @@ app.post('/client_config', (req, res) => {
 });
 
 app.post('/restart', async (req, res) => {
-    restartService().then(result => res.end(result));
+    restartService().then(result => res.json({ result }));
 });
 
 app.post('/active', async (req, res) => {
