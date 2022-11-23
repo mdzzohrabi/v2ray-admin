@@ -27,7 +27,7 @@ function InboundEditor({ inbound: inboundProp, dissmis, onEdit }) {
         onEdit(inboundProp, inbound);
         dissmis();
     }, [onEdit, inbound, dissmis]);
-    return <div className="bg-white rounded-xl p-2 min-w-[20rem] flex flex-col">
+    return <div className="bg-white rounded-xl p-2 min-w-[30rem] flex flex-col">
         <form onSubmit={ok}>
         <div className="flex flex-row px-1 pb-2">
             <span className="flex-1 font-bold">Inbound</span>
@@ -99,13 +99,13 @@ function InboundEditor({ inbound: inboundProp, dissmis, onEdit }) {
  * @returns 
  */
  function OutboundEditor({ outbound: outboundProp, dissmis, onEdit }) {
-    let [outbound, setOutbound] = useState(outboundProp);
+    let [outbound, setOutbound] = useState({ protocol: 'http', ...outboundProp });
     let ok = useCallback((/** @type {import("react").FormEvent} */ e) => {
         e?.preventDefault();
         onEdit(outboundProp, outbound);
         dissmis();
     }, [onEdit, outbound, dissmis]);
-    return <div className="bg-white rounded-xl p-2 min-w-[20rem] flex flex-col">
+    return <div className="bg-white rounded-xl p-2 min-w-[30rem] flex flex-col">
         <form onSubmit={ok}>
         <div className="flex flex-row px-1 pb-2">
             <span className="flex-1 font-bold">Outbound</span>
@@ -138,6 +138,46 @@ function InboundEditor({ inbound: inboundProp, dissmis, onEdit }) {
                     <input type="text" id="sendThrough" className={styles.input} placeholder={"127.0.0.1"}/>
                 </Field>
             </div>
+            {outbound?.protocol == 'http' ?
+            <div className="flex flex-col">
+                <h3 className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 font-smibold">Settings (HTTP)</h3>
+                <div className="flex flex-col">
+                    {/* <FieldsGroup data={outbound?.settings} dataSetter={settings => setOutbound({ ...outbound, settings })}>
+                        <Field label="Proxy Tag" htmlFor="tag" className="flex-1">
+                            <input className={styles.input} type="text" id="tag" placeholder="Proxy Tag" />
+                        </Field>
+                    </FieldsGroup> */}
+                    <label className={styles.label}>Servers</label>
+                    <table className="w-full text-xs">
+                        <thead className="sticky top-0 xl:top-12 bg-white shadow-md z-40">
+                            <tr className="bg-white">
+                                <th className={classNames(styles.tableHead)}>#</th>
+                                <th className={classNames(styles.tableHead, 'cursor-pointer')}>Address</th>
+                                <th className={classNames(styles.tableHead, 'cursor-pointer')}>Port</th>
+                                <th className={classNames(styles.tableHead, 'cursor-pointer')}>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {outbound?.settings?.servers?.map((x, index) => {
+                                return <tr className="bg-white odd:bg-slate-50" key={index}>
+                                    <td className={classNames(styles.td)}>{index}</td>
+                                    <td className={classNames(styles.td)}>
+                                        {x.address}
+                                    </td>
+                                    <td className={classNames(styles.td)}>
+                                        {x.port}
+                                    </td>
+                                    <td className={classNames(styles.td)}>
+                                        <PopupMenu>
+                                            <PopupMenu.Item>Delete</PopupMenu.Item>
+                                        </PopupMenu>
+                                    </td>
+                                </tr>;
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            </div> : null }
             <div className="flex flex-col">
                 <h3 className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 font-smibold">
                     Stream settings

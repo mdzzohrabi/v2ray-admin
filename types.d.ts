@@ -49,11 +49,21 @@ interface V2RayConfigInbound {
 interface V2RayConfigOutbound {
     protocol?: string
     tag?: string
-    settings?: any
+    settings?: V2RayConfigOutboundSettings
     sendThrough?: string
     streamSettings?: V2RayConfigStream
     proxySettings?: V2RayConfigProxy
     mux?: V2RayConfigMux
+}
+
+interface V2RayConfigOutboundSettings {
+    servers?: V2RayConfigOutboundSettingsServer[]
+}
+
+interface V2RayConfigOutboundSettingsServer {
+    address?: string
+    port?: number
+    users?: { user?: string, pass?: string }[]
 }
 
 interface V2RayConfigProxy {
