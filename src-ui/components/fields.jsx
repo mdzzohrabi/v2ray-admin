@@ -1,12 +1,9 @@
 // @ts-check
 
 import classNames from "classnames";
-import React, { createContext } from "react";
-import { useContext } from "react";
-import { useCallback } from "react";
-import { createElement } from "react";
-import { useArrayDelete, useArrayInsert, useArrayUpdate } from "../hooks";
-import { styles } from "../styles";
+import React, { createContext, createElement, useCallback, useContext } from "react";
+import { useArrayDelete, useArrayInsert, useArrayUpdate } from "../lib/hooks";
+import { styles } from "../lib/styles";
 
 /**
  * @template T
@@ -21,10 +18,10 @@ let FieldContext = createContext({});
 
 /**
  * Fields group
- * @param {React.HTMLAttributes<HTMLDivElement> & { children?: any, title?: string, titleClassName?: string, horizontal?: boolean, data?: any, dataSetter?: (value: any) => any, layoutVertical?: boolean, unsetEmpty?: boolean }} param0 
+ * @param {React.HTMLAttributes<HTMLDivElement> & { children?: any, title?: string, titleClassName?: string, horizontal?: boolean, data?: any, dataSetter?: (value: any) => any, layoutVertical?: boolean, unsetEmpty?: boolean, containerClassName?: string }} param0 
  * @returns 
  */
-export function FieldsGroup({ title, children, className, titleClassName, horizontal = false, layoutVertical = false, data = undefined, dataSetter = undefined, unsetEmpty = true, ...props }) {
+export function FieldsGroup({ title, children, className, titleClassName, horizontal = false, layoutVertical = false, data = undefined, dataSetter = undefined, unsetEmpty = true, containerClassName = '', ...props }) {
 
 	let provider = <FieldContext.Provider value={{ horizontal, data, dataSetter, unsetEmpty }}>
 		{children}
@@ -37,7 +34,7 @@ export function FieldsGroup({ title, children, className, titleClassName, horizo
 	return <div className={classNames("flex overflow-auto", className)} {...props}>
 		{title ? <h2 className={classNames("font-bold px-3 py-3 whitespace-nowrap", titleClassName)}>{title}</h2> : null }
 		<div className="self-center flex-1">
-			<div className={classNames("flex flex-1", { "flex-row": !layoutVertical, 'flex-col': layoutVertical })}>
+			<div className={classNames("flex flex-1", { "flex-row": !layoutVertical, 'flex-col': layoutVertical }, containerClassName)}>
 				{provider}
 			</div>
 		</div>
@@ -91,7 +88,7 @@ export function Field({ label, children, className = '', horizontal = undefined,
 	})
 
 	return <div className={classNames("flex px-1", { 'flex-col': !horizontal, 'flex-row self-center': horizontal }, className)}>
-		<label htmlFor={htmlFor} className={classNames(styles.label, { 'pr-3': horizontal })}>{label}</label>
+		<label htmlFor={htmlFor} className={classNames(styles.label, { 'pr-3': horizontal }, 'whitespace-nowrap')}>{label}</label>
 		{childs}
 	</div>;
 }

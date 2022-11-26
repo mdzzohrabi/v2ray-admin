@@ -3,23 +3,19 @@
 import classNames from "classnames";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import React, { Fragment, useCallback, useContext, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useMemo, useState } from 'react';
 import toast from "react-hot-toast";
 import useSWR from 'swr';
-import { AddUser } from "../components/add-user";
 import { AppContext } from "../components/app-context";
 import { Container } from "../components/container";
-import { Copy } from "../components/copy";
 import { DateView } from "../components/date-view";
 import { Editable } from "../components/editable";
 import { Field, FieldsGroup } from "../components/fields";
-import { Info, Infos } from "../components/info";
-import { Popup } from "../components/popup";
 import { PopupMenu } from "../components/popup-menu";
 import { Price } from "../components/price";
-import { usePrompt } from "../hooks";
-import { styles } from "../styles";
-import { arrSort, serverRequest } from "../util";
+import { usePrompt } from "../lib/hooks";
+import { styles } from "../lib/styles";
+import { arrSort, serverRequest } from "../lib/util";
 
 export default function TransactionsPage() {
 

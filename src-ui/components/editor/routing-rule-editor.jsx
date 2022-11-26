@@ -1,12 +1,10 @@
 // @ts-check
 
 import classNames from "classnames";
-import React from "react";
-import { useState, useCallback } from "react";
-import { styles } from "../../styles";
+import React, { useCallback, useState } from "react";
+import { styles } from "../../lib/styles";
 import { Dialog } from "../dialog";
 import { Collection, Field, FieldsGroup } from "../fields";
-import { PopupMenu } from "../popup-menu";
 import { Table } from "../table";
 
 /**

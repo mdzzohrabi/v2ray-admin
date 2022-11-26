@@ -1,6 +1,5 @@
-import { createContext, useEffect, useState } from "react";
-import { Dispatch, SetStateAction, Context } from "react";
-import { store, stored } from "../util";
+import { Context, createContext, Dispatch, SetStateAction, useEffect, useState } from "react";
+import { store, stored } from "../lib/util";
 
 /**
  * @typedef {{ url: string, token: string }} ServerContext

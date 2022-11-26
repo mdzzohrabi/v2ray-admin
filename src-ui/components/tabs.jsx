@@ -1,3 +1,4 @@
+// @ts-check
 
 /**
  * Tabs
@@ -11,7 +12,7 @@ export function Tabs({ children }) {
 
 /**
  * Tab
- * @param {{{ children: any, title: string }}} param0 Parameters
+ * @param {{ children: any, title: string }} param0 Parameters
  */
 function Tab({ children, title }) {
 

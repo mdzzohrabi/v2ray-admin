@@ -1,9 +1,5 @@
 // @ts-check
-import React from "react";
-import { Fragment, useState } from "react";
-import { useCallback } from "react";
-import { useContext } from "react";
-import { createContext } from "react"
+import React, { createContext, Fragment, useCallback, useContext, useState } from "react";
 
 export const DialogContext = createContext({ dialogs: [], setDialogs: (dialogs) => null });
 

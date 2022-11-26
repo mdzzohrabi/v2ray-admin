@@ -1,9 +1,11 @@
+// @ts-check
 import { useRouter } from "next/router";
+import React from "react";
 import { useEffect } from "react";
 import { useCallback, useContext, useState } from "react"
 import toast from "react-hot-toast";
 import { AppContext } from "../components/app-context"
-import { store, stored } from "../util";
+import { store, stored } from "../lib/util";
 
 export default function ServerConfig() {
     let context = useContext(AppContext);

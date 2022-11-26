@@ -1,7 +1,7 @@
 // @ts-check
 
 /**
- * @param {import("./components/app-context").ServerContext} server
+ * @param {import("../components/app-context").ServerContext} server
  * @param {string} action Action
  * @param {any} body 
  * @returns 

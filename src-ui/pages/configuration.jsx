@@ -18,8 +18,8 @@ import { Collection, Field, FieldsGroup } from "../components/fields";
 import { Info, Infos } from "../components/info";
 import { PopupMenu } from "../components/popup-menu";
 import { Table } from "../components/table";
-import { styles } from "../styles";
-import { deepCopy, getChanges, serverRequest } from "../util";
+import { styles } from "../lib/styles";
+import { deepCopy, getChanges, serverRequest } from "../lib/util";
 
 export default function ConfigurationPage() {
 
@@ -270,7 +270,7 @@ export default function ConfigurationPage() {
                 {getChanges(originalConfig, config).length > 0 ? <span className="rounded-lg bg-yellow-100 text-yellow-800 text-xs px-3 py-1">Changed</span> :null}
             </div>
             <button type={"button"} onClick={() => restartService()} className={styles.button}>Restart V2Ray</button>
-            <button type={"button"} onClick={() => saveConfig()} className={"border-2 border-green-600 bg-green-600 text-white whitespace-nowrap rounded-lg px-5 py-1 ml-2 duration-100 hover:ring-inset hover:ring-green-300 hover:ring-2"}>Save Configuration</button>
+            <button type={"button"} onClick={() => saveConfig()} className={styles.buttonPrimary}>Save Configuration</button>
         </FieldsGroup>
         <div className="grid grid-cols-1 p-3 xl:grid-cols-2 gap-3">
             {Log}

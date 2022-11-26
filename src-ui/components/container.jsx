@@ -30,6 +30,6 @@ export function Container({ children }) {
 function MenuLink({ href, text = undefined, children = undefined }) {
     const router = useRouter();
     return <Link href={href}>
-        <li className={classNames('px-3 cursor-pointer rounded-lg', { 'hover:bg-white': router.asPath != href }, { 'font-bold bg-slate-800 text-white': router.asPath == href })}>{text ?? children}</li>
+        <li className={classNames('whitespace-nowrap text-xs md:text-sm lg:text-base px-3 py-1 cursor-pointer rounded-lg', { 'hover:bg-white': router.asPath != href }, { 'font-bold bg-slate-800 text-white': router.asPath == href })}>{text ?? children}</li>
     </Link>;
 }

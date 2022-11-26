@@ -2,7 +2,7 @@
 
 import classNames from "classnames";
 import React from "react";
-import { styles } from "../styles";
+import { styles } from "../lib/styles";
 
 /**
  * @template T

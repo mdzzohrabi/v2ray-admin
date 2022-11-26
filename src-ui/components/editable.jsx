@@ -1,6 +1,5 @@
 import classNames from "classnames";
-import { useEffect } from "react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export function Editable({ value, children, onEdit, className = '', editable = true }) {
     let [isEdit, setEdit] = useState(false);

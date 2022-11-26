@@ -3,17 +3,15 @@
 import classNames from "classnames";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import React, { useContext } from 'react';
-import { useState } from "react";
+import React, { useContext, useState } from 'react';
 import useSWR from 'swr';
 import { AppContext } from "../components/app-context";
 import { Container } from "../components/container";
-import { DateView } from "../components/date-view";
 import { Field, FieldsGroup } from "../components/fields";
 import { Info, Infos } from "../components/info";
-import { usePrompt } from "../hooks";
-import { styles } from "../styles";
-import { serverRequest } from "../util";
+import { usePrompt } from "../lib/hooks";
+import { styles } from "../lib/styles";
+import { serverRequest } from "../lib/util";
 
 export default function UsagesPage() {
 

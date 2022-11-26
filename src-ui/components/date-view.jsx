@@ -1,7 +1,9 @@
+// @ts-check
 import classNames from 'classnames';
 import moment from 'jalali-moment';
 import { useRouter } from 'next/router';
-import { dateDiff } from '../util';
+import React from 'react';
+import { dateDiff } from '../lib/util';
 import { Popup } from './popup';
 
 /**

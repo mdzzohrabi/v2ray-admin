@@ -3,8 +3,8 @@
 import { useRouter } from "next/router";
 import React, { useCallback, useContext, useState } from "react";
 import toast from "react-hot-toast";
-import { styles } from "../styles";
-import { serverRequest } from "../util";
+import { styles } from "../lib/styles";
+import { serverRequest } from "../lib/util";
 import { AppContext } from "./app-context";
 import { Field, FieldsGroup } from "./fields";
 
@@ -14,10 +14,11 @@ import { Field, FieldsGroup } from "./fields";
  *      onRefresh?: Function,
  *      setLoading?: Function,
  *      protocols?: string[],
- *      disabled?: boolean
+ *      disabled?: boolean,
+ *      className?: string
  * }} param0 Parameters
  */
-export function AddUser({ disabled = false, onRefresh, setLoading, protocols }) {
+export function AddUser({ disabled = false, onRefresh, setLoading, protocols, className = '' }) {
 
     const context = useContext(AppContext);
     const router = useRouter();
@@ -54,8 +55,8 @@ export function AddUser({ disabled = false, onRefresh, setLoading, protocols }) 
 
     }, [user, onRefresh]);
 
-    return <form onSubmit={addUser} className="flex flex-row">
-        <FieldsGroup className="py-2" title="Add User" data={user} dataSetter={setUser}>
+    return <form onSubmit={addUser}>
+        <FieldsGroup className={className} title="Add User" containerClassName="items-center" data={user} dataSetter={setUser}>
             <Field label={"Username"} htmlFor="email">
                 <input placeholder="user" pattern={showAll ? undefined : '^user[a-z0-9_-]+'} disabled={disabled} className={styles.input} type="text" id="email"/>
             </Field>

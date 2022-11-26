@@ -1,6 +1,7 @@
 // @ts-check
 /// <reference types="../../types"/>
 import classNames from "classnames";
+import ExportJsonExcel from 'js-export-excel';
 import Head from "next/head";
 import { useRouter } from "next/router";
 import React, { Fragment, useCallback, useContext, useMemo, useState } from 'react';
@@ -12,14 +13,13 @@ import { Container } from "../components/container";
 import { Copy } from "../components/copy";
 import { DateView } from "../components/date-view";
 import { Editable } from "../components/editable";
-import { Field } from "../components/fields";
+import { Field, FieldsGroup } from "../components/fields";
 import { Info, Infos } from "../components/info";
 import { Popup } from "../components/popup";
 import { PopupMenu } from "../components/popup-menu";
-import { usePrompt } from "../hooks";
-import { styles } from "../styles";
-import { DateUtil, serverRequest } from "../util";
-import ExportJsonExcel from 'js-export-excel';
+import { usePrompt } from "../lib/hooks";
+import { styles } from "../lib/styles";
+import { DateUtil, serverRequest } from "../lib/util";
 
 export default function UsersPage() {
 
@@ -229,11 +229,10 @@ export default function UsersPage() {
         <Head>
             <title>Users</title>
         </Head>
-        <AddUser disabled={isLoading} onRefresh={refreshInbounds} protocols={inbounds?.map(i => i.protocol ?? '') ?? []}/>
-        <div className="flex flex-row px-3 py-3 border-t-[1px] overflow-auto">
-            <div className="flex flex-row px-1 text-sm">
-                <label htmlFor="sort" className={"self-center py-1 pr-2 font-semibold"}>Sort</label>
-                <select value={sortColumn} onChange={e => setSort([ e.currentTarget.value, sortAsc ])} id="sort" className="bg-slate-100 rounded-lg px-2 py-1">
+        <AddUser className="py-2 text-xs xl:text-base" disabled={isLoading} onRefresh={refreshInbounds} protocols={inbounds?.map(i => i.protocol ?? '') ?? []}/>
+        <FieldsGroup title="View" className="text-xs xl:text-base border-t-2 py-2" containerClassName="items-center">
+            <Field label="Sort" htmlFor="sort">
+                <select value={sortColumn} onChange={e => setSort([ e.currentTarget.value, sortAsc ])} id="sort" className={styles.input}>
                     <option value="-">-</option>
                     <option value="id">ID</option>
                     <option value="email">Username</option>
@@ -250,38 +249,36 @@ export default function UsersPage() {
                     <option value="firstConnect">First Connect</option>
                     <option value="lastConnect">Last Connect</option>
                 </select>
-                <select value={sortAsc ? "asc" : "desc"} className="bg-slate-100 rounded-lg px-2 py-1 ml-1" onChange={e => setSort([ sortColumn, e.currentTarget.value == "asc" ? true : false ])}>
+            </Field>
+            <Field label="Order" htmlFor="sort-order">
+                <select value={sortAsc ? "asc" : "desc"} id="sort-order" className={styles.input} onChange={e => setSort([ sortColumn, e.currentTarget.value == "asc" ? true : false ])}>
                     <option value={"asc"}>ASC</option>
                     <option value={"desc"}>DESC</option>
                 </select>
-            </div>
-            <div className="flex flex-row px-2 mx-2 text-sm border-r-[1px] border-l-[1px] border-gray-200">
-                <label htmlFor="fullTime" className={"py-1 pr-2 self-center font-semibold"}>Full Time</label>                
-                <input type={"checkbox"} id="fullTime" onChange={e => setFullTime(e.currentTarget.checked)} checked={fullTime}/>
-            </div>
-            <div className="flex flex-row pr-2 text-sm border-r-[1px] border-gray-200">
-                <label htmlFor="showId" className={"py-1 pr-2 self-center font-semibold"}>Show ID</label>                
-                <input type={"checkbox"} id="showId" onChange={e => setShowId(e.currentTarget.checked)} checked={showId}/>
-            </div>
-            <Field label="Precision Date" className="text-sm border-r-[1px] border-r-gray-200 pr-2 mr-2 pl-2" horizontal htmlFor="precisionDate" data={precision} dataSetter={setPrecision}>
-                <input type="checkbox" id="precisionDate"/>
             </Field>
-            <div className="flex flex-row px-1 text-sm">
-                <label htmlFor="filter" className={"py-1 pr-2 self-center font-semibold"}>Filter</label>                
-                <input type={"text"} id="filter" className="border-gray-500 border-solid border-b-0 bg-slate-100 rounded-md invalid:border-red-500 invalid:ring-red-600 px-2 py-1 focus:outline-blue-500" onChange={e => setFilter(e.currentTarget.value)} value={filter}/>
-            </div>
-            <div className="flex flex-row px-1 text-sm">
-                <label htmlFor="statusFilter" className={"self-center py-1 pr-2 pl-2 font-semibold"}>Status</label>
+            <Field label="Filter" htmlFor="filter">
+                <input type={"text"} id="filter" className={styles.input} onChange={e => setFilter(e.currentTarget.value)} value={filter}/>
+            </Field>
+            <Field label="Status" htmlFor="status">
                 <select value={statusFilter} onChange={e => setStatusFilter(e.currentTarget.value)} id="statusFilter" className="bg-slate-100 rounded-lg px-2 py-1">
                     <option value="-">-</option>
                     {Object.keys(statusFilters).map((x, index) => <option key={index} value={x}>{x}</option>)}
                 </select>
+            </Field>
+            <Field htmlFor="fullTime" label="Full Time">
+                <input type={"checkbox"} id="fullTime" onChange={e => setFullTime(e.currentTarget.checked)} checked={fullTime}/>
+            </Field>
+            <Field label="Show ID" htmlFor="showId">
+                <input type={"checkbox"} id="showId" onChange={e => setShowId(e.currentTarget.checked)} checked={showId}/>
+            </Field>
+            <Field label="Precision Date" htmlFor="precisionDate" data={precision} dataSetter={setPrecision}>
+                <input type="checkbox" id="precisionDate"/>
+            </Field>
+            <div className="flex flex-row">
+                {showAll ? <button className={styles.button} onClick={() => refreshInbounds()}>Reload</button> : null }
+                <button className={styles.button} onClick={exportExcel}>Export Excel</button>
             </div>
-            {showAll?<button className={styles.button} onClick={() => refreshInbounds()}>
-                Reload
-            </button>:null}
-            <button className={styles.button} onClick={exportExcel}>Export Excel</button>
-        </div>
+        </FieldsGroup>
         {isLoading ? <div className="absolute bg-slate-900 text-white rounded-lg px-3 py-1 bottom-3 left-3">
             Loading ...
         </div> : null }

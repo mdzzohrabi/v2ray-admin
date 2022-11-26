@@ -1,9 +1,9 @@
 // @ts-check
 
-import React, { useState, useCallback } from "react";
-import { styles } from "../../styles";
+import React, { useCallback, useState } from "react";
+import { styles } from "../../lib/styles";
 import { Dialog } from "../dialog";
-import { FieldsGroup, Field } from "../fields";
+import { Field, FieldsGroup } from "../fields";
 
 /**
  * 

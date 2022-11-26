@@ -1,4 +1,4 @@
-import classNames from "classnames"
+import classNames from "classnames";
 
 export function Info({ label, children, className = '' }) {
     return <div className={classNames("flex flex-row border-b-[1px] border-b-gray-200 last:border-b-0", className)}>

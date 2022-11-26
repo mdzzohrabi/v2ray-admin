@@ -2,8 +2,8 @@ import classNames from "classnames";
 import React, { useEffect } from "react";
 import { useRef } from "react";
 import { useState } from "react"
-import { useOutsideAlerter } from "../hooks";
-import { styles } from "../styles";
+import { useOutsideAlerter } from "../lib/hooks";
+import { styles } from "../lib/styles";
 
 
 /**
