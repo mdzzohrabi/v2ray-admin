@@ -38,12 +38,18 @@ interface V2RayConfigInboundStreamSettings {
 
 interface V2RayConfigInbound {
     listen?: string
-    port?: number
+    port?: number | string
     protocol?: string
     settings?: V2RayConfigInboundSettings
     streamSettings?: V2RayConfigInboundStreamSettings
     tag?: string,
-    sniffing?: any
+    sniffing?: V2RayConfigInboundSiffingObject
+    allocate?: any
+}
+
+interface V2RayConfigInboundSiffingObject {
+    enabled?: boolean
+    destOverride?: ('http' | 'tls')[]
 }
 
 interface V2RayConfigOutbound {
