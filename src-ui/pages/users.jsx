@@ -31,7 +31,9 @@ export default function UsersPage() {
     let [precision, setPrecision] = useState(true);
     let [showId, setShowId] = useState(false);
     let [filter, setFilter] = useState('');
-    let [statusFilter, setStatusFilter] = useState('');
+    /** @type {string[]} */
+    let initFilters = [];
+    let [statusFilter, setStatusFilter] = useState(initFilters);
 
     /**
      * @type {import("swr").SWRResponse<V2RayConfigInbound[]>}
@@ -260,7 +262,10 @@ export default function UsersPage() {
                 <input type={"text"} id="filter" className={styles.input} onChange={e => setFilter(e.currentTarget.value)} value={filter}/>
             </Field>
             <Field label="Status" htmlFor="status">
-                <select value={statusFilter} onChange={e => setStatusFilter(e.currentTarget.value)} id="statusFilter" className="bg-slate-100 rounded-lg px-2 py-1">
+                <div className="flex gap-1 mb-1">
+                    {statusFilter?.map(filter => <span onClick={() => setStatusFilter(statusFilter.filter(x => x != filter))} className={classNames("whitespace-nowrap bg-slate-200 px-3 py-1 rounded-3xl cursor-pointer hover:bg-slate-700 hover:text-white")}>{filter}</span> )}
+                </div>
+                <select value={"-"} onChange={e => setStatusFilter([...statusFilter, e.currentTarget.value])} id="statusFilter" className="bg-slate-100 rounded-lg px-2 py-1">
                     <option value="-">-</option>
                     {Object.keys(statusFilters).map((x, index) => <option key={index} value={x}>{x}</option>)}
                 </select>
@@ -303,7 +308,7 @@ export default function UsersPage() {
                     })
                     .filter(u => showAll || !u.private)
                     .filter(u => !filter || (u.id == filter || u.fullName?.includes(filter) || u.email?.includes(filter)))
-                    .filter(u => statusFilters[statusFilter] ? statusFilters[statusFilter](u) : true)
+                    .filter(u => statusFilter.length == 0 || statusFilter.map(filter => statusFilters[filter]).every(filter => filter(u)))
                     .sort((a, b) => !sortColumn ? 0 : a[sortColumn] == b[sortColumn] ? 0 : a[sortColumn] < b[sortColumn] ? (sortAsc ? -1 : 1) : (sortAsc ? 1 : -1));
 
                     return <Fragment key={"inbound-" + i.protocol}>

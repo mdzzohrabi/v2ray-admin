@@ -83,7 +83,7 @@ export default function TransactionsPage() {
         </Head>
         {showAll ?
         <form onSubmit={addTransaction}>
-            <FieldsGroup title="Add Transaction" className="mt-2 border-b-[1px] pb-3" horizontal={false} data={newTransaction} dataSetter={setNewTransaction}>
+            <FieldsGroup title="Add Transaction" className="mt-2 border-b-[1px] pb-3 text-xs md:text-sm lg:text-base" horizontal={false} data={newTransaction} dataSetter={setNewTransaction}>
                 <Field label={"User"} htmlFor="user">
                     <select className={styles.input} id="user">
                         <option value="">-</option>
@@ -102,20 +102,20 @@ export default function TransactionsPage() {
             </FieldsGroup>
         </form> : null }
         <div className="flex flex-col lg:flex-row">
-            <FieldsGroup title="Billing" horizontal className="border-b-[1px] lg:border-b-0">
-                <Field label="UnPaid" className="rounded-lg bg-red-100 px-3 items-center align-middle">
+            <FieldsGroup title="Billing" horizontal className="border-b-[1px] lg:border-b-0 text-xs md:text-sm lg:text-base">
+                <Field label="UnPaid" className="rounded-lg bg-red-100 px-4 items-center align-middle whitespace-nowrap">
                     <Price value={transactions?.filter(x => (Number(x.amount) ?? 0) > 0).reduce((result, t) => result + (Number(t.amount) || 0), 0) ?? 0}/>
                 </Field>
                 <span className="text-lg font-bold px-2">-</span>
-                <Field label="Paid" className="rounded-lg bg-green-100 px-3 items-center align-middle">
+                <Field label="Paid" className="rounded-lg bg-green-100 px-4 items-center align-middle whitespace-nowrap">
                     <Price value={transactions?.filter(x => (Number(x.amount) ?? 0) < 0).reduce((result, t) => result + (Math.abs(Number(t.amount)) || 0), 0) ?? 0}/>
                 </Field>
                 <span className="text-lg font-bold px-2">=</span>
-                <Field label="Remain" className="rounded-lg bg-slate-100 px-3 items-center align-middle">
+                <Field label="Remain" className="rounded-lg bg-slate-100 px-4 items-center align-middle whitespace-nowrap">
                     <Price value={transactions?.reduce((result, t) => result + (Number(t.amount) || 0), 0) ?? 0}/>
                 </Field>
             </FieldsGroup>
-            <FieldsGroup className="my-2" data={view} dataSetter={setView} title="View" horizontal>
+            <FieldsGroup className="my-2 text-xs md:text-sm lg:text-base" data={view} dataSetter={setView} title="View" horizontal>
                 <Field htmlFor="fullTime" label="Full Time">
                     <input type={"checkbox"} id="fullTime"/>
                 </Field>
@@ -142,43 +142,6 @@ export default function TransactionsPage() {
                 </Field>
             </FieldsGroup>
         </div>
-
-        {/* <div className="flex flex-row px-3 py-3 border-t-[1px] overflow-auto">
-            <div className="flex flex-row px-1 text-sm">
-                <label htmlFor="sort" className={"self-center py-1 pr-2 font-semibold"}>Sort</label>
-                <select value={sortColumn} onChange={e => setSort([ e.currentTarget.value, sortAsc ])} id="sort" className="bg-slate-100 rounded-lg px-2 py-1">
-                    <option value="-">-</option>
-                    <option value="id">ID</option>
-                    <option value="email">Username</option>
-                    <option value="fullName">FullName</option>
-                    <option value="mobile">Mobile</option>
-                    <option value="emailAddress">Email</option>
-                    <option value="maxConnections">Max Connections</option>
-                    <option value="expireDays">Expire Days</option>
-                    <option value="createDate">Create Date</option>
-                    <option value="billingStartDate">Billing Start Date</option>
-                    <option value="deActiveDate">De-active Date</option>
-                    <option value="deActiveReason">De-active Reason</option>
-                    <option value="firstConnect">First Connect</option>
-                    <option value="lastConnect">Last Connect</option>
-                </select>
-                <select value={sortAsc ? "asc" : "desc"} className="bg-slate-100 rounded-lg px-2 py-1 ml-1" onChange={e => setSort([ sortColumn, e.currentTarget.value == "asc" ? true : false ])}>
-                    <option value={"asc"}>ASC</option>
-                    <option value={"desc"}>DESC</option>
-                </select>
-            </div>
-            <div className="flex flex-row px-1 text-sm">
-                <label htmlFor="filter" className={"py-1 pr-2 self-center font-semibold"}>Filter</label>                
-                <input type={"text"} id="filter" className="border-gray-500 border-solid border-b-0 bg-slate-100 rounded-md invalid:border-red-500 invalid:ring-red-600 px-2 py-1 focus:outline-blue-500" onChange={e => setFilter(e.currentTarget.value)} value={filter}/>
-            </div>
-            <div className="flex flex-row px-1 text-sm">
-                <label htmlFor="statusFilter" className={"self-center py-1 pr-2 pl-2 font-semibold"}>Status</label>
-                <select value={statusFilter} onChange={e => setStatusFilter(e.currentTarget.value)} id="statusFilter" className="bg-slate-100 rounded-lg px-2 py-1">
-                    <option value="-">-</option>
-                    {Object.keys(statusFilters).map((x, index) => <option key={index} value={x}>{x}</option>)}
-                </select>
-            </div>
-        </div> */}
         <div className="">
         <table className="w-full text-sm">
             <thead className="sticky top-0 xl:top-12 bg-white shadow-md z-40">
