@@ -1,7 +1,7 @@
 // @ts-check
 
 import classNames from "classnames";
-import React from "react";
+import React, { Fragment } from "react";
 import { styles } from "../lib/styles";
 
 /**
@@ -43,7 +43,7 @@ export function Table({ columns, rows, cells, loading, rowContainer }) {
                     <td className={classNames(styles.td)}>{index}</td>
                     {cells?.call(this, row)?.map((cell, index) => <td key={index} className={classNames(styles.td)}>{cell}</td>)}
                 </tr>;
-                if (rowContainer) return rowContainer(row, elRow);
+                if (rowContainer) return <Fragment key={index}>{rowContainer(row, elRow)}</Fragment>;
                 return elRow;
             })}
         </tbody>

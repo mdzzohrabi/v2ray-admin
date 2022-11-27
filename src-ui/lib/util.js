@@ -110,6 +110,7 @@ export const DateUtil = {
 export function equals(a, b) {
     if (a===b) return true;
     if (typeof a != typeof b) return false;
+    return JSON.stringify(a) == JSON.stringify(b);
     if (Array.isArray(a)) {
         return a.every((v, i) => equals(v, b[i]));
     }
@@ -148,9 +149,10 @@ export function objectDiff(base, modified) {
 
 /**
  * @typedef {{
- *      action: 'set' | 'delete',
+ *      action: 'set' | 'delete' | 'add',
  *      value?: any,
- *      path?: string[]
+ *      path?: string[],
+ *      prevValue?: any
  * }} Change
  */
 
@@ -168,15 +170,50 @@ export function getChanges(base, modified, path = []) {
 
     // Types are different
     if (typeA != typeB) {
-        changes.push({ action: 'set', value: modified, path });
+        changes.push({ action: 'set', value: modified, path, prevValue: base });
         return changes;
     }
     // Array
-    else if (Array.isArray(base)) {
+    else if (Array.isArray(base) && Array.isArray(modified)) {
+        let len = Math.max(base.length, modified.length);
+        // console.log(base, modified, path, len);
+        // for (let i = 0; i < len; i++) {
+        //     let bValue = base[i];
+        //     let mValue = modified[i];
+        //     // Equals
+        //     if (equals(bValue, mValue)) {
+        //         console.log('equals');
+        //         continue;
+        //         // Add
+        //     } else if (bValue == undefined) {
+        //         changes.push({ action: 'add', path: [...path], value: mValue });
+        //     }
+        //     // Removed
+        //     else if (!modified.find(x => equals(x, bValue))) {
+        //         console.log('removed');
+        //         changes.push({ action: 'delete', path: [...path], value: bValue });
+        //         // Add
+        //         if (mValue && !base.find(x => equals(x, mValue))) {
+        //             changes.push({ action: 'add', path: [...path], value: mValue });
+        //         }
+        //     }
+        //     else {
+        //         console.log('changes');
+        //         let nodeChanges = getChanges(bValue, mValue, [ ...path, i ]);
+        //         nodeChanges.forEach(change => changes.push(change));
+        //         console.log(nodeChanges);
+        //     }
+        // }
         for (let i in modified) {
             let nodePath = [...path, i];
             let nodeChanges = getChanges(base[i], modified[i], nodePath);
             nodeChanges.forEach(change => changes.push(change));
+        }
+        for (let i in base) {
+            let nodePath = [...path, i];
+            let value = base[i];
+            if (!modified.find(x => equals(x, value)))
+                changes.push({ action: 'delete', path: [...path], value });
         }
         return changes;
     }
@@ -200,7 +237,7 @@ export function getChanges(base, modified, path = []) {
 
     // Modified
     if (!equals(base, modified)) {
-        changes.push({ action: 'set', value: modified, path });
+        changes.push({ action: 'set', value: modified, path, prevValue: base });
         return changes;
     }
 
@@ -212,16 +249,49 @@ export function getChanges(base, modified, path = []) {
  * @param {any} value Value
  * @param {Change[]} changes Changes
  */
-export function applyChanges(value, changes) {
+ function applyChanges(value, changes) {
     let result = deepCopy(value);
     changes?.forEach(change => {
+        let path = change.path?.map(x => typeof x == 'string' ? `"${x}"` : x).join('][');
+        let parentPath = change.path?.slice(0, change.path.length - 1).map(x => typeof x == 'string' ? `"${x}"` : x).join('][');
         switch (change.action) {
             case 'set': {
                 if (change.path?.length == 0)
                     result = change.value;
-                else
-                    eval(`result[${change.path?.map(x => typeof x == 'string' ? `"${x}"` : x).join('][')}] = change.value;`);
+                else {
+                    let parentNode = [];
+                    eval(`parentNode = result[${parentPath}]`);
+                    if (Array.isArray(parentNode)) {
+                        if (change.prevValue) {
+                            let index = parentNode.findIndex(x => equals(x, change.prevValue));
+                            if (index >= 0)
+                                parentNode[index] = change.value;
+                            // else
+                            //     parentNode.push(change.value);
+                        }
+                        else {
+                            parentNode.push(change.value);
+                        }
+                    }
+                    else {
+                        eval(`result[${path}] = change.value;`);
+                    }
+                }
                 break;
+            }
+            case 'delete': {
+                if (change.value) {
+                    let arr = [];
+                    eval(`arr = result[${path}];`);
+                    eval(`result[${path}] = arr.filter(x => !equals(x, change.value));`);
+                }
+                else {
+                    eval(`delete result[${path}];`);
+                }
+                break;
+            }
+            case 'add': {
+                eval(`result[${path}].push(change.value);`);
             }
         }
     });

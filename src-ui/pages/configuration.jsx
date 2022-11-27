@@ -10,14 +10,17 @@ import toast from "react-hot-toast";
 import useSWR from 'swr';
 import { AppContext } from "../components/app-context";
 import { Container } from "../components/container";
-import { useDialog } from "../components/dialog";
+import { Dialog, useDialog } from "../components/dialog";
 import { InboundEditor } from "../components/editor/inbound-editor";
 import { OutboundEditor } from "../components/editor/outbound-editor";
+import { RoutingBalancerEditor } from "../components/editor/routing-balancer-editor";
 import { RoutingRuleEditor } from "../components/editor/routing-rule-editor";
 import { Collection, Field, FieldsGroup } from "../components/fields";
 import { Info, Infos } from "../components/info";
+import { JsonView } from "../components/json";
 import { PopupMenu } from "../components/popup-menu";
 import { Table } from "../components/table";
+import { Tabs } from "../components/tabs";
 import { styles } from "../lib/styles";
 import { deepCopy, getChanges, serverRequest } from "../lib/util";
 
@@ -100,6 +103,15 @@ export default function ConfigurationPage() {
         /** @type {Function?} */
         onClose = null
     ) => <RoutingRuleEditor rule={rule} onEdit={onEdit} dissmis={onClose}/>);
+
+    let routingBalancerDialog = useDialog((
+        /** @type {V2RayConfigRoutingBalancer} */
+        balancer,
+        /** @type {Function} */
+        onEdit,
+        /** @type {Function?} */
+        onClose = null
+    ) => <RoutingBalancerEditor balancer={balancer} dissmis={onClose} onEdit={onEdit}/>);
 
     let Inbounds = <div id="config-inbounds" className="rounded-lg border-2 flex flex-col flex-1">
         <Collection data={config?.inbounds ?? []} dataSetter={inbounds => setConfig({ ...config, inbounds })}>{inbounds => <>
@@ -205,9 +217,9 @@ export default function ConfigurationPage() {
     </div>}
     </Collection>;
 
-    let Routing = <Collection data={config?.routing?.rules ?? []} dataSetter={rules => setConfig({ ...config, routing: { ...config?.routing, rules } })}>{rules => 
+    let RoutingRules = <Collection data={config?.routing?.rules ?? []} dataSetter={rules => setConfig({ ...config, routing: { ...config?.routing, rules } })}>{rules => 
         <div id="config-routing" className="rounded-lg border-2 flex flex-col flex-1">
-            <FieldsGroup title={"Routing"} className="text-xs" horizontal data={config?.routing} dataSetter={routing => setConfig({ ...config, routing })}>
+            <FieldsGroup title={"Rules"} className="text-xs" horizontal data={config?.routing} dataSetter={routing => setConfig({ ...config, routing })}>
                 <div className="flex flex-row flex-1 pr-2">
                     <div className="flex-1 flex-row flex">
                         <Field label="Domain Strategy" htmlFor="domainStrategy">
@@ -232,8 +244,17 @@ export default function ConfigurationPage() {
             <Table
                 rows={rules.items}
                 columns={['Options', 'Tags', 'Filters', 'Action']}
+                rowContainer={(row, children) => {
+                    return <>
+                        {row.description ? <tr>
+                            <td></td>
+                            <td colSpan={4} className={"px-3 py-2"}>{row.description}</td>
+                        </tr> : null }
+                        {children}
+                    </>
+                }}
                 cells={rule => [
-                    <Infos>
+                   <Infos>
                         <Info label={"Type"}>{rule.type ?? NA}</Info>
                         <Info label={"Domain Matcher"}>{rule.domainMatcher ?? NA}</Info>
                         <Info label={"Network"}>{rule.network ?? NA}</Info>
@@ -246,12 +267,13 @@ export default function ConfigurationPage() {
                         <Info label={"Balancer"}>{rule.balancerTag ?? NA}</Info>
                     </Infos>,
                     <Infos>
+                        <Info label={"Port"}>{rule.port ?? NA}</Info>
                         <Info label={"IPs"}>{rule.ip ? Array.isArray(rule.ip) && rule.ip?.length > 1 ? `${rule.ip.length} IPs` : rule.ip : NA}</Info>
-                        <Info label={"Domains"}>{rule.domains ? Array.isArray(rule.domains) && rule.domains?.length > 1 ? `${rule.domains.length} domains` : rule.domains : NA}</Info>
+                        <Info label={"Domains"}>{rule.domain ? Array.isArray(rule.domain) && rule.domain?.length > 1 ? `${rule.domain.length} domains` : rule.domain : NA}</Info>
                         <Info label={"Users"}>{rule.user ? Array.isArray(rule.user) && rule.user?.length > 1 ? `${rule.user.length} users` : rule.user : NA}</Info>
                     </Infos>,
                     <PopupMenu>
-                        <PopupMenu.Item action={() => routingRuleDialog.show(rule, rules.deleteItem)}>Edit</PopupMenu.Item>
+                        <PopupMenu.Item action={() => routingRuleDialog.show(rule, rules.updateItem)}>Edit</PopupMenu.Item>
                         <PopupMenu.Item action={() => rules.deleteItem(rule)}>Delete</PopupMenu.Item>
                     </PopupMenu>
                 ]}
@@ -259,6 +281,33 @@ export default function ConfigurationPage() {
             
         </div>}
     </Collection>;
+
+    let RoutingBalancers = <Collection data={config?.routing?.balancers ?? []} dataSetter={balancers => setConfig({ ...config, routing: { ...config?.routing, balancers } })}>{balancers => 
+        <div id="config-routing" className="rounded-lg border-2 flex flex-col flex-1">
+            <FieldsGroup title={"Balancers"} className="text-xs" horizontal data={config?.routing} dataSetter={routing => setConfig({ ...config, routing })}>
+                <div className="flex flex-row flex-1 pr-2">
+                    <div className="flex-1 flex-row flex">
+                        {/* Fields */}
+                    </div>
+                    <button onClick={() => routingBalancerDialog.show({}, balancers.addItem)} className={classNames(styles.addButton, "float-right")}>+ Add Balancer</button>
+                </div>
+            </FieldsGroup>
+            <Table
+                rows={balancers.items}
+                columns={['Tag', 'Selectors', 'Action']}
+                cells={balancer => [
+                    balancer.tag,
+                    balancer.selector?.join(', '),
+                    <PopupMenu>
+                        <PopupMenu.Item action={() => routingBalancerDialog.show(balancer, balancers.updateItem)}>Edit</PopupMenu.Item>
+                        <PopupMenu.Item action={() => balancers.deleteItem(balancer)}>Delete</PopupMenu.Item>
+                    </PopupMenu>
+                ]}
+                />
+            
+        </div>}
+    </Collection>;
+
 
     return <Container>
         <Head>
@@ -273,10 +322,20 @@ export default function ConfigurationPage() {
             <button type={"button"} onClick={() => saveConfig()} className={styles.buttonPrimary}>Save Configuration</button>
         </FieldsGroup>
         <div className="grid grid-cols-1 p-3 xl:grid-cols-2 gap-3">
-            {Log}
-            {Inbounds}
-            {Outbounds}
-            {Routing}
+            <Tabs>
+                <Tabs.Tab title="Log">{Log}</Tabs.Tab>
+                <Tabs.Tab title="Inbounds">{Inbounds}</Tabs.Tab>
+                <Tabs.Tab title="Outbounds">{Outbounds}</Tabs.Tab>
+                <Tabs.Tab title="Routing">
+                    <Tabs>
+                        <Tabs.Tab title="Rules">{RoutingRules}</Tabs.Tab>
+                        <Tabs.Tab title="Balancer">{RoutingBalancers}</Tabs.Tab>
+                    </Tabs>
+                </Tabs.Tab>
+                <Tabs.Tab title="Changes">
+                    <JsonView value={getChanges(originalConfig, config)}/>
+                </Tabs.Tab>
+            </Tabs>
         </div>
     </Container>
 }

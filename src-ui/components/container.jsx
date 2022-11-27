@@ -16,7 +16,7 @@ export function Container({ children }) {
             <MenuLink href={"/server_config" + (isFull ? '?all=1' : '')} text={"Server Config"}/>
             <MenuLink href={"/logout"}>Logout</MenuLink>
         </ul>
-        <div className="bg-white block shadow-md mt-2 min-w-fit">
+        <div className="bg-white block shadow-md mt-2 min-w-fit text-xs md:text-sm lg:text-base">
             {children}
         </div>
     </div>

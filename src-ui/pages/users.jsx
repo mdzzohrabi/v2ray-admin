@@ -263,7 +263,7 @@ export default function UsersPage() {
             </Field>
             <Field label="Status" htmlFor="status">
                 <div className="flex gap-1 mb-1">
-                    {statusFilter?.map(filter => <span onClick={() => setStatusFilter(statusFilter.filter(x => x != filter))} className={classNames("whitespace-nowrap bg-slate-200 px-3 py-1 rounded-3xl cursor-pointer hover:bg-slate-700 hover:text-white")}>{filter}</span> )}
+                    {statusFilter?.map((filter, index) => <span key={index} onClick={() => setStatusFilter(statusFilter.filter(x => x != filter))} className={classNames("whitespace-nowrap bg-slate-200 px-3 py-1 rounded-3xl cursor-pointer hover:bg-slate-700 hover:text-white")}>{filter}</span> )}
                 </div>
                 <select value={"-"} onChange={e => setStatusFilter([...statusFilter, e.currentTarget.value])} id="statusFilter" className="bg-slate-100 rounded-lg px-2 py-1">
                     <option value="-">-</option>

@@ -25,6 +25,11 @@ export function RoutingRuleEditor({ rule: ruleProp, dissmis, onEdit }) {
         <FieldsGroup data={rule} dataSetter={setRule}>
             <Tabs>
                 <Tabs.Tab title="Rule">
+                    <div className="flex-row flex-1">
+                        <Field htmlFor="description" label="Description">
+                            <input type="text" id="description" className={classNames(styles.input, "flex-1")}/>
+                        </Field>
+                    </div>
                     <div className="flex flex-row">
                         <Field htmlFor="tag" label="Tag">
                             <input type="text" id="tag" className={styles.input}/>
@@ -64,7 +69,7 @@ export function RoutingRuleEditor({ rule: ruleProp, dissmis, onEdit }) {
                             <input type={"text"} id="protocol" placeholder="vmess" className={styles.input}/>
                         </Field>
                         <Field label="Attributes" htmlFor="attrs" className="flex-1">
-                            <input type="text" id="attrs" className={styles.input}/>
+                            <input type="text" id="attrs" placeholder="attrs[':method'] == 'GET'" className={styles.input}/>
                         </Field>
                     </div>
                     <div className="flex flex-row pt-2">
@@ -126,7 +131,7 @@ export function RoutingRuleEditor({ rule: ruleProp, dissmis, onEdit }) {
                     </Collection>
                 </Tabs.Tab>
                 <Tabs.Tab title="Domains">
-                    <Collection data={rule.domains ?? []} dataSetter={domains => setRule({ ...rule, domains })}>
+                    <Collection data={rule.domain ?? []} dataSetter={domains => setRule({ ...rule, domain: domains })}>
                     {domains => <>
                         <div className="flex flex-row items-center px-2">
                             <label className={classNames(styles.label, "flex-1")}>Domains</label>

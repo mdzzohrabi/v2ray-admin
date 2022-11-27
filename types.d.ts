@@ -99,7 +99,12 @@ interface V2RayConfigRouting {
     domainStrategy?: "AsIs" | "IPIfNonMatch" | "IPOnDemand",
     domainMatcher?: "linear" | "mph"
     rules?: V2RayConfigRoutingRule[]
-    balancers?: any
+    balancers?: V2RayConfigRoutingBalancer[]
+}
+
+interface V2RayConfigRoutingBalancer {
+    tag?: string
+    selector?: string[]
 }
 
 interface V2RayConfigApi {
@@ -129,8 +134,9 @@ interface V2RayConfigDnsServer {
 interface V2RayConfigRoutingRule {
     domainMatcher?: "linear" | "mph"
     type?: "field"
-    domains?: string[]
+    domain?: string[]
     ip?: string[]
+    source?: string
     port?: string
     sourcePort?: string
     network?: "tcp" | "udp"
@@ -140,6 +146,7 @@ interface V2RayConfigRoutingRule {
     attrs?: string
     outboundTag?: string
     balancerTag?: string
+    description?: string
 }
 
 interface Transaction {
@@ -159,7 +166,8 @@ interface V2RayDb {
 }
 
 interface Change {
-    action: 'set' | 'delete',
+    action: 'set' | 'delete' | 'add',
     value?: any,
     path?: string[]
+    prevValue?: any
 }

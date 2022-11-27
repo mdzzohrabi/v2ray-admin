@@ -503,28 +503,69 @@ const DateUtil = {
 
 /**
  * 
+ * @param {any} a 
+ * @param {any} b 
+ */
+function equals(a, b) {
+    if (a===b) return true;
+    if (typeof a != typeof b) return false;
+    return JSON.stringify(a) == JSON.stringify(b);
+}
+
+/**
+ * 
  * @param {any} value Value
  * @param {Change[]} changes Changes
  */
- function applyChanges(value, changes) {
+function applyChanges(value, changes) {
     let result = deepCopy(value);
     changes?.forEach(change => {
+        let path = change.path?.map(x => typeof x == 'string' ? `"${x}"` : x).join('][');
+        let parentPath = change.path?.slice(0, change.path.length - 1).map(x => typeof x == 'string' ? `"${x}"` : x).join('][');
         switch (change.action) {
             case 'set': {
                 if (change.path?.length == 0)
                     result = change.value;
-                else
-                    eval(`result[${change.path?.map(x => typeof x == 'string' ? `"${x}"` : x).join('][')}] = change.value;`);
+                else {
+                    let parentNode = [];
+                    eval(`parentNode = result[${parentPath}]`);
+                    if (Array.isArray(parentNode)) {
+                        if (change.prevValue) {
+                            let index = parentNode.findIndex(x => equals(x, change.prevValue));
+                            if (index >= 0)
+                                parentNode[index] = change.value;
+                            // else
+                            //     parentNode.push(change.value);
+                        }
+                        else {
+                            parentNode.push(change.value);
+                        }
+                    }
+                    else {
+                        eval(`result[${path}] = change.value;`);
+                    }
+                }
                 break;
             }
             case 'delete': {
-                eval(`delete result[${change.path?.map(x => typeof x == 'string' ? `"${x}"` : x).join('][')}];`);
+                if (change.value) {
+                    let arr = [];
+                    eval(`arr = result[${path}];`);
+                    eval(`result[${path}] = arr.filter(x => !equals(x, change.value));`);
+                }
+                else {
+                    eval(`delete result[${path}];`);
+                }
                 break;
+            }
+            case 'add': {
+                eval(`result[${path}].push(change.value);`);
             }
         }
     });
     return result;
 }
+
 
 /**
  * Deep copy of a value
