@@ -111,18 +111,6 @@ export function equals(a, b) {
     if (a===b) return true;
     if (typeof a != typeof b) return false;
     return JSON.stringify(a) == JSON.stringify(b);
-    if (Array.isArray(a)) {
-        return a.every((v, i) => equals(v, b[i]));
-    }
-    if (typeof a == 'object') {
-        let aKeys = Object.keys(a);
-        let bKeys = Object.keys(b);
-        if (aKeys.length != bKeys.length) return false;
-        if (aKeys.filter(a => bKeys.includes(a) == false).length > 0) return false;
-        if (bKeys.filter(b => aKeys.includes(b) == false).length > 0) return false;
-        return aKeys.every(k => equals(a[k], b[k]));
-    }
-    return a == b;
 }
 
 /**
@@ -175,35 +163,6 @@ export function getChanges(base, modified, path = []) {
     }
     // Array
     else if (Array.isArray(base) && Array.isArray(modified)) {
-        let len = Math.max(base.length, modified.length);
-        // console.log(base, modified, path, len);
-        // for (let i = 0; i < len; i++) {
-        //     let bValue = base[i];
-        //     let mValue = modified[i];
-        //     // Equals
-        //     if (equals(bValue, mValue)) {
-        //         console.log('equals');
-        //         continue;
-        //         // Add
-        //     } else if (bValue == undefined) {
-        //         changes.push({ action: 'add', path: [...path], value: mValue });
-        //     }
-        //     // Removed
-        //     else if (!modified.find(x => equals(x, bValue))) {
-        //         console.log('removed');
-        //         changes.push({ action: 'delete', path: [...path], value: bValue });
-        //         // Add
-        //         if (mValue && !base.find(x => equals(x, mValue))) {
-        //             changes.push({ action: 'add', path: [...path], value: mValue });
-        //         }
-        //     }
-        //     else {
-        //         console.log('changes');
-        //         let nodeChanges = getChanges(bValue, mValue, [ ...path, i ]);
-        //         nodeChanges.forEach(change => changes.push(change));
-        //         console.log(nodeChanges);
-        //     }
-        // }
         for (let i in modified) {
             let nodePath = [...path, i];
             let nodeChanges = getChanges(base[i], modified[i], nodePath);
@@ -307,4 +266,16 @@ export function getChanges(base, modified, path = []) {
 export function deepCopy(value) {
     if (typeof value != 'object') return value;
     return JSON.parse(JSON.stringify(value));
+}
+
+/**
+ * Copy object without keys
+ * @template T
+ * @param {T} obj Object
+ * @param  {...(keyof T)} keys Keys to remove
+ */
+export function withoutKey(obj, ...keys) {
+    let clone = { ...obj };
+    keys.forEach(k => delete clone[k]);
+    return clone;
 }

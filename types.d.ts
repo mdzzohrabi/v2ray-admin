@@ -6,6 +6,27 @@ interface V2RayConfig {
     routing?: V2RayConfigRouting,
     inbounds?: V2RayConfigInbound[],
     outbounds?: V2RayConfigOutbound[]
+    policy?: V2RayConfigPolicy
+}
+
+interface V2RayConfigPolicy {
+    levels?: { [userLevel: string]: V2RayConfigPolicyLevel }
+    system?: V2RayConfigPolicySystem
+}
+
+interface V2RayConfigPolicySystem {
+    statsInboundUplink?: boolean,
+    statsInboundDownlink?: boolean
+}
+
+interface V2RayConfigPolicyLevel {
+    handshake?: number,
+    connIdle?: number,
+    uplinkOnly?: number,
+    downlinkOnly?: number,
+    statsUserUplink?: boolean,
+    statsUserDownlink?: boolean,
+    bufferSize?: number
 }
 
 interface V2RayConfigInboundClient {
@@ -29,6 +50,8 @@ interface V2RayConfigInboundClient {
 
 interface V2RayConfigInboundSettings {
     clients?: V2RayConfigInboundClient[]
+    accounts?: {user?: string, pass?: string}[]
+    users?: {email?: string, level?: number, secret?: string}[]
 }
 
 interface V2RayConfigInboundStreamSettings {
@@ -64,6 +87,16 @@ interface V2RayConfigOutbound {
 
 interface V2RayConfigOutboundSettings {
     servers?: V2RayConfigOutboundSettingsServer[]
+    vnext?: V2RayConfigOutboundSettingsServerVNext[]
+    redirect?: string
+    // MTProto
+    users?: { secret?: string }[]
+}
+
+interface V2RayConfigOutboundSettingsServerVNext {
+    address?: string
+    port?: number
+    users?: { id?: string }[]
 }
 
 interface V2RayConfigOutboundSettingsServer {
@@ -109,7 +142,7 @@ interface V2RayConfigRoutingBalancer {
 
 interface V2RayConfigApi {
     tag?: string
-    services: "HandlerService" | "LoggerService" | "StatsService" | "ObservatoryService"
+    services: ("HandlerService" | "LoggerService" | "StatsService" | "ObservatoryService")[]
 }
 
 

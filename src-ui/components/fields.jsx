@@ -2,7 +2,7 @@
 
 import classNames from "classnames";
 import React, { createContext, createElement, useCallback, useContext } from "react";
-import { useArrayDelete, useArrayInsert, useArrayUpdate } from "../lib/hooks";
+import { useArrayDelete, useArrayInsert, useArrayUpdate, useObjectCRUD } from "../lib/hooks";
 import { styles } from "../lib/styles";
 
 /**
@@ -62,6 +62,12 @@ export function Field({ label, children, className = '', horizontal = undefined,
 			// @ts-ignore
 			value = target.checked;
 		}
+
+		if (target.type == 'number') {
+			// @ts-ignore
+			value = value ? Number(value) : value;
+		}
+
 		if (typeof data == 'object' && htmlFor) {
 			if (!value && unsetEmpty) {
 				data = {...data};
@@ -113,4 +119,25 @@ export function Collection({ data, dataSetter, children }) {
 	let updateItem = useArrayUpdate(data, dataSetter);
 
 	return children({ items: data, addItem, deleteItem, updateItem });
+}
+
+
+/**
+ * Field Collection
+ * @template T
+ * @param {{
+ * 		data: T,
+ * 		dataSetter: (value: T) => any,
+ * 		children: (props: {
+ * 			value: T | null,
+ * 			deleteKey: (key: any) => any,
+ * 			setKey: (key: any, value: any) => any,
+ * 			renameKey: (key: any, newKey: any) => any,
+ * 		}) => any
+ * }} param0
+ */
+export function ObjectCollection({ data, dataSetter, children }) {
+	let crud = useObjectCRUD(data, dataSetter);
+
+	return children(crud);
 }

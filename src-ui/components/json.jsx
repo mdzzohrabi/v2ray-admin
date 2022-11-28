@@ -3,10 +3,10 @@ export function JsonView({ value }) {
         .split('\n');
 
     return <div>
-        {formatted.map(line => {
+        {formatted.map((line, index) => {
             let spaces = line.split('\t');
-            return <p className="py-1">
-                {spaces.slice(0, spaces.length - 1).map(a => <span className="w-4 inline-block">&nbsp;</span>)}{line}
+            return <p key={index} className="py-1">
+                {spaces.slice(0, spaces.length - 1).map((a, i) => <span key={i} className="w-4 inline-block">&nbsp;</span>)}{line}
             </p>
         })}
     </div>

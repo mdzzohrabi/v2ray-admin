@@ -73,9 +73,6 @@ export function RoutingRuleEditor({ rule: ruleProp, dissmis, onEdit }) {
                         </Field>
                     </div>
                     <div className="flex flex-row pt-2">
-                        <Field label="Inbound Tag" className="flex-1" htmlFor="inboundTag">
-                            <input type={"text"} id="inboundTag" placeholder="direct" className={styles.input}/>
-                        </Field>
                         <Field label="Outbound Tag" className="flex-1" htmlFor="outboundTag">
                             <input type={"text"} id="outboundTag" placeholder="direct" className={styles.input}/>
                         </Field>
@@ -83,6 +80,27 @@ export function RoutingRuleEditor({ rule: ruleProp, dissmis, onEdit }) {
                             <input type={"text"} id="balancerTag" placeholder="direct" className={styles.input}/>
                         </Field>
                     </div>
+                    <Collection data={rule.inboundTag ?? []} dataSetter={inboundTag => setRule({ ...rule, inboundTag })}>{inboundTags => 
+                    <>
+                        <div className="flex flex-row items-center px-2 py-2">
+                            <label className={classNames(styles.label, "flex-1")}>Inbound Tag</label>
+                            <div className="items-center">
+                                <button type={"button"} onClick={() => inboundTags.addItem(null, '')} className={styles.addButtonSmall}>+ Add Inbound Tag</button>
+                            </div>
+                        </div>
+                        <Table
+                            rows={inboundTags.items ?? []}
+                            columns={[ 'Inbound Tag', 'Action' ]}
+                            cells={row => [
+                                // Address
+                                <Field htmlFor="tag"><input type="text" id="tag" className={styles.input} placeholder={""}/></Field>,
+                                // Actions
+                                <span className={styles.link} onClick={() => inboundTags.deleteItem(row)} >Delete</span>
+                            ]}
+                            rowContainer={(row, children) => <FieldsGroup data={row} dataSetter={tag => inboundTags.updateItem(row, tag)}>{children}</FieldsGroup>}
+                        />                         
+                    </>
+                    }</Collection>
                 </Tabs.Tab>
                 <Tabs.Tab title="IPs">
                     <Collection data={rule.ip ?? []} dataSetter={ip => setRule({ ...rule, ip })}>

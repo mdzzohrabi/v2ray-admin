@@ -143,7 +143,7 @@ export default function TransactionsPage() {
             </FieldsGroup>
         </div>
         <div className="">
-        <table className="w-full text-sm">
+        <table className="w-full">
             <thead className="sticky top-0 xl:top-12 bg-white shadow-md z-40">
                 <tr className="bg-white">
                     <th className={classNames(styles.tableHead)}>#</th>

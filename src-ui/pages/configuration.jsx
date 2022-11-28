@@ -15,14 +15,15 @@ import { InboundEditor } from "../components/editor/inbound-editor";
 import { OutboundEditor } from "../components/editor/outbound-editor";
 import { RoutingBalancerEditor } from "../components/editor/routing-balancer-editor";
 import { RoutingRuleEditor } from "../components/editor/routing-rule-editor";
-import { Collection, Field, FieldsGroup } from "../components/fields";
+import { Collection, Field, FieldsGroup, ObjectCollection } from "../components/fields";
 import { Info, Infos } from "../components/info";
 import { JsonView } from "../components/json";
 import { PopupMenu } from "../components/popup-menu";
 import { Table } from "../components/table";
 import { Tabs } from "../components/tabs";
 import { styles } from "../lib/styles";
-import { deepCopy, getChanges, serverRequest } from "../lib/util";
+import { deepCopy, getChanges, serverRequest, withoutKey } from "../lib/util";
+import { Editable } from "../components/editable";
 
 export default function ConfigurationPage() {
 
@@ -176,6 +177,83 @@ export default function ConfigurationPage() {
         </FieldsGroup>
     </div>
 
+    let Api = <div className="rounded-lg flex flex-col flex-1 border-2">
+    <FieldsGroup title="Api" className="text-xs" data={config?.api ?? {}} dataSetter={api => setConfig({ ...config, api })} layoutVertical>
+        <div className="p-2">
+            <Field label="Tag" htmlFor="tag" className="flex-1 mt-1">
+                <input type="text" className={styles.input} />
+            </Field>
+        </div>
+        <Collection data={config?.api?.services ?? []} dataSetter={services => setConfig({ ...config, api: { ...config?.api, services } })}>{services =>
+        <>
+            <div className="flex flex-row items-center px-2">
+                <label className={classNames(styles.label, "flex-1")}>Services</label>
+                <div className="items-center">
+                    <button type={"button"} onClick={() => services.addItem(null, 'HandlerService')} className={styles.addButtonSmall}>+ Add Service</button>
+                </div>
+            </div>
+            <Table
+                rows={services.items ?? []}
+                columns={[ 'Service', 'Action' ]}
+                cells={row => [
+                    // Address
+                    <Field htmlFor="service"><input type="text" id="service" className={styles.input} placeholder={""}/></Field>,
+                    // Actions
+                    <span className={styles.link} onClick={() => services.deleteItem(row)} >Delete</span>
+                ]}
+                rowContainer={(row, children) => <FieldsGroup data={row} dataSetter={service => services.updateItem(row, service)}>{children}</FieldsGroup>}
+            />                         
+        </>
+        }</Collection>
+    </FieldsGroup>
+    </div>
+
+    let Policy = <div className="rounded-lg flex flex-col flex-1 border-2">
+         <FieldsGroup title="System" className="text-xs" data={config?.policy?.system ?? {}} dataSetter={system => setConfig({ ...config, policy: { ...config?.policy, system } })}>
+            <div className="p-2 flex-row flex">
+                <Field horizontal label="Stats Inbound Uplink" htmlFor="statsInboundUplink" className="flex-1 mt-1">
+                    <input type="checkbox" id="statsInboundUplink" className={styles.input} />
+                </Field>
+                <Field horizontal label="Stats Inbound Downlink" htmlFor="statsInboundDownlink" className="flex-1 mt-1">
+                    <input type="checkbox" id="statsInboundDownlink" className={styles.input} />
+                </Field>
+            </div>
+        </FieldsGroup>
+        <ObjectCollection data={config?.policy?.levels ?? {}} dataSetter={levels => setConfig({ ...config, policy: { ...config?.policy, levels } })}>{levels => 
+            <>
+                <div className="flex flex-row items-center px-2">
+                    <label className={classNames(styles.label, "flex-1", "font-bold text")}>Levels</label>
+                    <div className="items-center">
+                        <button type={"button"} onClick={() => levels.setKey(Math.round(Math.random() * 10000).toString(), {})} className={styles.addButtonSmall}>+ Add Policy</button>
+                    </div>
+                </div>
+                <Table
+                    rows={Object.keys(levels.value ?? {}).map(key => ({ key, ...(levels.value ?? {})[key] }))}
+                    columns={[ 'Level', 'Policy', 'Action' ]}
+                    cells={row => [
+                        <Editable value={row.key} onEdit={newKey => {
+                            levels.renameKey(row.key, newKey);
+                        }}>
+                            {row.key}
+                        </Editable>,
+                        <div>
+                            <Field htmlFor="handshake" label="Handshake"><input type="number" id="handshake" className={styles.input} placeholder={"4"}/></Field>
+                            <Field htmlFor="connIdle" label="Connection Idle"><input type="number" id="connIdle" className={styles.input} placeholder={"300"}/></Field>
+                            <Field htmlFor="uplinkOnly" label="Uplink Only"><input type="number" id="uplinkOnly" className={styles.input} placeholder={"300"}/></Field>
+                            <Field htmlFor="downlinkOnly" label="Downlink Only"><input type="number" id="downlinkOnly" className={styles.input} placeholder={"300"}/></Field>
+                            <Field htmlFor="bufferSize" label="Buffer Size"><input type="number" id="bufferSize" className={styles.input} placeholder={"300"}/></Field>
+                            <Field htmlFor="statsUserUplink" label="Stats User Uplink" horizontal><input type="checkbox" id="statsUserUplink" className={styles.input} /></Field>
+                            <Field htmlFor="statsUserDownlink" label="Stats User Downlink" horizontal><input type="checkbox" id="statsUserDownlink" className={styles.input}/></Field>
+                        </div>,
+                        // Actions
+                        <span className={styles.link} onClick={() => levels.deleteKey(row.key)}>Delete</span>
+                    ]}
+                    rowContainer={(row, children) => <FieldsGroup data={withoutKey(row, 'key')} dataSetter={level => levels.setKey(row.key, level)}>{children}</FieldsGroup>}
+                />
+            </>
+        }</ObjectCollection>
+    </div>
+
     let Outbounds = <Collection
         data={config?.outbounds ?? []}
         dataSetter={outbounds => setConfig({ ...config, outbounds })}
@@ -321,9 +399,15 @@ export default function ConfigurationPage() {
             <button type={"button"} onClick={() => restartService()} className={styles.button}>Restart V2Ray</button>
             <button type={"button"} onClick={() => saveConfig()} className={styles.buttonPrimary}>Save Configuration</button>
         </FieldsGroup>
-        <div className="grid grid-cols-1 p-3 xl:grid-cols-2 gap-3">
+        <div className="p-3">
             <Tabs>
-                <Tabs.Tab title="Log">{Log}</Tabs.Tab>
+                <Tabs.Tab title="Log & Api" className="space-y-2">
+                    {Log}
+                    {Api}
+                </Tabs.Tab>
+                <Tabs.Tab title="Policy">
+                    {Policy}
+                </Tabs.Tab>
                 <Tabs.Tab title="Inbounds">{Inbounds}</Tabs.Tab>
                 <Tabs.Tab title="Outbounds">{Outbounds}</Tabs.Tab>
                 <Tabs.Tab title="Routing">

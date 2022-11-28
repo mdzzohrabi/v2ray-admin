@@ -522,13 +522,14 @@ function applyChanges(value, changes) {
     changes?.forEach(change => {
         let path = change.path?.map(x => typeof x == 'string' ? `"${x}"` : x).join('][');
         let parentPath = change.path?.slice(0, change.path.length - 1).map(x => typeof x == 'string' ? `"${x}"` : x).join('][');
+        if (parentPath) parentPath = `[${parentPath}]`;
         switch (change.action) {
             case 'set': {
                 if (change.path?.length == 0)
                     result = change.value;
                 else {
                     let parentNode = [];
-                    eval(`parentNode = result[${parentPath}]`);
+                    eval(`parentNode = result${parentPath}`);
                     if (Array.isArray(parentNode)) {
                         if (change.prevValue) {
                             let index = parentNode.findIndex(x => equals(x, change.prevValue));

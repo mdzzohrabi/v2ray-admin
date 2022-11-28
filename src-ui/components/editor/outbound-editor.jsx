@@ -29,6 +29,7 @@ export function OutboundEditor({ outbound: outboundProp, dissmis, onEdit }) {
                 </Field>
                 <Field label="Protocol" className="flex-1" htmlFor="protocol">
                     <select id="protocol" className={styles.input}>
+                        <option>-</option>
                         <option value="http">HTTP</option>
                         <option value="vmess">VMess</option>
                         <option value="vless">VLess</option>
@@ -46,6 +47,25 @@ export function OutboundEditor({ outbound: outboundProp, dissmis, onEdit }) {
                     <input type="text" id="sendThrough" className={styles.input} placeholder={"127.0.0.1"}/>
                 </Field>
             </div>
+            {outbound?.protocol == 'freedom' ?
+            <div className="flex flex-row pt-2">
+                <FieldsGroup data={outbound.settings ?? {}} dataSetter={settings => setOutbound({ ...outbound, settings })}>
+                    <Field label="User Level" htmlFor="userLevel" className="flex-1">
+                        <input type="number" id="userLevel" className={styles.input} placeholder={"0"}/>
+                    </Field>
+                    <Field label="Redirect" htmlFor="redirect" className="flex-1">
+                        <input type="text" id="redirect" className={styles.input} placeholder={"127.0.0.1:80"}/>
+                    </Field>
+                    <Field label="Domain Strategy" htmlFor="domainStrategy">
+                        <select className={styles.input} id="domainStrategy">
+                            <option value="">-</option>
+                            <option value="AsIs">AsIs</option>
+                            <option value="IPIfNonMatch">IPIfNonMatch</option>
+                            <option value="IPOnDemand">IPOnDemand</option>
+                        </select>
+                    </Field>
+                </FieldsGroup>
+            </div> : null }
             {outbound?.protocol == 'http' ?
             <div className="flex flex-col">
                 <h3 className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 font-smibold">Settings (HTTP)</h3>
@@ -57,7 +77,7 @@ export function OutboundEditor({ outbound: outboundProp, dissmis, onEdit }) {
                     </FieldsGroup> */}
                     <Collection data={outbound?.settings?.servers ?? []} dataSetter={servers => setOutbound({ ...outbound, settings: { ...outbound.settings, servers } })}>
                     {servers => <>
-                        <div className="flex flex-row items-center px-2">
+                        <div className="flex flex-row items-center px-2 py-2">
                             <label className={classNames(styles.label, "flex-1")}>Servers</label>
                             <div className="items-center">
                                 <button type={"button"} onClick={() => servers.addItem(null, {})} className={styles.addButtonSmall}>+ Add Server</button>
@@ -70,7 +90,7 @@ export function OutboundEditor({ outbound: outboundProp, dissmis, onEdit }) {
                                 // Address
                                 <Field htmlFor="address"><input type="text" id="address" className={styles.input} placeholder={"0.0.0.0"}/></Field>,
                                 // Port
-                                <Field htmlFor="port"><input type="text" id="port" className={styles.input} placeholder={"80"}/></Field>,
+                                <Field htmlFor="port"><input type="number" id="port" className={styles.input} placeholder={"80"}/></Field>,
                                 // Users
                                 <Collection data={row.users ?? []} dataSetter={users => servers.updateItem(row, { ...row, users })}>
                                     {users => <>
@@ -99,6 +119,80 @@ export function OutboundEditor({ outbound: outboundProp, dissmis, onEdit }) {
                     </Collection>
                 </div>
             </div> : null }
+            {outbound?.protocol == 'vmess' ?
+            <div className="flex flex-col">
+                <h3 className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 font-smibold">Settings (VMESS)</h3>
+                <div className="flex flex-col">
+                    {/* <FieldsGroup data={outbound?.settings} dataSetter={settings => setOutbound({ ...outbound, settings })}>
+                        <Field label="Proxy Tag" htmlFor="tag" className="flex-1">
+                            <input className={styles.input} type="text" id="tag" placeholder="Proxy Tag" />
+                        </Field>
+                    </FieldsGroup> */}
+                    <Collection data={outbound?.settings?.vnext ?? []} dataSetter={vnext => setOutbound({ ...outbound, settings: { ...outbound.settings, vnext } })}>
+                    {vnext => <>
+                        <div className="flex flex-row items-center px-2 py-2">
+                            <label className={classNames(styles.label, "flex-1")}>VNext</label>
+                            <div className="items-center">
+                                <button type={"button"} onClick={() => vnext.addItem(null, {})} className={styles.addButtonSmall}>+ Add VNext Server</button>
+                            </div>
+                        </div>
+                        <Table
+                            rows={vnext.items ?? []}
+                            columns={[ 'Address', 'Port', 'Users', 'Action' ]}
+                            cells={row => [
+                                // Address
+                                <Field htmlFor="address"><input type="text" id="address" className={styles.input} placeholder={"0.0.0.0"}/></Field>,
+                                // Port
+                                <Field htmlFor="port"><input type="number" id="port" className={styles.input} placeholder={"80"}/></Field>,
+                                // Users
+                                <Collection data={row.users ?? []} dataSetter={users => vnext.updateItem(row, { ...row, users })}>
+                                    {users => <>
+                                        {users.items.map(user => <FieldsGroup data={user} dataSetter={edit => users.updateItem(user, edit)}>
+                                            <div className="flex flex-row border-b-[1px] pb-2 last-of-type:border-b-0 text-xs items-center">
+                                                <Field htmlFor="id" label="ID">
+                                                    <input type="text" className={styles.input} id="id"/>
+                                                </Field>
+                                                <span onClick={() => users.deleteItem(user)} className={styles.link}>Delete</span>
+                                            </div>
+                                        </FieldsGroup>)}
+                                        <span onClick={() => users.addItem(null, {})} className={styles.link}>+ Add User</span>
+                                    </>}
+                                </Collection>,
+                                // Actions
+                                <PopupMenu>
+                                    <PopupMenu.Item action={() => vnext.deleteItem(row)} >Delete</PopupMenu.Item>
+                                </PopupMenu>
+                            ]}
+                            rowContainer={(row, children) => <FieldsGroup data={row} dataSetter={vnextItem => vnext.updateItem(row, vnextItem)}>{children}</FieldsGroup>}
+                        />                         
+                    </> }
+                    </Collection>
+                </div>
+            </div> : null }
+            {outbound?.protocol == 'mtproto' ?
+            <>
+                <Collection data={outbound?.settings?.users ?? []} dataSetter={users => setOutbound({ ...outbound, settings: { ...outbound.settings, users } })}>
+                    {users => <>
+                        <div className="flex flex-row items-center px-2 py-2">
+                            <label className={classNames(styles.label, "flex-1")}>Users</label>
+                            <div className="items-center">
+                                <button type={"button"} onClick={() => users.addItem(null, {})} className={styles.addButtonSmall}>+ Add User</button>
+                            </div>
+                        </div>
+                        <Table
+                            rows={users.items ?? []}
+                            columns={[ 'Secret', 'Action' ]}
+                            cells={row => [
+                                <Field htmlFor="secret"><input type="text" id="secret" className={styles.input}/></Field>,
+                                // Actions
+                                <span className={styles.link} onClick={() => users.deleteItem(row)} >Delete</span>
+                            ]}
+                            rowContainer={(row, children) => <FieldsGroup data={row} dataSetter={user => users.updateItem(row, user)}>{children}</FieldsGroup>}
+                        />                         
+                    </> }
+                    </Collection>
+            </>
+             : null }
             <div className="flex flex-col">
                 <h3 className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 font-smibold">
                     Stream settings
