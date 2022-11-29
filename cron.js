@@ -1,5 +1,5 @@
 // @ts-check
-const { getPaths, parseArgumentsAndOptions, readLogLines, readConfig, findUser, setUserActive, writeConfig, createLogger, restartService, cache, log, readLogFile, DateUtil } = require("./util");
+const { getPaths, parseArgumentsAndOptions, readLogLines, readConfig, findUser, setUserActive, writeConfig, createLogger, restartService, cache, log, readLogFile, DateUtil } = require("./lib/util");
 
 const {
     cliArguments: [],

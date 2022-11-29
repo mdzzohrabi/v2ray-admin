@@ -4,8 +4,8 @@ const express = require('express');
 const { env } = require('process');
 const { Server } = require('socket.io');
 const { createServer } = require('http');
-const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser, restartService, findUser, setUserActive, writeConfig, deleteUser, log, readLines, watchFile, cache, applyChanges } = require('./util');
-const { getTransactions, addTransaction, saveDb, readDb } = require('./db');
+const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser, restartService, findUser, setUserActive, writeConfig, deleteUser, log, readLines, watchFile, cache, applyChanges } = require('./lib/util');
+const { getTransactions, addTransaction, saveDb, readDb } = require('./lib/db');
 
 let {showInfo} = createLogger();
 let app = express();

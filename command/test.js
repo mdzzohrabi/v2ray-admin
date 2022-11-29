@@ -1,4 +1,4 @@
-const { readLogFile, getPaths } = require("./util");
+const { readLogFile, getPaths } = require("../lib/util");
 const {createServer} = require('net');
 
 // async function main() {

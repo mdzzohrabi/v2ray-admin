@@ -116,7 +116,7 @@ export default function ConfigurationPage() {
 
     let Inbounds = <div id="config-inbounds" className="rounded-lg border-2 flex flex-col flex-1">
         <Collection data={config?.inbounds ?? []} dataSetter={inbounds => setConfig({ ...config, inbounds })}>{inbounds => <>
-            <FieldsGroup title={"Inbounds"} className="text-xs" data={view} dataSetter={setView} horizontal>
+            <FieldsGroup title={"Inbounds"} data={view} dataSetter={setView} horizontal>
                 <div className="flex flex-row flex-1 pr-2">
                     <div className="flex-1">
                         {/* <Field label="Show Detail" htmlFor="showDetail">
@@ -156,7 +156,7 @@ export default function ConfigurationPage() {
     </div>;
 
     let Log = <div className="rounded-lg flex flex-col flex-1 border-2">
-        <FieldsGroup title="Log" className="text-xs" data={config?.log ?? {}} dataSetter={log => setConfig({ ...config, log })} layoutVertical>
+        <FieldsGroup title="Log" data={config?.log ?? {}} dataSetter={log => setConfig({ ...config, log })} layoutVertical>
             <div className="p-2">
                 <Field label="Level" htmlFor="loglevel">
                     <select id="loglevel" className={styles.input}>
@@ -178,7 +178,7 @@ export default function ConfigurationPage() {
     </div>
 
     let Api = <div className="rounded-lg flex flex-col flex-1 border-2">
-    <FieldsGroup title="Api" className="text-xs" data={config?.api ?? {}} dataSetter={api => setConfig({ ...config, api })} layoutVertical>
+    <FieldsGroup title="Api" data={config?.api ?? {}} dataSetter={api => setConfig({ ...config, api })} layoutVertical>
         <div className="p-2">
             <Field label="Tag" htmlFor="tag" className="flex-1 mt-1">
                 <input type="text" className={styles.input} />
@@ -209,7 +209,7 @@ export default function ConfigurationPage() {
     </div>
 
     let Policy = <div className="rounded-lg flex flex-col flex-1 border-2">
-         <FieldsGroup title="System" className="text-xs" data={config?.policy?.system ?? {}} dataSetter={system => setConfig({ ...config, policy: { ...config?.policy, system } })}>
+         <FieldsGroup title="System" data={config?.policy?.system ?? {}} dataSetter={system => setConfig({ ...config, policy: { ...config?.policy, system } })}>
             <div className="p-2 flex-row flex">
                 <Field horizontal label="Stats Inbound Uplink" htmlFor="statsInboundUplink" className="flex-1 mt-1">
                     <input type="checkbox" id="statsInboundUplink" className={styles.input} />
@@ -258,7 +258,7 @@ export default function ConfigurationPage() {
         data={config?.outbounds ?? []}
         dataSetter={outbounds => setConfig({ ...config, outbounds })}
     >{outbounds => <div id="config-outbounds" className="rounded-lg border-2 flex flex-col flex-1">
-        <FieldsGroup title={"Outbounds"} className="text-xs" data={view} dataSetter={setView} horizontal>
+        <FieldsGroup title={"Outbounds"} data={view} dataSetter={setView} horizontal>
             <div className="flex flex-row flex-1 pr-2">
                 <div className="flex-1">
                     {/* <Field label="Show Detail" htmlFor="showDetail">
@@ -297,7 +297,7 @@ export default function ConfigurationPage() {
 
     let RoutingRules = <Collection data={config?.routing?.rules ?? []} dataSetter={rules => setConfig({ ...config, routing: { ...config?.routing, rules } })}>{rules => 
         <div id="config-routing" className="rounded-lg border-2 flex flex-col flex-1">
-            <FieldsGroup title={"Rules"} className="text-xs" horizontal data={config?.routing} dataSetter={routing => setConfig({ ...config, routing })}>
+            <FieldsGroup title={"Rules"} horizontal data={config?.routing} dataSetter={routing => setConfig({ ...config, routing })}>
                 <div className="flex flex-row flex-1 pr-2">
                     <div className="flex-1 flex-row flex">
                         <Field label="Domain Strategy" htmlFor="domainStrategy">
@@ -362,7 +362,7 @@ export default function ConfigurationPage() {
 
     let RoutingBalancers = <Collection data={config?.routing?.balancers ?? []} dataSetter={balancers => setConfig({ ...config, routing: { ...config?.routing, balancers } })}>{balancers => 
         <div id="config-routing" className="rounded-lg border-2 flex flex-col flex-1">
-            <FieldsGroup title={"Balancers"} className="text-xs" horizontal data={config?.routing} dataSetter={routing => setConfig({ ...config, routing })}>
+            <FieldsGroup title={"Balancers"} horizontal data={config?.routing} dataSetter={routing => setConfig({ ...config, routing })}>
                 <div className="flex flex-row flex-1 pr-2">
                     <div className="flex-1 flex-row flex">
                         {/* Fields */}
