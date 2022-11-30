@@ -1,5 +1,5 @@
 // @ts-check
-const { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile } = require('../util');
+const { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile } = require('../lib/util');
 
 async function users() {
     const { showError, showInfo, showOk } = createLogger();

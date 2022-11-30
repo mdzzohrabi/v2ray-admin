@@ -1,5 +1,5 @@
 // @ts-check
-const { getPaths, parseArgumentsAndOptions, readLogLines, createLogger } = require("../util");
+const { getPaths, parseArgumentsAndOptions, readLogLines, createLogger } = require("../lib/util");
 
 const {
     cliArguments: [search],

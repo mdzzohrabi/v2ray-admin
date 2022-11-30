@@ -4,7 +4,7 @@ import classNames from "classnames";
 import ExportJsonExcel from 'js-export-excel';
 import Head from "next/head";
 import { useRouter } from "next/router";
-import React, { Fragment, useCallback, useContext, useMemo, useState } from 'react';
+import React, { Fragment, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import toast from "react-hot-toast";
 import useSWR from 'swr';
 import { AddUser } from "../components/add-user";
@@ -19,21 +19,40 @@ import { Popup } from "../components/popup";
 import { PopupMenu } from "../components/popup-menu";
 import { usePrompt } from "../lib/hooks";
 import { styles } from "../lib/styles";
-import { DateUtil, serverRequest } from "../lib/util";
+import { DateUtil, serverRequest, store, stored } from "../lib/util";
 
 export default function UsersPage() {
 
     let context = useContext(AppContext);
     let router = useRouter();
-    let [[sortColumn, sortAsc], setSort] = useState(['', true]);
     let showAll = router.query.all == '1';
-    let [fullTime, setFullTime] = useState(false);
-    let [precision, setPrecision] = useState(true);
-    let [showId, setShowId] = useState(false);
-    let [filter, setFilter] = useState('');
+    // let [[sortColumn, sortAsc], setSort] = useState(['', true]);
+    // let [fullTime, setFullTime] = useState(false);
+    // let [precision, setPrecision] = useState(true);
+    // let [showId, setShowId] = useState(false);
+    // let [filter, setFilter] = useState('');
+    // /** @type {string[]} */
+    // let initFilters = stored('users-filter-status') ?? [];
+    // let [statusFilter, setStatusFilter] = useState(initFilters);
+
     /** @type {string[]} */
-    let initFilters = [];
-    let [statusFilter, setStatusFilter] = useState(initFilters);
+    let initStatusFilter = [];
+
+    let [view, setView] = useState(stored('users-view', {
+        sortColumn: '',
+        sortAsc: true,
+        fullTime: false,
+        precision: true,
+        showId: false,
+        filter: '',
+        statusFilter: initStatusFilter
+    }));
+
+    useEffect(() => store('users-view', view), [view]);
+
+    // useEffect(() => {
+    //     store('users-filter-status', statusFilter);
+    // }, [statusFilter]);
 
     /**
      * @type {import("swr").SWRResponse<V2RayConfigInbound[]>}
@@ -232,9 +251,9 @@ export default function UsersPage() {
             <title>Users</title>
         </Head>
         <AddUser className="py-2 text-xs xl:text-base" disabled={isLoading} onRefresh={refreshInbounds} protocols={inbounds?.map(i => i.protocol ?? '') ?? []}/>
-        <FieldsGroup title="View" className="text-xs xl:text-base border-t-2 py-2" containerClassName="items-center">
-            <Field label="Sort" htmlFor="sort">
-                <select value={sortColumn} onChange={e => setSort([ e.currentTarget.value, sortAsc ])} id="sort" className={styles.input}>
+        <FieldsGroup data={view} dataSetter={setView} title="View" className="text-xs xl:text-base border-t-2 py-2" containerClassName="items-center">
+            <Field label="Sort" htmlFor="sortColumn">
+                <select id="sortColumn" className={styles.input}>
                     <option value="-">-</option>
                     <option value="id">ID</option>
                     <option value="email">Username</option>
@@ -253,31 +272,31 @@ export default function UsersPage() {
                 </select>
             </Field>
             <Field label="Order" htmlFor="sort-order">
-                <select value={sortAsc ? "asc" : "desc"} id="sort-order" className={styles.input} onChange={e => setSort([ sortColumn, e.currentTarget.value == "asc" ? true : false ])}>
+                <select value={view?.sortAsc ? "asc" : "desc"} id="sort-order" className={styles.input} onChange={e => setView({ ...view, sortAsc: e.currentTarget.value == "asc" })}>
                     <option value={"asc"}>ASC</option>
                     <option value={"desc"}>DESC</option>
                 </select>
             </Field>
             <Field label="Filter" htmlFor="filter">
-                <input type={"text"} id="filter" className={styles.input} onChange={e => setFilter(e.currentTarget.value)} value={filter}/>
+                <input type={"text"} id="filter" className={styles.input}/>
             </Field>
             <Field label="Status" htmlFor="status">
                 <div className="flex gap-1 mb-1">
-                    {statusFilter?.map((filter, index) => <span key={index} onClick={() => setStatusFilter(statusFilter.filter(x => x != filter))} className={classNames("whitespace-nowrap bg-slate-200 px-3 py-1 rounded-3xl cursor-pointer hover:bg-slate-700 hover:text-white")}>{filter}</span> )}
+                    {view.statusFilter?.map((filter, index) => <span key={index} onClick={() => setView({ ...view, statusFilter: view.statusFilter.filter(x => x != filter)})} className={classNames("whitespace-nowrap bg-slate-200 px-3 py-1 rounded-3xl cursor-pointer hover:bg-slate-700 hover:text-white")}>{filter}</span> )}
                 </div>
-                <select value={"-"} onChange={e => setStatusFilter([...statusFilter, e.currentTarget.value])} id="statusFilter" className="bg-slate-100 rounded-lg px-2 py-1">
+                <select value={"-"} onChange={e => setView({ ...view, statusFilter: [...view.statusFilter, e.currentTarget.value]})} id="statusFilter" className="bg-slate-100 rounded-lg px-2 py-1">
                     <option value="-">-</option>
                     {Object.keys(statusFilters).map((x, index) => <option key={index} value={x}>{x}</option>)}
                 </select>
             </Field>
             <Field htmlFor="fullTime" label="Full Time">
-                <input type={"checkbox"} id="fullTime" onChange={e => setFullTime(e.currentTarget.checked)} checked={fullTime}/>
+                <input type={"checkbox"} id="fullTime"/>
             </Field>
             <Field label="Show ID" htmlFor="showId">
-                <input type={"checkbox"} id="showId" onChange={e => setShowId(e.currentTarget.checked)} checked={showId}/>
+                <input type={"checkbox"} id="showId"/>
             </Field>
-            <Field label="Precision Date" htmlFor="precisionDate" data={precision} dataSetter={setPrecision}>
-                <input type="checkbox" id="precisionDate"/>
+            <Field label="Precision Date" htmlFor="precision">
+                <input type="checkbox" id="precision"/>
             </Field>
             <div className="flex flex-row">
                 {showAll ? <button className={styles.button} onClick={() => refreshInbounds()}>Reload</button> : null }
@@ -292,14 +311,16 @@ export default function UsersPage() {
             <thead className="sticky top-0 xl:top-12 bg-white shadow-md z-40">
                 <tr className="bg-white">
                     <th className={classNames(headClass)}>#</th>
-                    <th onClick={() => setSort(['email', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-200': sortColumn == 'email'})}>User / FullName</th>
+                    <th onClick={() => setView({ ...view, sortColumn:'email', sortAsc: !view.sortAsc })} className={classNames(headClass, 'cursor-pointer', {'bg-slate-200': view.sortColumn == 'email'})}>User / FullName</th>
                     <th className={classNames(headClass, 'cursor-pointer')}>Infos</th>
-                    <th onClick={() => setSort(['createDate', !sortAsc])} className={classNames(headClass, 'cursor-pointer', {'bg-slate-200': sortColumn == 'createDate'})}>Dates</th>
+                    <th className={classNames(headClass, 'cursor-pointer', {'bg-slate-200': view.sortColumn == 'createDate'})}>Dates</th>
                     <th className={classNames(headClass)}>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {!inbounds ? <tr><td colSpan={10} className="px-3 py-4">Loading ...</td></tr> : inbounds.map(i => {
+
+                    let {sortColumn, sortAsc, filter, statusFilter, showId, fullTime, precision} = view;
 
                     let users = [...(i.settings?.clients ?? [])]
                     .map(u => {

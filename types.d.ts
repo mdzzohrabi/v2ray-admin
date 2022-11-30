@@ -196,6 +196,13 @@ interface V2RayDb {
         transactions?: number
     },
     transactions?: Transaction[];
+    users?: User[];
+}
+
+interface User {
+    user:? string
+    token?: string
+    isAdmin?: boolean
 }
 
 interface Change {

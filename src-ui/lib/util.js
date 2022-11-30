@@ -21,11 +21,18 @@ export function store(key, value) {
     localStorage[key] = value ? JSON.stringify(value) : undefined;
 }
 
-export function stored(key) {
+/**
+ * @template T
+ * @param {string} key Key
+ * @param {T?} _default Default value
+ * @returns {T extends null ? any : T}
+ */
+export function stored(key, _default = null) {
     try {
-        return localStorage[key] ? JSON.parse(localStorage[key]) : undefined;
+        return localStorage[key] ? JSON.parse(localStorage[key]) : _default ?? null;
     } catch {
-        return undefined;
+        // @ts-ignore
+        return _default ?? null;
     }
 }
 

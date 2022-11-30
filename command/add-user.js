@@ -1,5 +1,5 @@
 // @ts-check
-const { parseArgumentsAndOptions, createLogger, getPaths, addUser, getUserConfig } = require('../util');
+const { parseArgumentsAndOptions, createLogger, getPaths, addUser, getUserConfig } = require('../lib/util');
 const qrCode = require('qrcode-terminal');
 
 async function addUserCommand() {

@@ -20,7 +20,7 @@ export default function UsagesPage() {
     let showAll = router.query.all == '1';
     let email = router.query.user;
     let [view, setView] = useState({
-        showDetail: true
+        showDetail: showAll ? true : false
     });
 
     /**
@@ -37,9 +37,9 @@ export default function UsagesPage() {
             <Field label="User" className="border-x-[1px] px-3 mr-2">
                 <span className="text-gray-800 py-1 px-2 rounded-lg bg-yellow-100">{email}</span>
             </Field>
-            <Field label="Show Detail" htmlFor="showDetail">
+            {showAll?<Field label="Show Detail" htmlFor="showDetail">
                 <input type="checkbox" id="showDetail" />
-            </Field>
+            </Field>:null}
         </FieldsGroup>
         {isLoading ? <div className="absolute bg-slate-900 text-white rounded-lg px-3 py-1 bottom-3 left-3">
             Loading ...
