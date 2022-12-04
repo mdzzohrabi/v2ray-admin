@@ -338,22 +338,19 @@ app.get('/daily_usage_logs', async (req, res) => {
         counter = (page - 1) * limit;
         limit = counter + limit;
 
-        console.log(counter, limit);
-
         if (!email || !toOffset || !fromOffset) return res.json({ error: 'Invalid request' });
 
         for await (let line of lines) {
             // User filter
             if (!!email && line.user != email) continue;
             // Limit
-            if (counter > limit) break;
+            if (i > limit) break;
             // Tag filter
             if (!!tag && line.route.replace(/\[|\]/g, '') != tag) continue;
             // Search
             if (!!search && !line.destination?.includes(search)) continue;
-            counter++;
             i++;
-            // if (i > counter)
+            if (i > counter)
                 result.push(line);
         }            
 
