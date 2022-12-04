@@ -37,24 +37,26 @@ async function usages() {
             counter: 0,
             firstConnect: undefined,
             lastConnect: undefined,
-            ips: []
+            firstConnectLogOffset: undefined,
+            lastConnectLogOffset: undefined,
         };
 
         dailyUsage[date][line.user][outboundTag] = info;
-
-        // IPs
-        //info.ips = new Set(info.ips ?? []).add(ip);
 
         // Increase counter
         info.counter++;
 
         // Set first connect
-        if (!info.firstConnect)
+        if (!info.firstConnect) {
             info.firstConnect = line.dateTime.getTime();
+            info.firstConnectLogOffset = line.offset;
+        }
 
         // Set last connect
-        if (!info.lastConnect || (new Date(info.lastConnect).getTime()) < line.dateTime.getTime())
+        if (!info.lastConnect || (new Date(info.lastConnect).getTime()) < line.dateTime.getTime()) {
             info.lastConnect = line.dateTime.getTime();
+            info.lastConnectLogOffset = line.offset;
+        }
     }
 
     // Save data

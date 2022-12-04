@@ -4,7 +4,7 @@ const express = require('express');
 const { env } = require('process');
 const { Server } = require('socket.io');
 const { createServer } = require('http');
-const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser, restartService, findUser, setUserActive, writeConfig, deleteUser, log, readLines, watchFile, cache, applyChanges } = require('./lib/util');
+const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser, restartService, findUser, setUserActive, writeConfig, deleteUser, log, readLines, watchFile, cache, applyChanges, readLogLines, readLogLinesByOffset } = require('./lib/util');
 const { getTransactions, addTransaction, saveDb, readDb } = require('./lib/db');
 
 let {showInfo} = createLogger();
@@ -316,6 +316,51 @@ app.get('/daily_usages', async (req, res) => {
     }
     catch (err) {
         res.end({ error: err.message });
+    }
+});
+
+
+app.get('/daily_usage_logs', async (req, res) => {
+    try {
+        let email = req.query.email?.toString();
+        let fromOffset = Number(req.query.from) || 0;
+        let toOffset = Number(req.query.to) || null;
+        let tag = req.query.tag?.toString();
+        let {accessLogPath} = getPaths();
+        let lines = readLogLinesByOffset(accessLogPath, fromOffset, toOffset);
+        let result = [];
+        let limit = Number(req.query.limit) || 50;
+        let search = req.query.q?.toString();
+        let counter = 1;
+        let page = Number(req.query.page) || 1;
+        let i = 0;
+
+        counter = (page - 1) * limit;
+        limit = counter + limit;
+
+        console.log(counter, limit);
+
+        if (!email || !toOffset || !fromOffset) return res.json({ error: 'Invalid request' });
+
+        for await (let line of lines) {
+            // User filter
+            if (!!email && line.user != email) continue;
+            // Limit
+            if (counter > limit) break;
+            // Tag filter
+            if (!!tag && line.route.replace(/\[|\]/g, '') != tag) continue;
+            // Search
+            if (!!search && !line.destination?.includes(search)) continue;
+            counter++;
+            i++;
+            // if (i > counter)
+                result.push(line);
+        }            
+
+        res.json(result);
+    }
+    catch (err) {
+        res.json({ error: err.message });
     }
 });
 

@@ -73,7 +73,12 @@ export default function TransactionsPage() {
             .catch(err => toast.error(err));
     }, []);
 
+    let remain = 0;
     transactions = transactions
+        ?.map(t => {
+            remain += (Number(t.amount) ?? 0);
+            return { ...t, remain };
+        })
         ?.filter(u => !view.user || u.user == view.user)
         ?.sort(arrSort(view.sortColumn, view.sortOrder == 'asc'));
 
@@ -83,7 +88,7 @@ export default function TransactionsPage() {
         </Head>
         {showAll ?
         <form onSubmit={addTransaction}>
-            <FieldsGroup title="Add Transaction" className="mt-2 border-b-[1px] pb-3 text-xs md:text-sm lg:text-base" horizontal={false} data={newTransaction} dataSetter={setNewTransaction}>
+            <FieldsGroup title="Add Transaction" className="mt-2 border-b-[1px] pb-3" horizontal={false} data={newTransaction} dataSetter={setNewTransaction}>
                 <Field label={"User"} htmlFor="user">
                     <select className={styles.input} id="user">
                         <option value="">-</option>
@@ -102,7 +107,7 @@ export default function TransactionsPage() {
             </FieldsGroup>
         </form> : null }
         <div className="flex flex-col lg:flex-row">
-            <FieldsGroup title="Billing" horizontal className="border-b-[1px] lg:border-b-0 text-xs md:text-sm lg:text-base">
+            <FieldsGroup title="Billing" horizontal className="border-b-[1px] lg:border-b-0">
                 <Field label="UnPaid" className="rounded-lg bg-red-100 px-4 items-center align-middle whitespace-nowrap">
                     <Price value={transactions?.filter(x => (Number(x.amount) ?? 0) > 0).reduce((result, t) => result + (Number(t.amount) || 0), 0) ?? 0}/>
                 </Field>
@@ -115,7 +120,7 @@ export default function TransactionsPage() {
                     <Price value={transactions?.reduce((result, t) => result + (Number(t.amount) || 0), 0) ?? 0}/>
                 </Field>
             </FieldsGroup>
-            <FieldsGroup className="my-2 text-xs md:text-sm lg:text-base" data={view} dataSetter={setView} title="View" horizontal>
+            <FieldsGroup className="my-2" data={view} dataSetter={setView} title="View" horizontal>
                 <Field htmlFor="fullTime" label="Full Time">
                     <input type={"checkbox"} id="fullTime"/>
                 </Field>
@@ -149,17 +154,19 @@ export default function TransactionsPage() {
                     <th className={classNames(styles.tableHead)}>#</th>
                     <th className={classNames(styles.tableHead, 'cursor-pointer', {'bg-slate-200': view.sortColumn == 'user'})}>User</th>
                     <th className={classNames(styles.tableHead, 'cursor-pointer', {'bg-slate-200': view.sortColumn == 'remark'})}>Remark</th>
-                    <th className={classNames(styles.tableHead, 'cursor-pointer', {'bg-slate-200': view.sortColumn == 'amount'})}>Amount</th>
+                    <th className={classNames(styles.tableHead, 'cursor-pointer', {'bg-slate-200': view.sortColumn == 'amount'})}>Debt</th>
+                    <th className={classNames(styles.tableHead, 'cursor-pointer', {'bg-slate-200': view.sortColumn == 'amount'})}>Paid</th>
+                    <th className={classNames(styles.tableHead, 'cursor-pointer', {'bg-slate-200': view.sortColumn == 'amount'})}>Remain</th>
                     <th className={classNames(styles.tableHead, 'cursor-pointer', {'bg-slate-200': view.sortColumn == 'createDate'})}>Dates</th>
                     <th className={classNames(styles.tableHead)}>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {transactions?.length == 0 ? <tr>
-                    <td colSpan={5} className={"py-3 text-gray-400 text-center"}>No Transactions</td>
+                    <td colSpan={8} className={"py-3 text-gray-400 text-center"}>No Transactions</td>
                 </tr> : null}
                 {!transactions ? <tr>
-                    <td colSpan={5} className={"py-3 text-gray-400 text-center"}>Loading ...</td>
+                    <td colSpan={8} className={"py-3 text-gray-400 text-center"}>Loading ...</td>
                 </tr> : null}
                 {transactions
                     ?.map(t => {
@@ -173,12 +180,26 @@ export default function TransactionsPage() {
                             {t.remark ?? '-'}
                             </Editable>
                         </td>
-                        <td className={classNames(styles.td, 'text-center')}>
+                        <td className={classNames(styles.td)}>
+                            {(t.amount ?? 0) >= 0 ?
                             <Editable onEdit={value => editTransaction(t, 'amount', value)} value={t.amount} editable={showAll}>
                                 <span className={classNames("rounded-lg inline-block px-2 text-rtl", { 'bg-red-50 text-red-700': (t.amount ?? 0) >= 0, 'bg-green-50 text-green-700': (t.amount ?? 0) < 0 })}>
                                     <Price value={t.amount}/>
                                 </span>
-                            </Editable>
+                            </Editable> : null }
+                        </td>
+                        <td className={classNames(styles.td)}>
+                            {(t.amount ?? 0) < 0 ?
+                            <Editable onEdit={value => editTransaction(t, 'amount', value)} value={t.amount} editable={showAll}>
+                                <span className={classNames("rounded-lg inline-block px-2 text-rtl", { 'bg-red-50 text-red-700': (t.amount ?? 0) >= 0, 'bg-green-50 text-green-700': (t.amount ?? 0) < 0 })}>
+                                    <Price value={Math.abs(Number(t.amount) ?? 0)}/>
+                                </span>
+                            </Editable> : null }
+                        </td>
+                        <td className={classNames(styles.td)}>
+                            <span className={classNames("rounded-lg inline-block px-2 text-rtl", { 'bg-red-50 text-red-700': (t['remain'] ?? 0) >= 0, 'bg-green-50 text-green-700': (t['remain'] ?? 0) < 0 })}>
+                                <Price value={t['remain']}/>
+                            </span>
                         </td>
                         <td className={styles.td}>
                             <DateView containerClassName="text-center" precision={true} full={view.fullTime} date={t.createDate}/>

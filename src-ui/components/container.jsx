@@ -7,7 +7,7 @@ import React from 'react';
 export function Container({ children }) {
     const router = useRouter();
     const isFull = router.query.all == '1';
-    return <div className="flex flex-col h-screen overflow-x-auto w-full">
+    return <div className="flex flex-col h-screen overflow-x-auto w-full text-xs xl:text-sm">
         <ul className="px-2 py-3 flex xl:sticky top-0 z-50 bg-slate-100">
             {isFull ? <MenuLink href={"/logs" + (isFull ? '?all=1' : '')} text={"Logs"}/> : null}
             <MenuLink href={"/transactions" + (isFull ? '?all=1' : '')} text={"Transactions"}/>
@@ -16,7 +16,7 @@ export function Container({ children }) {
             <MenuLink href={"/server_config" + (isFull ? '?all=1' : '')} text={"Server Config"}/>
             <MenuLink href={"/logout"}>Logout</MenuLink>
         </ul>
-        <div className="bg-white block shadow-md mt-2 min-w-fit text-xs md:text-sm lg:text-base">
+        <div className="bg-white block shadow-md mt-2 min-w-fit">
             {children}
         </div>
     </div>
@@ -30,6 +30,6 @@ export function Container({ children }) {
 function MenuLink({ href, text = undefined, children = undefined }) {
     const router = useRouter();
     return <Link href={href}>
-        <li className={classNames('whitespace-nowrap text-xs md:text-sm lg:text-base px-3 py-1 cursor-pointer rounded-lg', { 'hover:bg-white': router.asPath != href }, { 'font-bold bg-slate-800 text-white': router.asPath == href })}>{text ?? children}</li>
+        <li className={classNames('whitespace-nowrap px-3 py-1 cursor-pointer rounded-lg', { 'hover:bg-white': router.asPath != href }, { 'font-bold bg-slate-800 text-white': router.asPath == href })}>{text ?? children}</li>
     </Link>;
 }

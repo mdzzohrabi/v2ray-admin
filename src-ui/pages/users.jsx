@@ -250,8 +250,8 @@ export default function UsersPage() {
         <Head>
             <title>Users</title>
         </Head>
-        <AddUser className="py-2 text-xs xl:text-base" disabled={isLoading} onRefresh={refreshInbounds} protocols={inbounds?.map(i => i.protocol ?? '') ?? []}/>
-        <FieldsGroup data={view} dataSetter={setView} title="View" className="text-xs xl:text-base border-t-2 py-2" containerClassName="items-center">
+        <AddUser className="py-2" disabled={isLoading} onRefresh={refreshInbounds} protocols={inbounds?.map(i => i.protocol ?? '') ?? []}/>
+        <FieldsGroup data={view} dataSetter={setView} title="View" className="border-t-2 py-2" containerClassName="items-center">
             <Field label="Sort" htmlFor="sortColumn">
                 <select id="sortColumn" className={styles.input}>
                     <option value="-">-</option>

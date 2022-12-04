@@ -2,6 +2,7 @@
 /// <reference types="../../types"/>
 import classNames from "classnames";
 import Head from "next/head";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { useContext, useState } from 'react';
 import useSWR from 'swr';
@@ -83,7 +84,7 @@ export default function UsagesPage() {
                             {view.showDetail ?
                             <Infos>
                                 {x.outbounds.map(o => {
-                                    return <Info label={o.tag}>{o.counter} requests</Info>
+                                    return <Info label={o.tag}>{o.counter} requests <Link className={classNames(styles.link)} href={`/usages/logs?user=${email}&tag=${o.tag}&from=${o.firstConnectLogOffset}&to=${o.lastConnectLogOffset}`}> (Logs)</Link></Info>
                                 })}
                             </Infos>
                             : x.outbounds.filter(o => o.tag == "direct").map(o => `${o.counter} requests`).pop()}
