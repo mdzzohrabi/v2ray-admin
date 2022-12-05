@@ -13,7 +13,8 @@ import { Editable } from "../components/editable";
 import { Field, FieldsGroup } from "../components/fields";
 import { PopupMenu } from "../components/popup-menu";
 import { Price } from "../components/price";
-import { usePrompt } from "../lib/hooks";
+import { Table } from "../components/table";
+import { usePrompt, useStoredState } from "../lib/hooks";
 import { styles } from "../lib/styles";
 import { arrSort, serverRequest } from "../lib/util";
 
@@ -24,12 +25,13 @@ export default function TransactionsPage() {
     let showAll = router.query.all == '1';
     /** @type {[Partial<Transaction>, React.Dispatch<React.SetStateAction<Partial<Transaction>>>]} */
     let [newTransaction, setNewTransaction] = useState({});
-    let [view, setView] = useState({
+    let [view, setView] = useStoredState('transactions-view', {
         fullTime: true,
         user: router.query.user,
         sortColumn: '',
         sortOrder: 'asc'
-    })
+    });
+    
     const prompt = usePrompt();
 
     /**
@@ -147,73 +149,44 @@ export default function TransactionsPage() {
                 </Field>
             </FieldsGroup>
         </div>
-        <div className="">
-        <table className="w-full">
-            <thead className="sticky top-0 xl:top-12 bg-white shadow-md z-40">
-                <tr className="bg-white">
-                    <th className={classNames(styles.tableHead)}>#</th>
-                    <th className={classNames(styles.tableHead, 'cursor-pointer', {'bg-slate-200': view.sortColumn == 'user'})}>User</th>
-                    <th className={classNames(styles.tableHead, 'cursor-pointer', {'bg-slate-200': view.sortColumn == 'remark'})}>Remark</th>
-                    <th className={classNames(styles.tableHead, 'cursor-pointer', {'bg-slate-200': view.sortColumn == 'amount'})}>Debt</th>
-                    <th className={classNames(styles.tableHead, 'cursor-pointer', {'bg-slate-200': view.sortColumn == 'amount'})}>Paid</th>
-                    <th className={classNames(styles.tableHead, 'cursor-pointer', {'bg-slate-200': view.sortColumn == 'amount'})}>Remain</th>
-                    <th className={classNames(styles.tableHead, 'cursor-pointer', {'bg-slate-200': view.sortColumn == 'createDate'})}>Dates</th>
-                    <th className={classNames(styles.tableHead)}>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {transactions?.length == 0 ? <tr>
-                    <td colSpan={8} className={"py-3 text-gray-400 text-center"}>No Transactions</td>
-                </tr> : null}
-                {!transactions ? <tr>
-                    <td colSpan={8} className={"py-3 text-gray-400 text-center"}>Loading ...</td>
-                </tr> : null}
-                {transactions
-                    ?.map(t => {
-                    return <tr key={"transaction-" + t.id}>
-                        <td className={classNames(styles.td, 'text-center')}>{t.id}</td>
-                        <td className={styles.td}>
-                            <Editable value={t.user} editable={showAll} onEdit={value => editTransaction(t, 'user', value)}>{t.user ?? '-'}</Editable>
-                        </td>
-                        <td className={styles.td}>
-                            <Editable value={t.remark} onEdit={value => editTransaction(t, 'remark', value)} editable={showAll}>
-                            {t.remark ?? '-'}
-                            </Editable>
-                        </td>
-                        <td className={classNames(styles.td)}>
-                            {(t.amount ?? 0) >= 0 ?
-                            <Editable onEdit={value => editTransaction(t, 'amount', value)} value={t.amount} editable={showAll}>
-                                <span className={classNames("rounded-lg inline-block px-2 text-rtl", { 'bg-red-50 text-red-700': (t.amount ?? 0) >= 0, 'bg-green-50 text-green-700': (t.amount ?? 0) < 0 })}>
-                                    <Price value={t.amount}/>
-                                </span>
-                            </Editable> : null }
-                        </td>
-                        <td className={classNames(styles.td)}>
-                            {(t.amount ?? 0) < 0 ?
-                            <Editable onEdit={value => editTransaction(t, 'amount', value)} value={t.amount} editable={showAll}>
-                                <span className={classNames("rounded-lg inline-block px-2 text-rtl", { 'bg-red-50 text-red-700': (t.amount ?? 0) >= 0, 'bg-green-50 text-green-700': (t.amount ?? 0) < 0 })}>
-                                    <Price value={Math.abs(Number(t.amount) ?? 0)}/>
-                                </span>
-                            </Editable> : null }
-                        </td>
-                        <td className={classNames(styles.td)}>
-                            <span className={classNames("rounded-lg inline-block px-2 text-rtl", { 'bg-red-50 text-red-700': (t['remain'] ?? 0) >= 0, 'bg-green-50 text-green-700': (t['remain'] ?? 0) < 0 })}>
-                                <Price value={t['remain']}/>
-                            </span>
-                        </td>
-                        <td className={styles.td}>
-                            <DateView containerClassName="text-center" precision={true} full={view.fullTime} date={t.createDate}/>
-                        </td>
-                        <td className={styles.td}>
-                            <PopupMenu text="Actions">
-                                {showAll?<PopupMenu.Item action={() => prompt(`Do you want to remove transaction ${t.id} ?`, `Remove`, () => removeTransaction(t))}>Delete</PopupMenu.Item>:null}
-                            </PopupMenu>
-                        </td>
-                    </tr>
-                })}
-            </tbody>
-        </table>
-        </div>
+        <Table
+            rows={transactions ?? []}
+            columns={[ 'ID', 'User', 'Remark', 'Debt', 'Paid', 'Remain', 'Dates', 'Actions' ]}
+            cells={t => [
+                // ID
+                t.id,
+                // User
+                <Editable value={t.user} editable={showAll} onEdit={value => editTransaction(t, 'user', value)}>{t.user ?? '-'}</Editable>,
+                // Remark
+                <Editable value={t.remark} onEdit={value => editTransaction(t, 'remark', value)} editable={showAll}>
+                {t.remark ?? '-'}
+                </Editable>,
+                // Dept
+                (t.amount ?? 0) >= 0 ?
+                <Editable onEdit={value => editTransaction(t, 'amount', value)} value={t.amount} editable={showAll}>
+                    <span className={classNames("rounded-lg inline-block px-2 text-rtl", { 'bg-red-50 text-red-700': (t.amount ?? 0) >= 0, 'bg-green-50 text-green-700': (t.amount ?? 0) < 0 })}>
+                        <Price value={t.amount}/>
+                    </span>
+                </Editable> : null,
+                // Paid
+                (t.amount ?? 0) < 0 ?
+                <Editable onEdit={value => editTransaction(t, 'amount', value)} value={t.amount} editable={showAll}>
+                    <span className={classNames("rounded-lg inline-block px-2 text-rtl", { 'bg-red-50 text-red-700': (t.amount ?? 0) >= 0, 'bg-green-50 text-green-700': (t.amount ?? 0) < 0 })}>
+                        <Price value={Math.abs(Number(t.amount) ?? 0)}/>
+                    </span>
+                </Editable> : null,
+                // Remain
+                <span className={classNames("rounded-lg inline-block px-2 text-rtl", { 'bg-red-50 text-red-700': (t['remain'] ?? 0) >= 0, 'bg-green-50 text-green-700': (t['remain'] ?? 0) < 0 })}>
+                    <Price value={t['remain']}/>
+                </span>,
+                // Date
+                <DateView containerClassName="text-center" precision={true} full={view.fullTime} date={t.createDate}/>,
+                // Action
+                <PopupMenu text="Actions">
+                    {showAll?<PopupMenu.Item action={() => prompt(`Do you want to remove transaction ${t.id} ?`, `Remove`, () => removeTransaction(t))}>Delete</PopupMenu.Item>:null}
+                </PopupMenu>
+            ]}
+        />
     </Container>
     
 }

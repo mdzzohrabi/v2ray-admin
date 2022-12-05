@@ -9,9 +9,9 @@ import { Popup } from './popup';
 /**
  * Date view
  */
-export function DateView({ date, className = '', containerClassName ='', full = false, precision = false }) {
+export function DateView({ date, className = '', containerClassName ='', full = false, precision = false, locale = '' }) {
     let router = useRouter();
-    let isEN = router.query.date == 'en';
+    let isEN = (locale ?? router.query.date) == 'en';
     if (!date) return <>-</>;
     date = date instanceof Date ? date : new Date(date);
     // return <>

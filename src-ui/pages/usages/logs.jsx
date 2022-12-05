@@ -1,19 +1,16 @@
 // @ts-check
 /// <reference types="../../../types"/>
-import classNames from "classnames";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import React, { useCallback, useContext, useState } from 'react';
+import React, { useCallback, useContext, useMemo, useState } from 'react';
 import useSWR from 'swr';
 import { AppContext } from "../../components/app-context";
-import { Table } from "../../components/table";
 import { Container } from "../../components/container";
+import { DateView } from "../../components/date-view";
 import { Field, FieldsGroup } from "../../components/fields";
-import { Info, Infos } from "../../components/info";
-import { usePrompt } from "../../lib/hooks";
+import { Table } from "../../components/table";
 import { styles } from "../../lib/styles";
-import { serverRequest } from "../../lib/util";
-import { useMemo } from "react";
+import { queryString, serverRequest } from "../../lib/util";
 
 export default function UsageLogsPage() {
 
@@ -23,14 +20,13 @@ export default function UsageLogsPage() {
     let showAll = all == '1';
     let [view, setView] = useState({
         search: '',
-        page: 1
+        page: 1,
+        limit: 50
     });
 
     let [search, setSearch] = useState('');
 
-    let fetchData = useMemo(() => {
-        return serverRequest.bind(this, context.server);
-    }, [context.server]);
+    let fetchData = useMemo(() => serverRequest.bind(this, context.server), [context.server]);
 
     let doFilter = useCallback(() => {
         setSearch(view.search);
@@ -39,8 +35,16 @@ export default function UsageLogsPage() {
     /**
      * @type {import("swr").SWRResponse<any[]>}
      */
-    let {data: logs, mutate: refreshData, isValidating: isLoading} = useSWR('/daily_usage_logs?email='+(email || '')+'&page='+view.page+'&q='+(search || '')+'&from='+fromOffset+'&to='+toOffset+'&tag='+(tag || '')+'&key=' + btoa(context.server.url), fetchData);
-    const prompt = usePrompt();
+    let {data: logs, mutate: refreshData, isValidating: isLoading} = useSWR(email ? '/daily_usage_logs' + queryString({
+        email,
+        page: view.page,
+        q: search,
+        from: fromOffset,
+        to: toOffset,
+        tag,
+        key: btoa(context.server.url),
+        limit: view.limit
+    }) : null, fetchData);
 
     return <Container>
         <Head>
@@ -55,8 +59,15 @@ export default function UsageLogsPage() {
             </Field>
             <Field label="Page" className="border-r-[1px] px-3 mr-2">
                 <span className="text-gray-800 py-1 px-2 rounded-lg bg-yellow-100">{view.page}</span>
-                { view.page > 1 ? <button className={styles.button} onClick={() => setView({ ...view, page: view.page - 1 })}>Prev</button> : null }
+                <button disabled={view.page <= 1} className={styles.button} onClick={() => setView({ ...view, page: view.page - 1 })}>Prev</button>
                 <button className={styles.button} onClick={() => setView({ ...view, page: view.page + 1 })}>Next</button>
+            </Field>
+            <Field htmlFor="limit" label="Limit">
+                <select id="limit" className={styles.input}>
+                    <option value="10">10</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
             </Field>
             <Field htmlFor="search" label="Search">
                 <input className={styles.input} type="text" id="search" placeholder="Destination Search ..."/>
@@ -67,10 +78,12 @@ export default function UsageLogsPage() {
         </FieldsGroup>
         <Table
             rows={logs ?? []}
-            columns={[ 'Client', 'Time', 'Tag', 'Destination' ]}
+            columns={[ 'Offset', 'Client', 'Time', 'Tag', 'Destination' ]}
+            index={(log, index) => index + 1 + ((view.page - 1) * view.limit)}
             cells={log => [
+                log.offset,
                 log.clientAddress,
-                log.dateTime,
+                <DateView date={log.dateTime} full={true} locale='en'/>,
                 log.route,
                 log.destination
             ]}

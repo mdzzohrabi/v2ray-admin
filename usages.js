@@ -1,4 +1,5 @@
 // @ts-check
+const { stat } = require('fs/promises');
 const { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile, readLogLines, cache } = require('./lib/util');
 
 async function usages() {

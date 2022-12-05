@@ -331,12 +331,12 @@ app.get('/daily_usage_logs', async (req, res) => {
         let result = [];
         let limit = Number(req.query.limit) || 50;
         let search = req.query.q?.toString();
-        let counter = 1;
+        let skip = 0;
         let page = Number(req.query.page) || 1;
         let i = 0;
 
-        counter = (page - 1) * limit;
-        limit = counter + limit;
+        skip = (page - 1) * limit;
+        limit = skip + limit;
 
         if (!email || !toOffset || !fromOffset) return res.json({ error: 'Invalid request' });
 
@@ -344,13 +344,13 @@ app.get('/daily_usage_logs', async (req, res) => {
             // User filter
             if (!!email && line.user != email) continue;
             // Limit
-            if (i > limit) break;
+            if (i + 1 > limit) break;
             // Tag filter
             if (!!tag && line.route.replace(/\[|\]/g, '') != tag) continue;
             // Search
             if (!!search && !line.destination?.includes(search)) continue;
             i++;
-            if (i > counter)
+            if (i > skip)
                 result.push(line);
         }            
 

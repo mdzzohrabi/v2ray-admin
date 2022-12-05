@@ -286,3 +286,21 @@ export function withoutKey(obj, ...keys) {
     keys.forEach(k => delete clone[k]);
     return clone;
 }
+
+/**
+ * Create query string from object
+ * @param {{ [key: string]: any }} values Values
+ */
+export function queryString(values) {
+    let qs = Object.keys(values).map(key => {
+        let value = values[key];
+        if (value == undefined) value = '';
+        if (Array.isArray(value)) {
+            return value.map(v => `${key}[]=${v}`).join('&');
+        }
+        return `${key}=${value}`;
+    }).join('&');
+
+    if (qs) return '?' + qs;
+    return '';
+}

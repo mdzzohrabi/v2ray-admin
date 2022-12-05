@@ -4,7 +4,7 @@ import React from "react";
 import { useState } from "react";
 import { useCallback, useEffect } from "react";
 import toast from "react-hot-toast";
-import { deepCopy } from "./util";
+import { deepCopy, store, stored } from "./util";
 
 export function useOutsideAlerter(ref, callback) {
 	useEffect(() => {
@@ -119,4 +119,18 @@ export function useObjectCRUD(initValue = null, setter = null) {
 	}, [value, setter]);
 
 	return { value, deleteKey, setKey, renameKey };
+}
+
+
+/**
+ * @template T
+ * @param {string} key Storage key
+ * @param {T} init Value
+ * @returns {[ T, React.Dispatch<React.SetStateAction<T>> ]}
+ */
+export function useStoredState(key, init) {
+	let state = useState(stored(key) ?? init);
+	useEffect(() => store(key, state[0]), [state[0]]);
+	// @ts-ignore
+	return state;
 }
