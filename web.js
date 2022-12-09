@@ -224,7 +224,9 @@ app.get('/inbounds', async (req, res) => {
         }
     }
 
-    res.json(inbounds);
+    res.json({ encoded: Buffer.from(JSON.stringify(inbounds)).toString('base64') });
+
+    //res.json(inbounds);
 });
 
 app.post('/user', async (req, res) => {
