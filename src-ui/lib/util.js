@@ -1,4 +1,6 @@
 // @ts-check
+import {decrypt} from 'crypto-js/aes';
+import encodeUtf8 from 'crypto-js/enc-utf8';
 
 /**
  * @param {import("../components/app-context").ServerContext} server
@@ -14,7 +16,18 @@ export function serverRequest(server, action, body = undefined) {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + btoa(server.token)
         }
-    }).then(result => result.json()).then(result => { if (result.error) throw Error(result.error); else return result });
+    })
+        .then(result => result.json())
+        .then(result => {
+            if (result.encoded) {
+                console.log('Encode data');
+                let data = JSON.parse(decrypt(result.encoded, 'masoud').toString(encodeUtf8));
+                console.log(data);
+                return data;
+            }
+            return result;
+        })
+        .then(result => { if (result.error) throw Error(result.error); else return result });
 }
 
 export function store(key, value) {

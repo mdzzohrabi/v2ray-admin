@@ -6,6 +6,11 @@ const { Server } = require('socket.io');
 const { createServer } = require('http');
 const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser, restartService, findUser, setUserActive, writeConfig, deleteUser, log, readLines, watchFile, cache, applyChanges, readLogLines, readLogLinesByOffset } = require('./lib/util');
 const { getTransactions, addTransaction, saveDb, readDb } = require('./lib/db');
+const { encrypt } = require('crypto-js/aes');
+
+const encryptData = (data) => {
+    return { encoded: encrypt(JSON.stringify(data), 'masoud').toString() }
+}
 
 let {showInfo} = createLogger();
 let app = express();
@@ -44,7 +49,7 @@ app.use((req, res, next) => {
 app.get('/config', async (req, res) => {
     let {configPath} = getPaths();
     let config = readConfig(configPath);
-    res.json(config);
+    res.json(encryptData(config));
 });
 
 app.post('/config', async (req, res) => {
@@ -59,7 +64,7 @@ app.post('/config', async (req, res) => {
 app.get('/usages', async (req, res) => {
     let {accessLogPath} = getPaths();
     let usages = await readLogFile(accessLogPath);
-    res.json(usages);
+    res.json(encryptData(usages));
 });
 
 app.post('/client_config', (req, res) => {
@@ -224,7 +229,7 @@ app.get('/inbounds', async (req, res) => {
         }
     }
 
-    res.json({ encoded: Buffer.from(JSON.stringify(inbounds)).toString('base64') });
+    res.json(encryptData(inbounds));
 
     //res.json(inbounds);
 });
@@ -265,7 +270,7 @@ app.get('/transactions', async (req, res) => {
 app.post('/transactions', async (req, res) => {
     try {
         let result = await addTransaction(req.body);
-        res.json({ transaction: result });
+        res.json(encryptData({ transaction: result }));
     }
     catch (err) {
         res.json({ error: err.message });

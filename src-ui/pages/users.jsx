@@ -54,15 +54,10 @@ export default function UsersPage() {
     //     store('users-filter-status', statusFilter);
     // }, [statusFilter]);
 
-    let getInbounds = (...args) => {
-        // @ts-ignore
-        return serverRequest(context.server, ...args).then(data => JSON.parse(atob(data.encoded)));
-    }
-
     /**
      * @type {import("swr").SWRResponse<V2RayConfigInbound[]>}
      */
-    let {data: inbounds, mutate: refreshInbounds, isValidating: isLoading} = useSWR('/inbounds?key=' + btoa(context.server.url), getInbounds);
+    let {data: inbounds, mutate: refreshInbounds, isValidating: isLoading} = useSWR('/inbounds?key=' + btoa(context.server.url), serverRequest.bind(this, context.server));
 
     const showQRCode = useCallback(async (protocol, user) => {
         let config = await serverRequest(context.server, '/client_config?protocol=' + protocol, user).then(data => data.config)
