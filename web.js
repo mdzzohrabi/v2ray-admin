@@ -221,11 +221,13 @@ app.get('/inbounds', async (req, res) => {
         let users = inbound.settings?.clients ?? [];
         for (let user of users) {
             let usage = user.email ? usages[user.email] : {};
-            user.firstConnect = user.firstConnect ?? usage?.firstConnect;
-            user['lastConnect'] = usage?.lastConnect;
+            user.firstConnect = (user.firstConnect ?? usage?.firstConnect) ? new Date(user.firstConnect ?? usage?.firstConnect).getTime() : null;
+            user['lastConnect'] = (usage?.lastConnect) ? new Date(usage?.lastConnect).getTime() : null;
             user.expireDays = user.expireDays || Number(env.V2RAY_EXPIRE_DAYS) || 30;
             user.maxConnections = user.maxConnections || Number(env.V2RAY_MAX_CONNECTIONS) || 3;
-            user.billingStartDate = user.billingStartDate ?? user.firstConnect;
+            user.billingStartDate = (user.billingStartDate ?? user.firstConnect) ? new Date(user.billingStartDate ?? user.firstConnect).getTime() : null;
+            user.expiredDate = user.expiredDate ? new Date(user.expiredDate).getTime() : user.expiredDate;
+            user.createDate = user.createDate ? new Date(user.createDate).getTime() : user.createDate;
         }
     }
 
