@@ -227,8 +227,6 @@ app.get('/inbounds', async (req, res) => {
             user.maxConnections = user.maxConnections || Number(env.V2RAY_MAX_CONNECTIONS) || 3;
             user.billingStartDate = user.billingStartDate ?? user.firstConnect;
         }
-        if (inbound && inbound.settings)
-            inbound.settings.clients = [];
     }
 
     res.json(encryptData(inbounds));
