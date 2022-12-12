@@ -231,7 +231,7 @@ app.get('/inbounds', async (req, res) => {
         }
     }
 
-    console.log('Send inbounds data');
+    console.log('Send inbounds data', encryptData(inbounds));
 
     res.json(encryptData(inbounds));
 
