@@ -229,6 +229,8 @@ app.get('/inbounds', async (req, res) => {
         }
     }
 
+    console.log('Send inbounds data');
+
     res.json(encryptData(inbounds));
 
     //res.json(inbounds);
