@@ -9,6 +9,12 @@ import encodeUtf8 from 'crypto-js/enc-utf8';
  * @returns 
  */
 export function serverRequest(server, action, body = undefined) {
+
+    if (typeof action == 'object') {
+        body = action['body'];
+        action = action['url'];
+    }
+
     return fetch(server.url + action, {
         method: body ? 'POST' : 'GET',
         body: body ? JSON.stringify(body) : undefined,

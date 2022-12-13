@@ -26,14 +26,6 @@ export default function UsersPage() {
     let context = useContext(AppContext);
     let router = useRouter();
     let showAll = router.query.all == '1';
-    // let [[sortColumn, sortAsc], setSort] = useState(['', true]);
-    // let [fullTime, setFullTime] = useState(false);
-    // let [precision, setPrecision] = useState(true);
-    // let [showId, setShowId] = useState(false);
-    // let [filter, setFilter] = useState('');
-    // /** @type {string[]} */
-    // let initFilters = stored('users-filter-status') ?? [];
-    // let [statusFilter, setStatusFilter] = useState(initFilters);
 
     /** @type {string[]} */
     let initStatusFilter = [];
@@ -45,19 +37,23 @@ export default function UsersPage() {
         precision: true,
         showId: false,
         filter: '',
-        statusFilter: initStatusFilter
+        statusFilter: initStatusFilter,
+        page: 1,
+        limit: 20
     }));
 
     useEffect(() => store('users-view', view), [view]);
 
-    // useEffect(() => {
-    //     store('users-filter-status', statusFilter);
-    // }, [statusFilter]);
-
     /**
      * @type {import("swr").SWRResponse<V2RayConfigInbound[]>}
      */
-    let {data: inbounds, mutate: refreshInbounds, isValidating: isLoading} = useSWR('/inbounds?key=' + btoa(context.server.url), serverRequest.bind(this, context.server));
+    let {data: inbounds, mutate: refreshInbounds, isValidating: isLoading} = useSWR({
+        url: '/inbounds?key=' + btoa(context.server.url),
+        body: {
+            private: showAll,
+            view
+        }
+    }, serverRequest.bind(this, context.server));
 
     const showQRCode = useCallback(async (protocol, user) => {
         let config = await serverRequest(context.server, '/client_config?protocol=' + protocol, user).then(data => data.config)
@@ -156,41 +152,10 @@ export default function UsersPage() {
     <button className="rounded-lg duration-150 hover:shadow-md bg-blue-400 px-2 py-1 ml-1 hover:bg-blue-600">OK</button>
     </div>
 
-    const statusFilters = useMemo(() => {
-        /** @type {{ [name: string]: (user: V2RayConfigInboundClient) => boolean }} */
-        let filters = {
-            'Active': u => !u.deActiveDate,
-            'De-Active': u => !!u.deActiveDate,
-            'Expired': u => (u.deActiveReason?.includes('Expired') ?? false),
-            'Private': u => !!u.private,
-            'Non-Private': u => !u.private,
-            'Free': u => !!u.free,
-            'Non-Free': u => !u.free,
-            'Without FullName': u => !u.fullName,
-            'With FullName': u => !!u.fullName,
-            'Without Mobile': u => !u.mobile,
-            'With Mobile': u => !!u.mobile,
-            'Not Connected (1 Hour)': u => !u['lastConnect'] || (Date.now() - new Date(u['lastConnect']).getTime() >= 1000 * 60 * 60),
-            'Not Connected (10 Hours)': u => !u['lastConnect'] || (Date.now() - new Date(u['lastConnect']).getTime() >= 1000 * 60 * 60 * 10),
-            'Not Connected (1 Day)': u => !u['lastConnect'] || (Date.now() - new Date(u['lastConnect']).getTime() >= 1000 * 60 * 60 * 24),
-            'Not Connected (1 Month)': u => !u['lastConnect'] || (Date.now() - new Date(u['lastConnect']).getTime() >= 1000 * 60 * 60 * 24 * 30),
-            'Connected (1 Hour)': u => !!u['lastConnect'] && (Date.now() - new Date(u['lastConnect']).getTime() <= 1000 * 60 * 60),
-            'Connected (10 Hours)': u => !!u['lastConnect'] && (Date.now() - new Date(u['lastConnect']).getTime() <= 1000 * 60 * 60 * 10),
-            'Connected (1 Day)': u => !!u['lastConnect'] && (Date.now() - new Date(u['lastConnect']).getTime() <= 1000 * 60 * 60 * 24),
-            'Connected (1 Month)': u => !!u['lastConnect'] && (Date.now() - new Date(u['lastConnect']).getTime() <= 1000 * 60 * 60 * 24 * 30),
-            'Recently Created (1 Hour)': u => !!u.createDate && (Date.now() - new Date(u.createDate).getTime() <= 1000 * 60 * 60),
-            'Recently Created (10 Hours)': u => !!u.createDate && (Date.now() - new Date(u.createDate).getTime() <= 1000 * 60 * 60 * 10),
-            'Recently Created (1 Day)': u => !!u.createDate && (Date.now() - new Date(u.createDate).getTime() <= 1000 * 60 * 60 * 24),
-            'Recently Created (1 Month)': u => !!u.createDate && (Date.now() - new Date(u.createDate).getTime() <= 1000 * 60 * 60 * 24 * 30),
-            'Expiring (6 Hours)': u => !u.deActiveDate && !!u.billingStartDate &&  ((new Date(u.billingStartDate).getTime() + ((u.expireDays ?? 30) * 24 * 60 * 60 * 1000)) - Date.now() <= 1000 * 60 * 60 * 6),
-            'Expiring (24 Hours)': u => !u.deActiveDate && !!u.billingStartDate && ((new Date(u.billingStartDate).getTime() + ((u.expireDays ?? 30) * 24 * 60 * 60 * 1000)) - Date.now() <= 1000 * 60 * 60 * 24),
-            'Expiring (3 Days)': u => !u.deActiveDate && !!u.billingStartDate &&   ((new Date(u.billingStartDate).getTime() + ((u.expireDays ?? 30) * 24 * 60 * 60 * 1000)) - Date.now() <= 1000 * 60 * 60 * 24 * 3),
-            'Expiring (1 Week)': u => !u.deActiveDate && !!u.billingStartDate &&   ((new Date(u.billingStartDate).getTime() + ((u.expireDays ?? 30) * 24 * 60 * 60 * 1000)) - Date.now() <= 1000 * 60 * 60 * 24 * 7),
-            'Re-activated from Expire (1 Week)': u => !!u.billingStartDate && u.billingStartDate != u.firstConnect && (Date.now() - new Date(u.billingStartDate).getTime() <= 1000 * 60 * 60 * 24 * 7)
-        };
-
-        return filters;
-    }, []);
+    /**
+     * @type {import("swr").SWRResponse<string[]>}
+     */
+    const {data: statusFilters} = useSWR('/status_filters', serverRequest.bind(this, context.server));
 
     const prompt = usePrompt();
 
@@ -245,6 +210,9 @@ export default function UsersPage() {
         })
         excel.saveExcel();
     }, [inbounds]);
+    
+    let maxUsers = inbounds?.map(x => x.settings ? x.settings['totalClients'] : 0).reduce((a, b) => a > b ? a : b, 0) ?? 0;
+    let totalPages = Math.ceil( maxUsers / view.limit );
 
     return <Container>
         <Head>
@@ -252,6 +220,23 @@ export default function UsersPage() {
         </Head>
         <AddUser className="py-2" disabled={isLoading} onRefresh={refreshInbounds} protocols={inbounds?.map(i => i.protocol ?? '') ?? []}/>
         <FieldsGroup data={view} dataSetter={setView} title="View" className="border-t-2 py-2" containerClassName="items-center">
+            <Field label="Page" htmlFor="page">
+                <select id="page" className={styles.input}>
+                    {[...new Array(totalPages)].map((x, i) => <option value={i+1}>{i+1}</option>)}
+                </select>
+            </Field>
+            <Field label="Limit" htmlFor="limit">
+                <select id="limit" className={styles.input}>
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                    <option value={200}>200</option>
+                    <option value={300}>300</option>
+                    <option value={400}>400</option>
+                    <option value={500}>500</option>
+                </select>
+            </Field>
             <Field label="Sort" htmlFor="sortColumn">
                 <select id="sortColumn" className={styles.input}>
                     <option value="-">-</option>
@@ -286,7 +271,7 @@ export default function UsersPage() {
                 </div>
                 <select value={"-"} onChange={e => setView({ ...view, statusFilter: [...view.statusFilter, e.currentTarget.value]})} id="statusFilter" className="bg-slate-100 rounded-lg px-2 py-1">
                     <option value="-">-</option>
-                    {Object.keys(statusFilters).map((x, index) => <option key={index} value={x}>{x}</option>)}
+                    {(statusFilters ?? []).map((x, index) => <option key={index} value={x}>{x}</option>)}
                 </select>
             </Field>
             <Field htmlFor="fullTime" label="Full Time">
@@ -319,22 +304,15 @@ export default function UsersPage() {
             </thead>
             <tbody>
                 {!inbounds ? <tr><td colSpan={10} className="px-3 py-4">Loading ...</td></tr> : inbounds.map(i => {
-
-                    let {sortColumn, sortAsc, filter, statusFilter, showId, fullTime, precision} = view;
-
-                    let users = [...(i.settings?.clients ?? [])]
-                    .map(u => {
-                        u['expireDate'] = DateUtil.addDays(u.billingStartDate, u.expireDays ?? 30);
-                        return u;
-                    })
-                    .filter(u => showAll || !u.private)
-                    .filter(u => !filter || (u.id == filter || u.fullName?.includes(filter) || u.email?.includes(filter)))
-                    .filter(u => statusFilter.length == 0 || statusFilter.map(filter => statusFilters[filter]).every(filter => filter(u)))
-                    .sort((a, b) => !sortColumn ? 0 : a[sortColumn] == b[sortColumn] ? 0 : a[sortColumn] < b[sortColumn] ? (sortAsc ? -1 : 1) : (sortAsc ? 1 : -1));
-
+                    let users = i.settings?.clients ?? [];
+                    let totalUsers = i.settings ? i.settings['totalClients'] ?? 0 : 0;
+                    let totalFiltered = i.settings ? i.settings['totalFiltered'] ?? 0 : 0;
+                    let from = i.settings ? i.settings['from'] ?? 0 : 0;
+                    let to = i.settings ? i.settings['to'] ?? 0 : 0;
+                    let {showId, fullTime, precision} = view;
                     return <Fragment key={"inbound-" + i.protocol}>
                         <tr key={"inbound-" + i.protocol}>
-                            <td colSpan={5} className="uppercase font-bold bg-slate-100 px-4 py-3">{i.protocol} ({users.length} users)</td>
+                            <td colSpan={5} className="uppercase font-bold bg-slate-100 px-4 py-3">{i.protocol} ( {from}-{to} / {totalFiltered} users ) - Total = {totalUsers} users</td>
                         </tr>
                         {users
                         .map((u, index) => {

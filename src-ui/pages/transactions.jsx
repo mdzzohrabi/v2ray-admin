@@ -40,11 +40,9 @@ export default function TransactionsPage() {
     let {data: transactions, mutate: refreshList} = useSWR('/transactions?key=' + btoa(context.server.url), serverRequest.bind(this, context.server));
 
     /**
-     * @type {import("swr").SWRResponse<V2RayConfigInbound[]>}
+     * @type {import("swr").SWRResponse<string[]>}
      */
-     let {data: inbounds, mutate: refreshInbounds} = useSWR('/inbounds?key=' + btoa(context.server.url), serverRequest.bind(this, context.server));
-
-    const users = useMemo(() => inbounds?.flatMap(i => i.settings?.clients ?? []) ?? [], [inbounds]);
+     let {data: users, mutate: refreshUsers} = useSWR('/inbounds_clients?key=' + btoa(context.server.url), serverRequest.bind(this, context.server));
 
     const addTransaction = useCallback(async (e) => {
         try {
@@ -94,7 +92,7 @@ export default function TransactionsPage() {
                 <Field label={"User"} htmlFor="user">
                     <select className={styles.input} id="user">
                         <option value="">-</option>
-                        {users.map((client, index) => <option key={index} value={client?.email}>{client?.email}</option>)}
+                        {(users ?? []).map((client, index) => <option key={index} value={client}>{client}</option>)}
                     </select>
                 </Field>
                 <Field label={"Description"} htmlFor="remark">
@@ -144,7 +142,7 @@ export default function TransactionsPage() {
                 <Field label={"User"} htmlFor="user">
                     <select className={styles.input} id="user">
                         <option value="">-</option>
-                        {users.map((client, index) => <option key={index} value={client?.email}>{client?.email}</option>)}
+                        {(users ??[]).map((client, index) => <option key={index} value={client}>{client}</option>)}
                     </select>
                 </Field>
             </FieldsGroup>

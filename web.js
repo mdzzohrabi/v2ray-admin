@@ -4,11 +4,12 @@ const express = require('express');
 const { env } = require('process');
 const { Server } = require('socket.io');
 const { createServer } = require('http');
-const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser, restartService, findUser, setUserActive, writeConfig, deleteUser, log, readLines, watchFile, cache, applyChanges, readLogLines, readLogLinesByOffset } = require('./lib/util');
+const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser, restartService, findUser, setUserActive, writeConfig, deleteUser, log, readLines, watchFile, cache, applyChanges, readLogLines, readLogLinesByOffset, DateUtil } = require('./lib/util');
 const { getTransactions, addTransaction, saveDb, readDb } = require('./lib/db');
 const { encrypt } = require('crypto-js/aes');
 
 const encryptData = (data) => {
+    return data;
     return { encoded: encrypt(JSON.stringify(data), 'masoud').toString() }
 }
 
@@ -22,6 +23,38 @@ let socket = new Server(server, {
         allowedHeaders: []
       }
 });
+
+/** @type {{ [name: string]: (user: V2RayConfigInboundClient) => boolean }} */
+const statusFilters = {
+    'Active': u => !u.deActiveDate,
+    'De-Active': u => !!u.deActiveDate,
+    'Expired': u => (u.deActiveReason?.includes('Expired') ?? false),
+    'Private': u => !!u.private,
+    'Non-Private': u => !u.private,
+    'Free': u => !!u.free,
+    'Non-Free': u => !u.free,
+    'Without FullName': u => !u.fullName,
+    'With FullName': u => !!u.fullName,
+    'Without Mobile': u => !u.mobile,
+    'With Mobile': u => !!u.mobile,
+    'Not Connected (1 Hour)': u => !u['lastConnect'] || (Date.now() - new Date(u['lastConnect']).getTime() >= 1000 * 60 * 60),
+    'Not Connected (10 Hours)': u => !u['lastConnect'] || (Date.now() - new Date(u['lastConnect']).getTime() >= 1000 * 60 * 60 * 10),
+    'Not Connected (1 Day)': u => !u['lastConnect'] || (Date.now() - new Date(u['lastConnect']).getTime() >= 1000 * 60 * 60 * 24),
+    'Not Connected (1 Month)': u => !u['lastConnect'] || (Date.now() - new Date(u['lastConnect']).getTime() >= 1000 * 60 * 60 * 24 * 30),
+    'Connected (1 Hour)': u => !!u['lastConnect'] && (Date.now() - new Date(u['lastConnect']).getTime() <= 1000 * 60 * 60),
+    'Connected (10 Hours)': u => !!u['lastConnect'] && (Date.now() - new Date(u['lastConnect']).getTime() <= 1000 * 60 * 60 * 10),
+    'Connected (1 Day)': u => !!u['lastConnect'] && (Date.now() - new Date(u['lastConnect']).getTime() <= 1000 * 60 * 60 * 24),
+    'Connected (1 Month)': u => !!u['lastConnect'] && (Date.now() - new Date(u['lastConnect']).getTime() <= 1000 * 60 * 60 * 24 * 30),
+    'Recently Created (1 Hour)': u => !!u.createDate && (Date.now() - new Date(u.createDate).getTime() <= 1000 * 60 * 60),
+    'Recently Created (10 Hours)': u => !!u.createDate && (Date.now() - new Date(u.createDate).getTime() <= 1000 * 60 * 60 * 10),
+    'Recently Created (1 Day)': u => !!u.createDate && (Date.now() - new Date(u.createDate).getTime() <= 1000 * 60 * 60 * 24),
+    'Recently Created (1 Month)': u => !!u.createDate && (Date.now() - new Date(u.createDate).getTime() <= 1000 * 60 * 60 * 24 * 30),
+    'Expiring (6 Hours)': u => !u.deActiveDate && !!u.billingStartDate &&  ((new Date(u.billingStartDate).getTime() + ((u.expireDays ?? 30) * 24 * 60 * 60 * 1000)) - Date.now() <= 1000 * 60 * 60 * 6),
+    'Expiring (24 Hours)': u => !u.deActiveDate && !!u.billingStartDate && ((new Date(u.billingStartDate).getTime() + ((u.expireDays ?? 30) * 24 * 60 * 60 * 1000)) - Date.now() <= 1000 * 60 * 60 * 24),
+    'Expiring (3 Days)': u => !u.deActiveDate && !!u.billingStartDate &&   ((new Date(u.billingStartDate).getTime() + ((u.expireDays ?? 30) * 24 * 60 * 60 * 1000)) - Date.now() <= 1000 * 60 * 60 * 24 * 3),
+    'Expiring (1 Week)': u => !u.deActiveDate && !!u.billingStartDate &&   ((new Date(u.billingStartDate).getTime() + ((u.expireDays ?? 30) * 24 * 60 * 60 * 1000)) - Date.now() <= 1000 * 60 * 60 * 24 * 7),
+    'Re-activated from Expire (1 Week)': u => !!u.billingStartDate && u.billingStartDate != u.firstConnect && (Date.now() - new Date(u.billingStartDate).getTime() <= 1000 * 60 * 60 * 24 * 7)
+};
 
 app.get('/account_deactive', (req, res) => {
     res.end('Account disabled');
@@ -203,10 +236,15 @@ app.post('/remove_user', async (req, res) => {
     }
 });
 
+app.get('/status_filters', (req, res) => {
+    res.json(Object.keys(statusFilters))
+});
 
-app.get('/inbounds', async (req, res) => {
+app.post('/inbounds', async (req, res) => {
 
     let {configPath, accessLogPath} = getPaths();
+    let {view, private} = req.body;
+    let {sortColumn, sortAsc, filter, statusFilter, showId, fullTime, precision, page = 1, limit = 20} = view;
 
     let config = readConfig(configPath);
 
@@ -217,8 +255,14 @@ app.get('/inbounds', async (req, res) => {
 
     let usages = await readLogFile(accessLogPath);
 
+    limit = Number(limit);
+    page = Number(page);
+
+    let skip = (page * limit) - limit;
+
     for (let inbound of inbounds) {
-        let users = inbound.settings?.clients ?? [];
+        let users = (inbound.settings?.clients ?? []).filter(u => private || !u.private);
+        let total = users.length;
         for (let user of users) {
             let usage = user.email ? usages[user.email] : {};
             user.firstConnect = user.firstConnect ?? usage?.firstConnect;
@@ -226,12 +270,35 @@ app.get('/inbounds', async (req, res) => {
             user.expireDays = user.expireDays || Number(env.V2RAY_EXPIRE_DAYS) || 30;
             user.maxConnections = user.maxConnections || Number(env.V2RAY_MAX_CONNECTIONS) || 3;
             user.billingStartDate = user.billingStartDate ?? user.firstConnect;
+            user['expireDate'] = DateUtil.addDays(user.billingStartDate, user.expireDays ?? 30);
+        }
+        
+        let filtered = users
+            .filter(u => !filter || (u.id == filter || u.fullName?.toLowerCase().includes(filter.toLowerCase()) || u.email?.toLowerCase().includes(filter.toLowerCase())))
+            .filter(u => statusFilter.length == 0 || statusFilter.map(filter => statusFilters[filter]).every(filter => filter(u)))
+            .sort((a, b) => !sortColumn ? 0 : a[sortColumn] == b[sortColumn] ? 0 : a[sortColumn] < b[sortColumn] ? (sortAsc ? -1 : 1) : (sortAsc ? 1 : -1))
+        ;
+
+        if (inbound.settings) {
+            inbound.settings.clients = filtered.slice(skip, skip + limit);
+            inbound.settings['totalClients'] = total;
+            inbound.settings['totalFiltered'] = filtered.length;
+            inbound.settings['from'] = skip;
+            inbound.settings['to'] = skip + limit;
         }
     }
 
     res.json(encryptData(inbounds));
+});
 
-    //res.json(inbounds);
+app.get('/inbounds_clients', async (req, res) => {
+    let {configPath} = getPaths();
+    let config = readConfig(configPath);
+    if (Array.isArray(config.inbounds) == false)
+        return res.status(500).end('No inbounds defined in configuration');
+    let inbounds = config.inbounds ?? [];
+    let clients = inbounds.flatMap(x => x.settings?.clients ?? [])?.map(x => x.email);
+    res.json(encryptData(clients));
 });
 
 app.post('/user', async (req, res) => {
@@ -410,6 +477,10 @@ app.post('/add_days', async (req, res) => {
         res.json({ error: err.message });
         console.error(err);
     }
+});
+
+app.post('/sync_node', async (req, res) => {
+
 });
 
 let logWatch = socket.of('/logs');
