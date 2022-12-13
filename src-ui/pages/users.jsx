@@ -212,7 +212,7 @@ export default function UsersPage() {
     }, [inbounds]);
     
     let maxUsers = inbounds?.map(x => x.settings ? x.settings['totalClients'] : 0).reduce((a, b) => a > b ? a : b, 0) ?? 0;
-    let totalPages = Math.ceil( maxUsers / view.limit );
+    let totalPages = Number( Math.ceil( maxUsers / view.limit ) ) || 1;
 
     return <Container>
         <Head>
