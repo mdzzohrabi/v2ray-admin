@@ -91,6 +91,7 @@ interface V2RayConfigOutboundSettings {
     redirect?: string
     // MTProto
     users?: { secret?: string }[]
+    response?: { type?: string }
 }
 
 interface V2RayConfigOutboundSettingsServerVNext {
@@ -120,6 +121,18 @@ interface V2RayConfigStream {
   transportSettings: any,
   security: "none" | "auto",
   securitySettings: any
+  network?: 'tcp' | 'kcp' | 'ws' | 'http' | 'domainsocket' | 'quic'
+  tcpSettings?: NoneHeaderObject | HttpHeaderObject
+}
+
+interface NoneHeaderObject {
+    type: 'none'
+}
+
+interface HttpHeaderObject {
+    type: 'http'
+    request?: any
+    response?: any
 }
 
 interface V2RayConfigLog {

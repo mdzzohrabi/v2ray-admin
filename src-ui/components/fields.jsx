@@ -41,6 +41,28 @@ export function FieldsGroup({ title, children, className, titleClassName, horizo
 	</div>
 }
 
+export function FieldObject({ children, path }) {
+	let context = useContext(FieldContext);
+	
+	let setData = useCallback(data => {
+		console.log(`Set Data`, data, context.data, path);
+		if (context.dataSetter) {
+			let obj = { ...context.data };
+			if (!data && context.unsetEmpty) {
+				delete obj[path];
+			} else {
+				obj[path] = data;
+			}
+			// @ts-ignore
+			context.dataSetter(obj);
+		}
+	}, [context.data, context.dataSetter]);
+
+	let data = context.data && context.data[path] ? context.data[path] : undefined;
+
+	return <FieldContext.Provider value={{ ...context, dataSetter: setData, data }}>{children}</FieldContext.Provider>;
+}
+
 /**
  * 
  * @param {{ label?: string, children?: any, className?: string, horizontal?: boolean, htmlFor?: string, data?: any, dataSetter?: Function, unsetEmpty?: boolean }} param0 
@@ -83,7 +105,7 @@ export function Field({ label, children, className = '', horizontal = undefined,
 	}, [htmlFor, data, dataSetter]);
 
 	childs = childs.map((child, index) => {
-		if (typeof data != 'undefined' && dataSetter) {
+		if (dataSetter) {
 			if (child?.type == 'input' || child?.type == 'select' || child?.type == 'textarea') {
 				let valueProp = 'value';
 				if (child.props.type == 'checkbox') valueProp = 'checked';

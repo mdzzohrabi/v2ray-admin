@@ -4,7 +4,7 @@ import classNames from "classnames";
 import React, { useCallback, useState } from "react";
 import { styles } from "../../lib/styles";
 import { Dialog } from "../dialog";
-import { Collection, Field, FieldsGroup } from "../fields";
+import { Collection, Field, FieldObject, FieldsGroup } from "../fields";
 import { PopupMenu } from "../popup-menu";
 import { Table } from "../table";
 
@@ -62,6 +62,18 @@ export function OutboundEditor({ outbound: outboundProp, dissmis, onEdit }) {
                             <option value="AsIs">AsIs</option>
                             <option value="IPIfNonMatch">IPIfNonMatch</option>
                             <option value="IPOnDemand">IPOnDemand</option>
+                        </select>
+                    </Field>
+                </FieldsGroup>
+            </div> : null }
+            {outbound?.protocol == 'blackhole' ?
+            <div className="flex flex-row pt-2">
+                <FieldsGroup data={outbound.settings?.response ?? {}} dataSetter={response => setOutbound({ ...outbound, settings: { ...outbound.settings, response } })}>
+                    <Field label="Response Type" htmlFor="type">
+                        <select className={styles.input} id="type">
+                            <option value="">-</option>
+                            <option value="none">None</option>
+                            <option value="http">HTTP</option>
                         </select>
                     </Field>
                 </FieldsGroup>
@@ -148,9 +160,24 @@ export function OutboundEditor({ outbound: outboundProp, dissmis, onEdit }) {
                                 <Collection data={row.users ?? []} dataSetter={users => vnext.updateItem(row, { ...row, users })}>
                                     {users => <>
                                         {users.items.map(user => <FieldsGroup data={user} dataSetter={edit => users.updateItem(user, edit)}>
-                                            <div className="flex flex-row border-b-[1px] pb-2 last-of-type:border-b-0 text-xs items-center">
+                                            <div className="flex flex-col border-b-[1px] pb-2 last-of-type:border-b-0 text-xs ">
                                                 <Field htmlFor="id" label="ID">
                                                     <input type="text" className={styles.input} id="id"/>
+                                                </Field>
+                                                <Field htmlFor="alterId" label="Alter ID">
+                                                    <input type="text" className={styles.input} id="alterId" placeholder="0"/>
+                                                </Field>
+                                                <Field htmlFor="level" label="Level">
+                                                    <input type="text" className={styles.input} id="level" placeholder="0"/>
+                                                </Field>
+                                                <Field htmlFor="security" label="Security">
+                                                    <select className={styles.input} id="security">
+                                                        <option value="">-</option>
+                                                        <option value="auto">auto</option>
+                                                        <option value="aes-128-gcm">aes-128-gcm</option>
+                                                        <option value="chacha20-poly1305">chacha20-poly1305</option>
+                                                        <option value="none">none</option>
+                                                    </select>
                                                 </Field>
                                                 <span onClick={() => users.deleteItem(user)} className={styles.link}>Delete</span>
                                             </div>
@@ -201,6 +228,7 @@ export function OutboundEditor({ outbound: outboundProp, dissmis, onEdit }) {
                 <div className="flex flex-row">
                     <Field label="Network" htmlFor="network" className="flex-1" data={outbound?.streamSettings ?? {}} dataSetter={streamSettings => setOutbound({ ...outbound, streamSettings })}>
                         <select className={styles.input} id="network">
+                            <option value="">-</option>
                             <option value="tcp">TCP</option>
                             <option value="kcp">KCP</option>
                             <option value="http">HTTP</option>
@@ -216,6 +244,21 @@ export function OutboundEditor({ outbound: outboundProp, dissmis, onEdit }) {
                         </select>
                     </Field>
                 </div>
+                {outbound?.streamSettings?.network=='tcp'? <div className="flex flex-row">
+                    <FieldObject path={'streamSettings'}>
+                        <FieldObject path={'tcpSettings'}>
+                            <FieldObject path={'header'}>
+                                <Field label="Header Type" htmlFor="type">
+                                    <select className={styles.input} id="type">
+                                        <option value="">-</option>
+                                        <option value="none">None</option>
+                                        <option value="http">HTTP</option>
+                                    </select>
+                                </Field>
+                            </FieldObject>
+                        </FieldObject>
+                    </FieldObject>
+                </div> : null}
             </div>
             <div className="flex flex-col">
                 <h3 className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 font-smibold">Proxy settings</h3>
