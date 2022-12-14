@@ -4,7 +4,7 @@ import classNames from "classnames";
 import React, { useCallback, useState } from "react";
 import { styles } from "../../lib/styles";
 import { Dialog } from "../dialog";
-import { Collection, Field, FieldObject, FieldsGroup } from "../fields";
+import { Collection, Field, FieldObject, FieldsGroup, ObjectCollection } from "../fields";
 import { PopupMenu } from "../popup-menu";
 import { Table } from "../table";
 
@@ -220,32 +220,32 @@ export function OutboundEditor({ outbound: outboundProp, dissmis, onEdit }) {
                     </Collection>
             </>
              : null }
-            <div className="flex flex-col">
-                <h3 className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 font-smibold">
-                    Stream settings
-                    {!!outbound?.proxySettings?.tag ? <span className="italic text-gray-500 ml-2 text-xs px-2 py-1 rounded-lg bg-yellow-100">Ignored because of Proxy</span> : null }
-                </h3>
-                <div className="flex flex-row">
-                    <Field label="Network" htmlFor="network" className="flex-1" data={outbound?.streamSettings ?? {}} dataSetter={streamSettings => setOutbound({ ...outbound, streamSettings })}>
-                        <select className={styles.input} id="network">
-                            <option value="">-</option>
-                            <option value="tcp">TCP</option>
-                            <option value="kcp">KCP</option>
-                            <option value="http">HTTP</option>
-                            <option value="domainsocket">DomainSocket</option>
-                            <option value="quic">Quic</option>
-                            <option value="ws">WebSocket</option>
-                        </select>
-                    </Field>
-                    <Field label="Security" htmlFor="security" data={outbound?.streamSettings ?? {}} dataSetter={streamSettings => setOutbound({ ...outbound, streamSettings })}>
-                        <select className={styles.input} id="security">
-                            <option value="none">None</option>
-                            <option value="tls">TLS</option>
-                        </select>
-                    </Field>
-                </div>
-                {outbound?.streamSettings?.network=='tcp'? <div className="flex flex-row">
-                    <FieldObject path={'streamSettings'}>
+            <FieldObject path={'streamSettings'}>
+                <div className="flex flex-col">
+                    <h3 className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 font-smibold">
+                        Stream settings
+                        {!!outbound?.proxySettings?.tag ? <span className="italic text-gray-500 ml-2 text-xs px-2 py-1 rounded-lg bg-yellow-100">Ignored because of Proxy</span> : null }
+                    </h3>
+                    <div className="flex flex-row">
+                        <Field label="Network" htmlFor="network" className="flex-1">
+                            <select className={styles.input} id="network">
+                                <option value="">-</option>
+                                <option value="tcp">TCP</option>
+                                <option value="kcp">KCP</option>
+                                <option value="http">HTTP</option>
+                                <option value="domainsocket">DomainSocket</option>
+                                <option value="quic">Quic</option>
+                                <option value="ws">WebSocket</option>
+                            </select>
+                        </Field>
+                        <Field label="Security" htmlFor="security">
+                            <select className={styles.input} id="security">
+                                <option value="none">None</option>
+                                <option value="tls">TLS</option>
+                            </select>
+                        </Field>
+                    </div>
+                    {outbound?.streamSettings?.network=='tcp'? <div className="flex flex-row">
                         <FieldObject path={'tcpSettings'}>
                             <FieldObject path={'header'}>
                                 <Field label="Header Type" htmlFor="type">
@@ -255,11 +255,44 @@ export function OutboundEditor({ outbound: outboundProp, dissmis, onEdit }) {
                                         <option value="http">HTTP</option>
                                     </select>
                                 </Field>
+                                <FieldObject path={'request'}>
+                                    <Field label="Request Method" htmlFor="method">
+                                        <input type="text" id="method" className={styles.input}/>
+                                    </Field>                                    
+                                    <Field label="Request Path" htmlFor="path">
+                                        <input type="text" id="method" className={styles.input}/>
+                                    </Field>
+                                    <ObjectCollection path="headers">{headers => {
+                                        <>
+                                        <div className="flex flex-row items-center px-2">
+                                            <label className={classNames(styles.label, "flex-1", "font-bold text")}>Headers</label>
+                                            <div className="items-center">
+                                                <button type={"button"} onClick={() => headers.setKey(Math.round(Math.random() * 10000).toString(), {})} className={styles.addButtonSmall}>+ Add Policy</button>
+                                            </div>
+                                        </div>
+                                        <Table
+                                            rows={Object.keys(headers.value ?? {}).map(key => ({ key, ...(headers.value ?? {})[key] }))}
+                                            columns={[ 'Header', 'Value', 'Action' ]}
+                                            cells={row => [
+                                                <Editable value={row.key} onEdit={newKey => {
+                                                    headers.renameKey(row.key, newKey);
+                                                }}>
+                                                    {row.key}
+                                                </Editable>,
+                                                <Field htmlFor="handshake" label="Handshake"><input type="number" id="handshake" className={styles.input} placeholder={"4"}/></Field>,
+                                                // Actions
+                                                <span className={styles.link} onClick={() => headers.deleteKey(row.key)}>Delete</span>
+                                            ]}
+                                            rowContainer={(row, children) => <FieldsGroup data={withoutKey(row, 'key')} dataSetter={level => headers.setKey(row.key, level)}>{children}</FieldsGroup>}
+                                        />
+                                    </>
+                                    }}</ObjectCollection>
+                                </FieldObject>
                             </FieldObject>
                         </FieldObject>
-                    </FieldObject>
-                </div> : null}
-            </div>
+                    </div> : null}
+                </div>                        
+            </FieldObject>
             <div className="flex flex-col">
                 <h3 className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 font-smibold">Proxy settings</h3>
                 <div className="flex flex-row">

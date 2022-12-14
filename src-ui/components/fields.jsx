@@ -53,12 +53,13 @@ export function FieldObject({ children, path }) {
 			} else {
 				obj[path] = data;
 			}
+			console.log(obj);
 			// @ts-ignore
 			context.dataSetter(obj);
 		}
 	}, [context.data, context.dataSetter]);
 
-	let data = context.data && context.data[path] ? context.data[path] : undefined;
+	let data = context.data && context.data[path] ? context.data[path] : {};
 
 	return <FieldContext.Provider value={{ ...context, dataSetter: setData, data }}>{children}</FieldContext.Provider>;
 }
@@ -148,8 +149,9 @@ export function Collection({ data, dataSetter, children }) {
  * Field Collection
  * @template T
  * @param {{
- * 		data: T,
- * 		dataSetter: (value: T) => any,
+ * 		path?: string
+ * 		data?: T,
+ * 		dataSetter?: (value: T) => any,
  * 		children: (props: {
  * 			value: T | null,
  * 			deleteKey: (key: any) => any,
@@ -158,8 +160,23 @@ export function Collection({ data, dataSetter, children }) {
  * 		}) => any
  * }} param0
  */
-export function ObjectCollection({ data, dataSetter, children }) {
-	let crud = useObjectCRUD(data, dataSetter);
+export function ObjectCollection({ data, dataSetter, children, path }) {
+	let context = useContext(FieldContext);
+
+	if (path) {
+		// @ts-ignore
+		if (!data) data = context.data ?? {};
+	}
+
+	let memoDataSetter = useCallback(newData => {
+		if (!dataSetter && path && context.dataSetter) {
+			context.dataSetter(newData);
+		} else if (dataSetter) {
+			dataSetter(newData);
+		}
+	}, [dataSetter, context.dataSetter, data]);
+
+	let crud = useObjectCRUD(data, memoDataSetter);
 
 	return children(crud);
 }

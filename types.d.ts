@@ -122,16 +122,16 @@ interface V2RayConfigStream {
   security: "none" | "auto",
   securitySettings: any
   network?: 'tcp' | 'kcp' | 'ws' | 'http' | 'domainsocket' | 'quic'
-  tcpSettings?: NoneHeaderObject | HttpHeaderObject
-}
-
-interface NoneHeaderObject {
-    type: 'none'
+  tcpSettings?: HttpHeaderObject
 }
 
 interface HttpHeaderObject {
-    type: 'http'
-    request?: any
+    type: 'http' | 'none'
+    request?: {
+        path?: string
+        method?: string
+        headers?: { [name: string]: string }
+    }
     response?: any
 }
 
