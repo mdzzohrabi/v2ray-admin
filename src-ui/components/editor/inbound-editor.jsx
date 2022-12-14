@@ -116,9 +116,10 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }) {
                 </Field>
             </div>
             <div className="flex flex-col">
+                <FieldObject path={"streamSettings"}>
                 <h3 className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 font-smibold">Stream settings</h3>
                 <div className="flex flex-row">
-                    <Field label="Network" htmlFor="network" className="flex-1" data={inbound?.streamSettings ?? {}} dataSetter={streamSettings => setInbound({ ...inbound, streamSettings })}>
+                    <Field label="Network" htmlFor="network" className="flex-1">
                         <select className={styles.input} id="network">
                             <option value="">-</option>
                             <option value="tcp">TCP</option>
@@ -129,7 +130,7 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }) {
                             <option value="ws">WebSocket</option>
                         </select>
                     </Field>
-                    <Field label="Security" htmlFor="security" data={inbound?.streamSettings ?? {}} dataSetter={streamSettings => setInbound({ ...inbound, streamSettings })}>
+                    <Field label="Security" htmlFor="security">
                         <select className={styles.input} id="security">
                             <option value="none">None</option>
                             <option value="tls">TLS</option>
@@ -182,7 +183,7 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }) {
                             </FieldObject>
                         </FieldObject>
                     </div> : null}
-
+                    </FieldObject>
             </div>
             </FieldsGroup>
             <div className="pt-3 border-t-[1px] mt-3 flex justify-end">
