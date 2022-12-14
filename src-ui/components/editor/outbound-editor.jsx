@@ -165,10 +165,10 @@ export function OutboundEditor({ outbound: outboundProp, dissmis, onEdit }) {
                                                     <input type="text" className={styles.input} id="id"/>
                                                 </Field>
                                                 <Field htmlFor="alterId" label="Alter ID">
-                                                    <input type="text" className={styles.input} id="alterId" placeholder="0"/>
+                                                    <input type="number" className={styles.input} id="alterId" placeholder="0"/>
                                                 </Field>
                                                 <Field htmlFor="level" label="Level">
-                                                    <input type="text" className={styles.input} id="level" placeholder="0"/>
+                                                    <input type="number" className={styles.input} id="level" placeholder="0"/>
                                                 </Field>
                                                 <Field htmlFor="security" label="Security">
                                                     <select className={styles.input} id="security">
@@ -262,7 +262,7 @@ export function OutboundEditor({ outbound: outboundProp, dissmis, onEdit }) {
                                     <Field label="Request Path" htmlFor="path">
                                         <input type="text" id="method" className={styles.input}/>
                                     </Field>
-                                    <ObjectCollection path="headers">{headers => {
+                                    {/* <ObjectCollection path="headers">{headers => {
                                         <>
                                         <div className="flex flex-row items-center px-2">
                                             <label className={classNames(styles.label, "flex-1", "font-bold text")}>Headers</label>
@@ -286,7 +286,7 @@ export function OutboundEditor({ outbound: outboundProp, dissmis, onEdit }) {
                                             rowContainer={(row, children) => <FieldsGroup data={withoutKey(row, 'key')} dataSetter={level => headers.setKey(row.key, level)}>{children}</FieldsGroup>}
                                         />
                                     </>
-                                    }}</ObjectCollection>
+                                    }}</ObjectCollection> */}
                                 </FieldObject>
                             </FieldObject>
                         </FieldObject>

@@ -4,7 +4,7 @@ import classNames from "classnames";
 import React, { useCallback, useState } from "react";
 import { styles } from "../../lib/styles";
 import { Dialog } from "../dialog";
-import { Collection, Field, FieldsGroup } from "../fields";
+import { Collection, Field, FieldObject, FieldsGroup } from "../fields";
 import { PopupMenu } from "../popup-menu";
 import { Table } from "../table";
 
@@ -120,6 +120,7 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }) {
                 <div className="flex flex-row">
                     <Field label="Network" htmlFor="network" className="flex-1" data={inbound?.streamSettings ?? {}} dataSetter={streamSettings => setInbound({ ...inbound, streamSettings })}>
                         <select className={styles.input} id="network">
+                            <option value="">-</option>
                             <option value="tcp">TCP</option>
                             <option value="kcp">KCP</option>
                             <option value="http">HTTP</option>
@@ -135,6 +136,53 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }) {
                         </select>
                     </Field>
                 </div>
+                {inbound?.streamSettings?.network=='tcp'? <div className="flex flex-row">
+                        <FieldObject path={'tcpSettings'}>
+                            <FieldObject path={'header'}>
+                                <Field label="Header Type" htmlFor="type">
+                                    <select className={styles.input} id="type">
+                                        <option value="">-</option>
+                                        <option value="none">None</option>
+                                        <option value="http">HTTP</option>
+                                    </select>
+                                </Field>
+                                <FieldObject path={'request'}>
+                                    <Field label="Request Method" htmlFor="method">
+                                        <input type="text" id="method" className={styles.input}/>
+                                    </Field>                                    
+                                    <Field label="Request Path" htmlFor="path">
+                                        <input type="text" id="method" className={styles.input}/>
+                                    </Field>
+                                    {/* <ObjectCollection path="headers">{headers => {
+                                        <>
+                                        <div className="flex flex-row items-center px-2">
+                                            <label className={classNames(styles.label, "flex-1", "font-bold text")}>Headers</label>
+                                            <div className="items-center">
+                                                <button type={"button"} onClick={() => headers.setKey(Math.round(Math.random() * 10000).toString(), {})} className={styles.addButtonSmall}>+ Add Policy</button>
+                                            </div>
+                                        </div>
+                                        <Table
+                                            rows={Object.keys(headers.value ?? {}).map(key => ({ key, ...(headers.value ?? {})[key] }))}
+                                            columns={[ 'Header', 'Value', 'Action' ]}
+                                            cells={row => [
+                                                <Editable value={row.key} onEdit={newKey => {
+                                                    headers.renameKey(row.key, newKey);
+                                                }}>
+                                                    {row.key}
+                                                </Editable>,
+                                                <Field htmlFor="handshake" label="Handshake"><input type="number" id="handshake" className={styles.input} placeholder={"4"}/></Field>,
+                                                // Actions
+                                                <span className={styles.link} onClick={() => headers.deleteKey(row.key)}>Delete</span>
+                                            ]}
+                                            rowContainer={(row, children) => <FieldsGroup data={withoutKey(row, 'key')} dataSetter={level => headers.setKey(row.key, level)}>{children}</FieldsGroup>}
+                                        />
+                                    </>
+                                    }}</ObjectCollection> */}
+                                </FieldObject>
+                            </FieldObject>
+                        </FieldObject>
+                    </div> : null}
+
             </div>
             </FieldsGroup>
             <div className="pt-3 border-t-[1px] mt-3 flex justify-end">
