@@ -97,7 +97,7 @@ interface V2RayConfigOutboundSettings {
 interface V2RayConfigOutboundSettingsServerVNext {
     address?: string
     port?: number
-    users?: { id?: string }[]
+    users?: { id?: string, security?: string }[]
 }
 
 interface V2RayConfigOutboundSettingsServer {
@@ -126,7 +126,9 @@ interface V2RayConfigStream {
 }
 
 interface HttpHeaderObject {
-    type: 'http' | 'none'
+    header?: {
+        type?: 'http' | 'none'
+    }
     request?: {
         path?: string
         method?: string
