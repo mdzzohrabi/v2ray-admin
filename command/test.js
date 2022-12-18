@@ -21,9 +21,9 @@ async function main() {
         console.log(`New Connection !`);
         socket.once('data', buffer => {
             console.log(buffer.toString('utf-8'));
-            let response = `HTTP/1.1 200\r\nContent-Type: text/html\r\n\r\nPlease follow`;
-            //console.log(response);
-            socket.write(response);
+            // let response = `HTTP/1.1 200\r\nContent-Type: text/html\r\n\r\nPlease follow`;
+            // //console.log(response);
+            // socket.write(response);
         });
     });
     server.listen(10808, () => console.log(`Server started`));

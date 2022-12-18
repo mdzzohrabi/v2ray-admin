@@ -7,6 +7,7 @@ interface V2RayConfig {
     inbounds?: V2RayConfigInbound[],
     outbounds?: V2RayConfigOutbound[]
     policy?: V2RayConfigPolicy
+    stats?: {}
 }
 
 interface V2RayConfigPolicy {

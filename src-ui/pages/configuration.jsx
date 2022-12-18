@@ -386,7 +386,6 @@ export default function ConfigurationPage() {
         </div>}
     </Collection>;
 
-
     return <Container>
         <Head>
             <title>Configuration</title>
@@ -404,6 +403,15 @@ export default function ConfigurationPage() {
                 <Tabs.Tab title="Log & Api" className="space-y-2">
                     {Log}
                     {Api}
+                    <div className="rounded-lg flex flex-col flex-1 border-2">
+                        <FieldsGroup title="Stats" layoutVertical>
+                            <div className="p-2">
+                                <Field label="Enable Stats" htmlFor="stats" data={!!config?.stats} dataSetter={value => setConfig(!value ? withoutKey(config ?? {}, 'stats') : { ...config, stats: {} })} className="flex-1 mt-1">
+                                    <input type="checkbox" className={styles.input}/>
+                                </Field>
+                            </div>
+                        </FieldsGroup>
+                    </div>
                 </Tabs.Tab>
                 <Tabs.Tab title="Policy">
                     {Policy}
