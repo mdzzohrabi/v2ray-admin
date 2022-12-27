@@ -37,6 +37,9 @@ async function cronCommand() {
 
         let stats = JSON.parse(execSync(`${v2ray} api stats -json`).toString('utf-8'));
 
+        if (print)
+            console.log(stats);
+
         // Stat items
         for (let item of stats.stat) {
             let {name: itemName, value} = item;
