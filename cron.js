@@ -1,4 +1,5 @@
 // @ts-check
+const { env } = require("process");
 const { getPaths, parseArgumentsAndOptions, readLogLines, readConfig, findUser, setUserActive, writeConfig, createLogger, restartService, cache, log, readLogFile, DateUtil } = require("./lib/util");
 
 const {
@@ -90,7 +91,7 @@ async function cronCommand() {
     for (let user of result) {
         if (user.hasMultipleAccess && user.deActive) {
             showInfo(`De-active user ${user.user} due to multiple ip access (${user.ips.length} ips)`);
-            setUserActive(configBeforeUpdate, user.user, false, `Used by ${user.ips.length} ips in ${range} mins ago (${user.ips.join(', ')})`);
+            setUserActive(configBeforeUpdate, user.user, false, `Used by ${user.ips.length} ips in ${range} mins ago (${user.ips.join(', ')})`, env.BAD_USER_TAG ?? 'baduser');
             hasChange = true;
             isRestartService = true;
         }
@@ -111,7 +112,7 @@ async function cronCommand() {
         }
 
         for (let user of usersToActive)
-            setUserActive(configBeforeUpdate, user ?? '', true);
+            setUserActive(configBeforeUpdate, user ?? '', true, undefined, env.BAD_USER_TAG ?? 'baduser');
     }
 
     // Print Users with multiple access
@@ -150,7 +151,7 @@ async function cronCommand() {
                 hasChange = true;
                 isRestartService = true;
                 user.expiredDate = String(new Date());
-                setUserActive(configBeforeUpdate, user?.email, false, `Expired after ${expireDays} days`);
+                setUserActive(configBeforeUpdate, user?.email, false, `Expired after ${expireDays} days`, env.EXPIRED_USER_TAG ?? 'baduser');
                 showInfo(`De-active user "${user?.email}" due to expiration at ${expireDate} after ${expireDays} days from ${billingStartDate}`);
             }
         }

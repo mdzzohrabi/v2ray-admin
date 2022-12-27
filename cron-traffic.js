@@ -1,0 +1,77 @@
+// @ts-check
+const { execSync } = require("child_process");
+const { getPaths, parseArgumentsAndOptions, readConfig, createLogger, cache } = require("./lib/util");
+
+const {
+    cliArguments: [],
+    cliOptions: {print = false, delay = 1, help = false}
+} = parseArgumentsAndOptions();
+
+let {showInfo, showError, showWarn} = createLogger();
+
+async function cronCommand() {
+
+    if (help) {
+        console.log(`V2Ray Cron Traffic help`);
+        console.log(`Options :`);
+        console.log(` --print               (only print result and dont make any changes, default: false)`);
+        console.log(` --delay               (cron timer delay in minutes, default: 5)`);
+        process.exit();
+    }
+
+    showInfo(`Start V2Rary Cron Traffic`);
+    
+    let {v2ray} = getPaths();
+
+    /**
+     * @type {TrafficUsages}
+     */
+    let trafficUsages = await cache('traffic-usage.json') ?? [];
+
+    let date = new Date().toLocaleDateString();
+
+    try {
+        // Make Date
+        if (!trafficUsages[date])
+            trafficUsages[date] = [];
+
+        let stats = JSON.parse(execSync(`${v2ray} api stats -json`).toString('utf-8'));
+
+        // Stat items
+        for (let item of stats.stat) {
+            let {name: itemName, value} = item;
+            if (!itemName || typeof itemName != 'string') continue;
+            if (!itemName.includes('>>>')) continue;
+            let [type, name, , direction] = itemName.split('>>>');
+
+            let node = trafficUsages[date].find(x => x.type == type && x.name == name && x.direction == direction);
+
+            if (!node) {
+                node = { name, type, direction, traffic: 0 };
+                trafficUsages[date].push(node);
+            }
+
+            node.traffic = Number(value);
+        }
+
+        await cache('traffic-usage.json', trafficUsages);
+
+    } catch (err) {
+        showError(err);
+    }
+
+    showInfo('Complete.');
+
+}
+
+async function runCron() {
+    showInfo(`Run traffic cron ${new Date().toLocaleString()}`);
+    try {
+        await cronCommand();
+    } finally {
+        if (delay > 0)
+            setTimeout(runCron, delay * 60 * 1000);
+    }
+}
+
+runCron();

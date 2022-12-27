@@ -372,6 +372,10 @@ app.post('/edit_transaction', async (req, res) => {
     }
 });
 
+app.get('/traffic', async (req, res) => {
+    res.json(await cache('traffic-usages.json'))
+});
+
 app.get('/daily_usages', async (req, res) => {
     try {
         let email = String(req.query.email);

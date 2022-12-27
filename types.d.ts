@@ -227,3 +227,7 @@ interface Change {
     path?: string[]
     prevValue?: any
 }
+
+interface TrafficUsages {
+    [date: string]: { name: string, direction: string, type: string, traffic: number }[]
+}
