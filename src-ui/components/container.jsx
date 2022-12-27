@@ -10,6 +10,7 @@ export function Container({ children }) {
     return <div className="flex flex-col h-screen overflow-x-auto w-full text-xs xl:text-sm">
         <ul className="px-2 py-3 flex xl:sticky top-0 z-50 bg-slate-100">
             {isFull ? <MenuLink href={"/logs" + (isFull ? '?all=1' : '')} text={"Logs"}/> : null}
+            {isFull ? <MenuLink href={"/usages/traffic" + (isFull ? '?all=1' : '')} text={"Traffic Usages"}/> : null}
             <MenuLink href={"/transactions" + (isFull ? '?all=1' : '')} text={"Transactions"}/>
             <MenuLink href={"/users" + (isFull ? '?all=1' : '')} text={"Users"}/>
             {isFull?<MenuLink href={"/configuration" + (isFull ? '?all=1' : '')} text={"Configuration"}/>:null}

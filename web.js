@@ -373,7 +373,7 @@ app.post('/edit_transaction', async (req, res) => {
 });
 
 app.get('/traffic', async (req, res) => {
-    res.json(await cache('traffic-usages.json'))
+    res.json(await cache('traffic-usage.json'))
 });
 
 app.get('/daily_usages', async (req, res) => {

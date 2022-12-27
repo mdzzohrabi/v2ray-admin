@@ -1,0 +1,56 @@
+// @ts-check
+/// <reference types="../../../types"/>
+import classNames from "classnames";
+import Head from "next/head";
+import { useRouter } from "next/router";
+import React, { useContext } from 'react';
+import useSWR from 'swr';
+import { AppContext } from "../../components/app-context";
+import { Container } from "../../components/container";
+import { Field, FieldsGroup } from "../../components/fields";
+import { Info, Infos } from "../../components/info";
+import { Table } from "../../components/table";
+import { usePrompt, useStoredState } from "../../lib/hooks";
+import { styles } from "../../lib/styles";
+import { arrSort, queryString, serverRequest } from "../../lib/util";
+
+export default function TrafficUsagePage() {
+
+    let context = useContext(AppContext);
+    let router = useRouter();
+    let showAll = router.query.all == '1';
+    let email = router.query.user;
+    let [view, setView] = useStoredState('usages-traffic-view', {
+        showDetail: showAll ? true : false
+    });
+
+    /**
+     * @type {import("swr").SWRResponse<any>}
+     */
+    let {data: usages, mutate: refreshUsages, isValidating: isLoading} = useSWR('/traffic' + queryString({ email, key: btoa(context.server.url) }), serverRequest.bind(this, context.server));
+    const prompt = usePrompt();
+
+    return <Container>
+        <Head>
+            <title>Traffic Usages</title>
+        </Head>
+        <FieldsGroup title={"Daily Traffic Usages"} data={view} dataSetter={setView} horizontal>
+            { email ? <Field label="User" className="border-x-[1px] px-3 mr-2">
+                <span className="text-gray-800 py-1 px-2 rounded-lg bg-yellow-100">{email}</span>
+            </Field> : null }
+        </FieldsGroup>
+        <Table
+            rows={Object.keys(usages ?? {}).flatMap(date => [ { date, group: true }, ...usages[date] ])}
+            loading={isLoading}
+            columns={[ 'Type', 'Name', 'Direction', 'Traffic' ]}
+            cells={x => [
+                // Date
+                x.date ?? x.type,
+                x.name,
+                x.direction,
+                x.traffic
+            ]}
+        />
+    </Container>
+    
+}
