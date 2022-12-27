@@ -26,7 +26,7 @@ async function cronCommand() {
     /**
      * @type {TrafficUsages}
      */
-    let trafficUsages = await cache('traffic-usage.json') ?? [];
+    let trafficUsages = await cache('traffic-usage.json') ?? {};
 
     let date = new Date().toLocaleDateString();
 
