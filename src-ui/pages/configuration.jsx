@@ -217,6 +217,12 @@ export default function ConfigurationPage() {
                 <Field horizontal label="Stats Inbound Downlink" htmlFor="statsInboundDownlink" className="flex-1 mt-1">
                     <input type="checkbox" id="statsInboundDownlink" className={styles.input} />
                 </Field>
+                <Field horizontal label="Stats Outbound Uplink" htmlFor="statsOutboundUplink" className="flex-1 mt-1">
+                    <input type="checkbox" id="statsOutboundUplink" className={styles.input} />
+                </Field>
+                <Field horizontal label="Stats Outbound Downlink" htmlFor="statsOutboundDownlink" className="flex-1 mt-1">
+                    <input type="checkbox" id="statsOutboundDownlink" className={styles.input} />
+                </Field>
             </div>
         </FieldsGroup>
         <ObjectCollection data={config?.policy?.levels ?? {}} dataSetter={levels => setConfig({ ...config, policy: { ...config?.policy, levels } })}>{levels => 
