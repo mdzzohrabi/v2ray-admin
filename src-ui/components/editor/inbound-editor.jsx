@@ -107,6 +107,15 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }) {
                     </Collection>
             </>
              : null }
+             {inbound?.protocol == 'dokodemo-door' ?
+            <>
+                <FieldObject path={'settings'}>
+                    <Field label="Address" htmlFor="address">
+                        <input type="text" id="address" className={styles.input}/>
+                    </Field> 
+                </FieldObject>
+            </>
+             : null }
             <div className="flex flex-row pt-2">
                 <Field label="Listen" htmlFor="listen" className="flex-1">
                     <input type="text" id="listen" className={styles.input} placeholder={"0.0.0.0"}/>
