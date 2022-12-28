@@ -35,7 +35,7 @@ async function cronCommand() {
         if (!trafficUsages[date])
             trafficUsages[date] = [];
 
-        let stats = JSON.parse(execSync(`${v2ray} api stats -json`).toString('utf-8'));
+        let stats = JSON.parse(execSync(`${v2ray} api stats -json -reset`).toString('utf-8'));
 
         if (print)
             console.log(stats);
@@ -54,7 +54,7 @@ async function cronCommand() {
                 trafficUsages[date].push(node);
             }
 
-            node.traffic = Number(value);
+            node.traffic = node.traffic + Number(value ?? 0);
         }
 
         await cache('traffic-usage.json', trafficUsages);
