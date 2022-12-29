@@ -31,11 +31,21 @@ async function cronCommand() {
     let date = new Date().toLocaleDateString();
 
     try {
+        let isNewDate = false;
+
         // Make Date
-        if (!trafficUsages[date])
+        if (!trafficUsages[date]) {
             trafficUsages[date] = [];
+            isNewDate = true;
+        }
 
         let stats = JSON.parse(execSync(`${v2ray} api stats -json -reset`).toString('utf-8'));
+
+        // New Date (Ignore stats from last day)
+        if (isNewDate)
+        {
+            stats.stat = [];
+        }
 
         if (print)
             console.log(stats);
