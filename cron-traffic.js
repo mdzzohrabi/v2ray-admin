@@ -31,11 +31,21 @@ async function cronCommand() {
     let date = new Date().toLocaleDateString();
 
     try {
-        // Make Date
-        if (!trafficUsages[date])
-            trafficUsages[date] = [];
+        let isNewDate = false;
 
-        let stats = JSON.parse(execSync(`${v2ray} api stats -json`).toString('utf-8'));
+        // Make Date
+        if (!trafficUsages[date]) {
+            trafficUsages[date] = [];
+            isNewDate = true;
+        }
+
+        let stats = JSON.parse(execSync(`${v2ray} api stats -json -reset`).toString('utf-8'));
+
+        // New Date (Ignore stats from last day)
+        if (isNewDate)
+        {
+            stats.stat = [];
+        }
 
         if (print)
             console.log(stats);
@@ -54,7 +64,7 @@ async function cronCommand() {
                 trafficUsages[date].push(node);
             }
 
-            node.traffic = Number(value);
+            node.traffic = node.traffic + Number(value ?? 0);
         }
 
         await cache('traffic-usage.json', trafficUsages);

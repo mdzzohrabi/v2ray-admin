@@ -27,7 +27,8 @@ export default function TrafficUsagePage() {
         sortAsc: true,
         filter: '',
         direction: '',
-        type: ''
+        type: '',
+        date: ''
     });
 
     /**
@@ -44,6 +45,12 @@ export default function TrafficUsagePage() {
             { email ? <Field label="User" className="border-x-[1px] px-3 mr-2">
                 <span className="text-gray-800 py-1 px-2 rounded-lg bg-yellow-100">{email}</span>
             </Field> : null }
+            <Field label="Date" htmlFor="date">
+                <select id="date" className={styles.input}>
+                    <option value="">-</option>
+                    {Object.keys(usages ?? {}).map(date => <option value={date}>{date}</option>)}
+                </select>
+            </Field>
             <Field label="Sort" htmlFor="sortColumn">
                 <select id="sortColumn" className={styles.input}>
                     <option value="-">-</option>
@@ -94,7 +101,7 @@ export default function TrafficUsagePage() {
             Loading ...
         </div> : null }
         <Table
-            rows={Object.keys(usages ?? {}).flatMap(date => [ { date, group: true }, ...(
+            rows={Object.keys(usages ?? {}).filter(date => !view.date || date == view.date).flatMap(date => [ { date, group: true }, ...(
                 usages[date]
                     .sort(arrSort(view.sortColumn, view.sortAsc))
                     .filter(x => view.filter ? x.name.includes(view.filter) : true)
