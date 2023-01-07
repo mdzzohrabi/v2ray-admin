@@ -29,7 +29,8 @@ export default function TransactionsPage() {
         fullTime: true,
         user: router.query.user,
         sortColumn: '',
-        sortOrder: 'asc'
+        sortOrder: 'asc',
+        group: true
     });
     
     const prompt = usePrompt();
@@ -124,6 +125,9 @@ export default function TransactionsPage() {
                 <Field htmlFor="fullTime" label="Full Time">
                     <input type={"checkbox"} id="fullTime"/>
                 </Field>
+                <Field htmlFor="group" label="Group">
+                    <input type={"checkbox"} id="group"/>
+                </Field>
                 <Field htmlFor="sortColumn" label="Sort">
                     <select className={styles.input} id="sortColumn">
                         <option value="">-</option>
@@ -150,6 +154,26 @@ export default function TransactionsPage() {
         <Table
             rows={transactions ?? []}
             columns={[ 'ID', 'User', 'Remark', 'Debt', 'Paid', 'Remain', 'Dates', 'Actions' ]}
+            groupBy={t => !view.group ? null : t.createDate ? new Intl.DateTimeFormat('fa-IR', { month: 'long', year: 'numeric' }).format(new Date(t.createDate)) : null}
+            group={monthName => <tr className="bg-slate-50 border-t-2 border-t-gray-400">
+                <td className="py-2 px-6 text-md font-bold" colSpan={7}></td>
+                <td className="py-2 px-6 text-lg font-bold text-center" colSpan={1}>
+                    {monthName}
+                </td>
+                <td className="py-2 px-6 text-lg font-bold text-center"></td>
+            </tr>}
+            groupFooter={(group, items) => 
+                <tr className="bg-slate-50">
+                    <td className="py-2 px-6 text-md font-bold" colSpan={4}></td>
+                    <td className="py-2 px-6 text-md font-bold">
+                        <Price value={items.filter(t => Number(t.amount) > 0).reduce((r, t) => r + (Number(t.amount) || 0), 0)}/>
+                    </td>
+                    <td className="py-2 px-6 text-md font-bold">
+                        <Price value={items.filter(t => Number(t.amount) < 0).reduce((r, t) => r + (Math.abs(Number(t.amount)) || 0), 0)}/>
+                    </td>
+                    <td className="py-2 px-6 text-md font-bold" colSpan={3}></td>
+                </tr>
+            }
             cells={t => [
                 // ID
                 t.id,

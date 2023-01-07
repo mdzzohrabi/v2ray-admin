@@ -1,0 +1,11 @@
+pm2 stop api
+pm2 stop ui
+pm2 stop cron
+pm2 stop cron-usages
+pm2 stop cron-traffic
+
+pm2 start web.js --name=api
+pm2 start cron.js --name=cron
+pm2 start usages.js --name=cron-usages
+pm2 start cron-traffic.js --name=cron-traffic
+cd src-ui & pm2 start npm --name=ui -- run start

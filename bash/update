@@ -1,0 +1,10 @@
+git stash
+git pull
+pm2 stop all
+npm i
+cd src-ui
+npm i
+service v2ray stop
+npm run build
+service v2ray start
+pm2 start all

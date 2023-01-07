@@ -7,9 +7,22 @@ import { dateDiff } from '../lib/util';
 import { Popup } from './popup';
 
 /**
- * Date view
+ * @typedef {{
+ *      date: any,
+ *      className?: string,
+ *      containerClassName?: string
+ * 		full?: boolean
+ * 		precision?: boolean
+ * 		locale?: string
+ * 		options?: Intl.DateTimeFormatOptions
+ * }} DateViewProps
  */
-export function DateView({ date, className = '', containerClassName ='', full = false, precision = false, locale = '' }) {
+
+/**
+ * Date view
+ * @param {DateViewProps} param0
+ */
+export function DateView({ date, className = '', containerClassName ='', full = false, precision = false, locale = '', options = null }) {
     let router = useRouter();
     let isEN = (locale ?? router.query.date) == 'en';
     if (!date) return <>-</>;
@@ -19,8 +32,13 @@ export function DateView({ date, className = '', containerClassName ='', full = 
     //     <span className='block text-gray-500 text-rtl'>{moment(date).locale('fa').fromNow()}</span>
     // </>;
 
+    let intl = new Intl.DateTimeFormat(isEN ? 'en-US' : 'fa-IR-u-nu-latn', options ?? {
+		timeStyle: 'medium',
+		dateStyle: 'full'
+	})
+
     let fromNow = precision ? dateDiff(date).text : moment(date).locale('fa').fromNow();
-    let strDate = isEN ? date.toLocaleString() : moment(date).locale('fa').format('YYYY/MM/DD hh:mm:ss a');
+    let strDate = intl.format(date);// isEN ? date.toLocaleString() : moment(date).locale('fa').format('YYYY/MM/DD hh:mm:ss a');
 
     if (full) {
         return <Popup className={containerClassName} popup={<span dir='rtl'>{fromNow}</span>}>

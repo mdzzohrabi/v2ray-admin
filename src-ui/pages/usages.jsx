@@ -7,6 +7,7 @@ import React, { useContext } from 'react';
 import useSWR from 'swr';
 import { AppContext } from "../components/app-context";
 import { Container } from "../components/container";
+import { DateView } from "../components/date-view";
 import { Field, FieldsGroup } from "../components/fields";
 import { Info, Infos } from "../components/info";
 import { Table } from "../components/table";
@@ -45,10 +46,14 @@ export default function UsagesPage() {
         <Table
             rows={usages ?? []}
             loading={isLoading}
+            groupBy={x => new Intl.DateTimeFormat('fa-IR', { month: 'long', year: 'numeric'}).format(new Date(x.date))}
+            group={monthName => <tr className="sticky top-[31px] z-50 bg-white shadow-sm">
+                <td colSpan={5} className={'px-10 py-2 text-base font-bold'}>{monthName}</td>
+            </tr>}
             columns={[ 'Date', 'First connect', 'Last connect', 'Requests' ]}
             cells={x => [
                 // Date
-                x.date,
+                <DateView options={{ dateStyle: 'full' }} date={x.date} full={true} containerClassName="text-center"/>,
                 // First connect
                 view.showDetail ? 
                 <Infos>

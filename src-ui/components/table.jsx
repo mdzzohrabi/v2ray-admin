@@ -6,6 +6,7 @@ import { styles } from "../lib/styles";
 
 /**
  * @template T
+ * @template G
  * @typedef {{
  *      columns?: string[],
  *      rows: T[],
@@ -13,6 +14,9 @@ import { styles } from "../lib/styles";
  *      loading?: boolean,
  *      rowContainer?: (row: T, children: any) => any
  *      index?: (row: T, index: number) => any
+ *      groupBy?: (row: T, index: number) => G
+ *      group?: (group: G) => any
+ *      groupFooter?: (group: G, items: T[]) => any
  * }} TableProps
  */
 
@@ -20,9 +24,14 @@ import { styles } from "../lib/styles";
 /**
  * Table
  * @template T
- * @param {TableProps<T>} param0 
+ * @template G
+ * @param {TableProps<T, G>} param0 
  */
-export function Table({ columns, rows, cells, loading, rowContainer, index: indexGetter }) {
+export function Table({ columns, rows, cells, loading, rowContainer, index: indexGetter, groupBy, group, groupFooter }) {
+
+    let prevGroup = null;
+    let groupItems = [];
+
     return <table className="w-full text-xs">
         <thead className="sticky top-0 xl:top-12 bg-white shadow-md z-40">
             <tr className="bg-white">
@@ -40,12 +49,39 @@ export function Table({ columns, rows, cells, loading, rowContainer, index: inde
                 <td colSpan={(columns?.length ?? 0) + 1} className="py-3 text-gray-600 text-center">No records</td>
             </tr> : null }
             {rows?.map((row, index) => {
+                let elGroupFooter = null;
+                let elGroup = null;
+                if (groupBy && group) {
+                    let rowGroup = groupBy(row, index);
+                    if (rowGroup) {
+                        // New Group
+                        if (rowGroup != prevGroup) {
+                            // End of group
+                            if (prevGroup != null && !!groupFooter) {
+                                elGroupFooter = groupFooter(prevGroup, groupItems);
+                            }
+
+                            elGroup = group(rowGroup);
+                            prevGroup = rowGroup;
+                            groupItems = [];
+                        }
+                        groupItems.push(row);
+                    }
+                }
+
+
                 let elRow = <tr className="bg-white odd:bg-slate-50" key={index}>
                     <td className={classNames(styles.td)}>{indexGetter ? indexGetter(row, index) : index}</td>
                     {cells?.call(this, row)?.map((cell, index) => <td key={index} className={classNames(styles.td)}>{cell}</td>)}
                 </tr>;
-                if (rowContainer) return <Fragment key={index}>{rowContainer(row, elRow)}</Fragment>;
-                return elRow;
+
+                return <Fragment key={index}>
+                    {elGroupFooter}
+                    {elGroup}
+                    {rowContainer ? rowContainer(row, elRow) : elRow}
+                    {/* End of table */}
+                    {!!groupFooter && !!prevGroup && rows.length == index + 1 ? groupFooter(prevGroup, groupItems) : null}
+                </Fragment>;
             })}
         </tbody>
     </table>;
