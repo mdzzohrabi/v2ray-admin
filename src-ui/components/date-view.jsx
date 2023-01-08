@@ -22,7 +22,7 @@ import { Popup } from './popup';
  * Date view
  * @param {DateViewProps} param0
  */
-export function DateView({ date, className = '', containerClassName ='', full = false, precision = false, locale = '', options = null }) {
+export function DateView({ date, className = '', containerClassName ='', full = false, precision = false, locale = '', options = undefined }) {
     let router = useRouter();
     let isEN = (locale ?? router.query.date) == 'en';
     if (!date) return <>-</>;

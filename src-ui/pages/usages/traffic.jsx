@@ -1,6 +1,5 @@
 // @ts-check
 /// <reference types="../../../types"/>
-import classNames from "classnames";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import React, { useContext } from 'react';
@@ -8,7 +7,6 @@ import useSWR from 'swr';
 import { AppContext } from "../../components/app-context";
 import { Container } from "../../components/container";
 import { Field, FieldsGroup } from "../../components/fields";
-import { Info, Infos } from "../../components/info";
 import { Size } from "../../components/size";
 import { Table } from "../../components/table";
 import { usePrompt, useStoredState } from "../../lib/hooks";
@@ -28,7 +26,10 @@ export default function TrafficUsagePage() {
         filter: '',
         direction: '',
         type: '',
-        date: ''
+        date: '',
+        zeroTraffic: false,
+        top: 500,
+        footer: true
     });
 
     /**
@@ -84,6 +85,12 @@ export default function TrafficUsagePage() {
             <Field label="Filter" htmlFor="filter">
                 <input type={"text"} id="filter" className={styles.input}/>
             </Field>
+            <Field label="Select Top" htmlFor="top">
+                <input type={"number"} id="top" className={styles.input}/>
+            </Field>
+            <Field label="Zero Traffic" htmlFor="zeroTraffic">
+                <input type={"checkbox"} id="zeroTraffic" className={styles.input}/>
+            </Field>
             {/* <Field label="Status" htmlFor="status">
                 <div className="flex gap-1 mb-1">
                     {view.statusFilter?.map((filter, index) => <span key={index} onClick={() => setView({ ...view, statusFilter: view.statusFilter.filter(x => x != filter)})} className={classNames("whitespace-nowrap bg-slate-200 px-3 py-1 rounded-3xl cursor-pointer hover:bg-slate-700 hover:text-white")}>{filter}</span> )}
@@ -101,18 +108,34 @@ export default function TrafficUsagePage() {
             Loading ...
         </div> : null }
         <Table
-            rows={Object.keys(usages ?? {}).filter(date => !view.date || date == view.date).flatMap(date => [ { date, group: true }, ...(
+            rows={Object.keys(usages ?? {}).filter(date => !view.date || date == view.date).flatMap(date => [ ...(
                 usages[date]
+                    .map(x => ({ date, ...x }))
                     .sort(arrSort(view.sortColumn, view.sortAsc))
                     .filter(x => view.filter ? x.name.includes(view.filter) : true)
                     .filter(x => !!view.direction ? x.direction == view.direction : true)
                     .filter(x => !!view.type ? x.type == view.type : true)
+                    .filter(x => view.zeroTraffic ? true : x.traffic > 0)
+                    .slice(0, view.top)
                 ) ])}
+            groupBy={x => x.date}
+            group={date => <tr className="bg-slate-50">
+                <td></td>
+                <td className="font-bold text-lg py-1 px-2">{date}</td>
+                <td colSpan={3}></td>
+            </tr>}
+            groupFooter={(date, items) => 
+                <tr className="bg-slate-50">
+                    <td></td>
+                    <td colSpan={3} className='px-3 text-gray-400'>Day Total</td>
+                    <td className="p-2 px-3 font-bold"><Size size={items.reduce((s, r) => s + r.traffic, 0)}/></td>
+                </tr>
+            }
             loading={isLoading}
             columns={[ 'Type', 'Name', 'Direction', 'Traffic' ]}
             cells={x => [
                 // Date
-                x.date ? <span className="font-bold text-lg">{x.date}</span> : x.type,
+                x.type,
                 x.name,
                 x.direction,
                 <Size size={x.traffic}/>
