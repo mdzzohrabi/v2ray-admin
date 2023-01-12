@@ -255,6 +255,8 @@ export default function UsersPage() {
                     <option value="deActiveReason">De-active Reason</option>
                     <option value="firstConnect">First Connect</option>
                     <option value="lastConnect">Last Connect</option>
+                    <option value="quotaUsage">Bandwidth Usage</option>
+                    <option value="quotaLimit">Bandwidth Limit</option>
                 </select>
             </Field>
             <Field label="Order" htmlFor="sort-order">
@@ -359,7 +361,7 @@ export default function UsersPage() {
                                             <Editable input={{
                                                 type: 'number',
                                                 placeholder: '1'
-                                            }} editable={showAll} onEdit={value => setInfo(i.protocol, u, 'quotaLimit', value * 1024 * 1024 * 1024)} value={u.quotaLimit} postfix={'GB'}>
+                                            }} editable={true} onEdit={value => setInfo(i.protocol, u, 'quotaLimit', value * 1024 * 1024 * 1024)} value={u.quotaLimit} postfix={'GB'}>
                                                 <Size size={u['quotaUsage'] ?? 0}/> / {u.quotaLimit && u.quotaLimit > 0 ? <Size size={u.quotaLimit ?? 0}/> : '∞' }
                                             </Editable>
                                         </Info>                                        
