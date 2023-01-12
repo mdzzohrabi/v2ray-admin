@@ -87,6 +87,7 @@ async function cronCommand() {
         }
 
         await cache('traffic-usage.json', trafficUsages);
+        await cache('usages', userUsage);
 
     } catch (err) {
         showError(err);
