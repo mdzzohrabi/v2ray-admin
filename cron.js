@@ -128,7 +128,10 @@ async function cronCommand() {
         for (let user of users) {
             let expireDays = user?.expireDays ?? defaultExpireDays;
             let usage = usages[user?.email ?? ''];
-            let billingStartDate = new Date(user?.billingStartDate ?? user?.firstConnect ?? usage?.firstConnect ?? user?.createDate);
+            let strBillingStartDate = user?.billingStartDate ?? user?.firstConnect ?? usage?.firstConnect ?? user?.createDate;
+            // Ignore user without any date
+            if (!strBillingStartDate) continue;
+            let billingStartDate = new Date(strBillingStartDate);
             let expireDate = DateUtil.addDays(billingStartDate, expireDays);
 
             if (user?.deActiveReason?.includes('Expired') == true || !billingStartDate || !user?.email)
@@ -146,13 +149,20 @@ async function cronCommand() {
                 hasChange = true;
             }
 
+            // User expired
             if (expireDate && expireDate?.getTime() < Date.now()) {
-                // User expired
                 hasChange = true;
                 isRestartService = true;
                 user.expiredDate = String(new Date());
                 setUserActive(configBeforeUpdate, user?.email, false, `Expired after ${expireDays} days`, env.EXPIRED_USER_TAG ?? 'baduser');
                 showInfo(`De-active user "${user?.email}" due to expiration at ${expireDate} after ${expireDays} days from ${billingStartDate}`);
+            }
+            // Quota limit
+            else if (user.quotaLimit && usage.quotaUsage && usage.quotaUsage > user.quotaLimit) {
+                hasChange = true;
+                isRestartService = true;
+                setUserActive(configBeforeUpdate, user?.email, false, `Bandwith used`, env.QUOTA_USER_TAG ?? 'baduser');
+                showInfo(`De-active user "${user?.email}" due to bandwidth usage`);
             }
         }
     }

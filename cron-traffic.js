@@ -28,6 +28,11 @@ async function cronCommand() {
      */
     let trafficUsages = await cache('traffic-usage.json') ?? {};
 
+    /**
+     * @type {UserUsages}
+     */
+    let userUsage = await cache('usages') ?? {};
+
     let date = new Date().toLocaleDateString();
 
     try {
@@ -65,6 +70,20 @@ async function cronCommand() {
             }
 
             node.traffic = node.traffic + Number(value ?? 0);
+
+            // Update User usage
+            if (type == 'user') {
+                if (!userUsage[name]) userUsage[name] = {};
+                let usage = userUsage[name];
+
+                // Reset quota usage on month changes
+                if (usage.quotaUsageUpdate && new Date(usage.quotaUsageUpdate).getMonth() != new Date().getMonth())
+                    usage.quotaUsage = 0;
+
+                // Update quota
+                usage.quotaUsage = (usage.quotaUsage ?? 0) + Number(value ?? 0);
+                usage.quotaUsageUpdate = new Date().toString();
+            }
         }
 
         await cache('traffic-usage.json', trafficUsages);

@@ -17,6 +17,7 @@ import { Field, FieldsGroup } from "../components/fields";
 import { Info, Infos } from "../components/info";
 import { Popup } from "../components/popup";
 import { PopupMenu } from "../components/popup-menu";
+import { Size } from "../components/size";
 import { usePrompt } from "../lib/hooks";
 import { styles } from "../lib/styles";
 import { DateUtil, serverRequest, store, stored } from "../lib/util";
@@ -352,13 +353,16 @@ export default function UsersPage() {
                                             <Editable onEdit={value => setMaxConnection(i.protocol, u, value)} value={u.maxConnections}>{u.maxConnections}</Editable>
                                         </Info>
                                         <Info label={'Expire Days'}>
-                                        <Editable editable={showAll} onEdit={value => setExpireDays(i.protocol, u, value)} value={u.expireDays}>{u.expireDays}</Editable>
+                                            <Editable editable={showAll} onEdit={value => setExpireDays(i.protocol, u, value)} value={u.expireDays}>{u.expireDays}</Editable>
                                         </Info>
-                                        {!u.deActiveDate?
-                                            <Info label={'Until Expire'}>
-                                                <DateView precision={precision} full={fullTime} date={u['expireDate']}/>
-                                            </Info>
-                                        :null}
+                                        <Info label={'Bandwidth'}>
+                                            <Editable input={{
+                                                type: 'number',
+                                                placeholder: '1'
+                                            }} editable={showAll} onEdit={value => setInfo(i.protocol, u, 'quotaLimit', value * 1024 * 1024 * 1024)} value={u.quotaLimit} postfix={'GB'}>
+                                                <Size size={u['quotaUsage'] ?? 0}/> / {u.quotaLimit && u.quotaLimit > 0 ? <Size size={u.quotaLimit ?? 0}/> : '∞' }
+                                            </Editable>
+                                        </Info>                                        
                                     </Infos>
                                 </td>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3">
@@ -373,6 +377,11 @@ export default function UsersPage() {
                                             <Info label={'DeActived'}>
                                                 <DateView precision={precision} full={fullTime} date={u.deActiveDate}/>
                                             </Info>
+                                            {!u.deActiveDate?
+                                                <Info label={'Until Expire'}>
+                                                    <DateView precision={precision} full={fullTime} date={u['expireDate']}/>
+                                                </Info>
+                                            :null}
                                         </Infos>
                                         <Infos className="flex-1 xl:ml-2">
                                             <Info label={'Expired'}>
@@ -384,6 +393,9 @@ export default function UsersPage() {
                                             <Info label={'Last Connect'}>
                                                 <DateView precision={precision} full={fullTime} date={u['lastConnect']}/>
                                             </Info>
+                                            {u['quotaUsageUpdate'] ? <Info label={'Bandwidth Update'}>
+                                                <DateView precision={precision} full={fullTime} date={u['quotaUsageUpdate']}/>
+                                            </Info> : null }
                                         </Infos>
                                     </div>
                                 </td>

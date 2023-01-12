@@ -174,6 +174,7 @@ app.post('/set_info', async (req, res) => {
         let config = readConfig(configPath);
         let user = findUser(config, email);
         if (!user) throw Error('User not found');
+        if (prop == 'quotaLimit' && value) value = Number(value);
         log(`Change user "${email}" property "${prop}" from "${user[prop]}" to "${value}"`);
         user[prop] = value;
         await writeConfig(configPath, config);
@@ -267,6 +268,8 @@ app.post('/inbounds', async (req, res) => {
             let usage = user.email ? usages[user.email] : {};
             user.firstConnect = user.firstConnect ?? usage?.firstConnect;
             user['lastConnect'] = usage?.lastConnect;
+            user['quotaUsage'] = usage?.quotaUsage;
+            user['quotaUsageUpdate'] = usage?.quotaUsageUpdate;
             user.expireDays = user.expireDays || Number(env.V2RAY_EXPIRE_DAYS) || 30;
             user.maxConnections = user.maxConnections || Number(env.V2RAY_MAX_CONNECTIONS) || 3;
             user.billingStartDate = user.billingStartDate ?? user.firstConnect;
@@ -303,12 +306,13 @@ app.get('/inbounds_clients', async (req, res) => {
 
 app.post('/user', async (req, res) => {
     try {
-        let {email, protocol, fullName, mobile, emailAddress, private, free} = req.body;
+        let {email, protocol, fullName, mobile, emailAddress, private, free, quotaLimit} = req.body;
         if (!email) return res.json({ error: 'Email not entered' });
         if (!protocol) return res.json({ error: 'Protocol not entered' });
         let {configPath} = getPaths();
+        if (quotaLimit) quotaLimit = Number(quotaLimit);
         let result = await addUser(configPath, email, protocol, null, {
-            fullName, mobile, emailAddress, private, free
+            fullName, mobile, emailAddress, private, free, quotaLimit
         });
         if (!free) {
             await addTransaction({

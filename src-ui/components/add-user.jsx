@@ -26,7 +26,7 @@ export function AddUser({ disabled = false, onRefresh, setLoading, protocols, cl
 
     /**
      * @type {[
-     *      {email?: string, fullName?: string, mobile?: string, emailAddress?: string, protocol?: string, free?: boolean, private?: boolean},
+     *      {email?: string, fullName?: string, mobile?: string, emailAddress?: string, protocol?: string, free?: boolean, private?: boolean, quotaLimit?: number},
      *      React.Dispatch<React.SetStateAction<any>>
      * ]}
      */
@@ -36,6 +36,8 @@ export function AddUser({ disabled = false, onRefresh, setLoading, protocols, cl
         e?.preventDefault();
         try {
             setLoading?.call(this, true);
+            if (user.quotaLimit)
+                user.quotaLimit = user.quotaLimit * 1024 * 1024 * 1024;
             let result = await serverRequest(context.server, '/user', {
                 ...user
             });
@@ -68,6 +70,9 @@ export function AddUser({ disabled = false, onRefresh, setLoading, protocols, cl
             </Field>
             <Field label={"Email"} htmlFor="emailAddress">
                 <input placeholder="Email" inputMode={"email"} disabled={disabled} className={styles.input} type="text" id="emailAddress"/>
+            </Field>
+            <Field label={"Bandwidth"} htmlFor="quotaLimit">
+                <input placeholder="5 GB" inputMode={"numeric"} disabled={disabled} className={styles.input} type="number" id="quotaLimit"/>
             </Field>
             <Field label={"Protocol"} htmlFor="protocol">
                 <select disabled={disabled} id="protocol" className={styles.input}>

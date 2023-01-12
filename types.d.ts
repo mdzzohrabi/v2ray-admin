@@ -47,6 +47,7 @@ interface V2RayConfigInboundClient {
     emailAddress?: string
     private?: boolean
     free?: boolean
+    quotaLimit?: number
 }
 
 interface V2RayConfigInboundSettings {
@@ -230,4 +231,15 @@ interface Change {
 
 interface TrafficUsages {
     [date: string]: { name: string, direction: string, type: string, traffic: number }[]
+}
+
+interface UserUsage {
+    firstConnect?: string
+    lastConnect?: string
+    quotaUsage?: number
+    quotaUsageUpdate?: string
+}
+
+interface UserUsages {
+    [user?: string]: UserUsage
 }
