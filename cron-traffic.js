@@ -45,6 +45,7 @@ async function cronCommand() {
         }
 
         let stats = JSON.parse(execSync(`${v2ray} api stats -json -reset`).toString('utf-8'));
+        let intl = new Intl.DateTimeFormat('fa-IR', { month: 'numeric' });
 
         // New Date (Ignore stats from last day)
         if (isNewDate)
@@ -77,7 +78,7 @@ async function cronCommand() {
                 let usage = userUsage[name];
 
                 // Reset quota usage on month changes
-                if (usage.quotaUsageUpdate && new Date(usage.quotaUsageUpdate).getMonth() != new Date().getMonth())
+                if (usage.quotaUsageUpdate && intl.format(new Date(usage.quotaUsageUpdate)) != intl.format(new Date()))
                     usage.quotaUsage = 0;
 
                 // Update quota
