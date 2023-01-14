@@ -17,6 +17,7 @@ import { styles } from "../lib/styles";
  *      groupBy?: (row: T, index: number) => G
  *      group?: (group: G) => any
  *      groupFooter?: (group: G, items: T[]) => any
+ *      footer?: (items: T[]) => any
  * }} TableProps
  */
 
@@ -27,7 +28,7 @@ import { styles } from "../lib/styles";
  * @template G
  * @param {TableProps<T, G>} param0 
  */
-export function Table({ columns, rows, cells, loading, rowContainer, index: indexGetter, groupBy, group, groupFooter }) {
+export function Table({ columns, rows, cells, loading, rowContainer, index: indexGetter, groupBy, group, groupFooter, footer }) {
 
     let prevGroup = null;
     let groupItems = [];
@@ -84,5 +85,8 @@ export function Table({ columns, rows, cells, loading, rowContainer, index: inde
                 </Fragment>;
             })}
         </tbody>
+        {footer ? <tfoot>
+            {footer(rows)}
+        </tfoot> : null }
     </table>;
 }

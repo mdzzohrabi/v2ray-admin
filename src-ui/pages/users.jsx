@@ -12,7 +12,9 @@ import { AppContext } from "../components/app-context";
 import { Container } from "../components/container";
 import { Copy } from "../components/copy";
 import { DateView } from "../components/date-view";
+import { useDialog } from "../components/dialog";
 import { Editable } from "../components/editable";
+import { ChangeInboundEditor } from "../components/editor/change-inbound-editor";
 import { Field, FieldsGroup } from "../components/fields";
 import { Info, Infos } from "../components/info";
 import { Popup } from "../components/popup";
@@ -48,7 +50,7 @@ export default function UsersPage() {
     /**
      * @type {import("swr").SWRResponse<V2RayConfigInbound[]>}
      */
-    let {data: inbounds, mutate: refreshInbounds, isValidating: isLoading} = useSWR({
+    let {data: inboundsResponse, mutate: refreshInbounds, isValidating: isLoading} = useSWR({
         url: '/inbounds?key=' + btoa(context.server.url),
         body: {
             private: showAll,
@@ -56,14 +58,16 @@ export default function UsersPage() {
         }
     }, serverRequest.bind(this, context.server));
 
-    const showQRCode = useCallback(async (protocol, user) => {
-        let config = await serverRequest(context.server, '/client_config?protocol=' + protocol, user).then(data => data.config)
+    let inbounds = useMemo(() => inboundsResponse?.filter(x => x.protocol == 'vmess') ?? [], [inboundsResponse]);
+
+    const showQRCode = useCallback(async (tag, user) => {
+        let config = await serverRequest(context.server, '/client_config?tag=' + tag, user).then(data => data.config)
         let link = `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=` + encodeURIComponent(config);
         window.open(link);
     }, [router]);
 
-    const setActive = useCallback(async (protocol, user, active) => {
-        let result = await serverRequest(context.server, '/active', {email: user.email, protocol, active});
+    const setActive = useCallback(async (tag, user, active) => {
+        let result = await serverRequest(context.server, '/active', {email: user.email, tag, active});
         if (result?.ok) {
             toast.success('Changes made successful');
             refreshInbounds();
@@ -72,8 +76,8 @@ export default function UsersPage() {
         }
     }, [router]);
 
-    const removeUser = useCallback(async (protocol, user) => {
-        let result = await serverRequest(context.server, '/remove_user', {email: user.email, protocol});
+    const removeUser = useCallback(async (protocol, tag, user) => {
+        let result = await serverRequest(context.server, '/remove_user', {email: user.email, tag, protocol});
         if (result?.ok) {
             toast.success('User removed');
             refreshInbounds();
@@ -82,8 +86,8 @@ export default function UsersPage() {
         }
     }, [router]);
 
-    const setMaxConnection = useCallback(async (protocol, user, value) => {
-        let result = await serverRequest(context.server, '/max_connections', {email: user.email, protocol, value});
+    const setMaxConnection = useCallback(async (tag, user, value) => {
+        let result = await serverRequest(context.server, '/max_connections', {email: user.email, tag, value});
         if (result?.ok) {
             toast.success('Max connection changed');
             refreshInbounds();
@@ -92,8 +96,8 @@ export default function UsersPage() {
         }
     }, [router]);
 
-    const setExpireDays = useCallback(async (protocol, user, value) => {
-        let result = await serverRequest(context.server, '/expire_days', {email: user.email, protocol, value});
+    const setExpireDays = useCallback(async (tag, user, value) => {
+        let result = await serverRequest(context.server, '/expire_days', {email: user.email, tag, value});
         if (result?.ok) {
             toast.success('Expire days changed');
             refreshInbounds();
@@ -112,8 +116,8 @@ export default function UsersPage() {
         }
     }, [router]);
 
-    const setUsername = useCallback(async (protocol, user, value) => {
-        let result = await serverRequest(context.server, '/change_username', {email: user.email, protocol, value});
+    const setUsername = useCallback(async (tag, user, value) => {
+        let result = await serverRequest(context.server, '/change_username', {email: user.email, tag, value});
         if (result?.ok) {
             toast.success('Username changed');
             refreshInbounds();
@@ -122,8 +126,8 @@ export default function UsersPage() {
         }
     }, [router]);
 
-    const setInfo = useCallback(async (protocol, user, prop, value) => {
-        let result = await serverRequest(context.server, '/set_info', {email: user.email, protocol, value, prop});
+    const setInfo = useCallback(async (tag, user, prop, value) => {
+        let result = await serverRequest(context.server, '/set_info', {email: user.email, tag, value, prop});
         if (result?.ok) {
             toast.success(prop + ' changed for user "'+user.email+'"');
             refreshInbounds();
@@ -133,8 +137,8 @@ export default function UsersPage() {
     }, [router]);
 
 
-    const reGenerateId = useCallback(async (protocol, user) => {
-        let result = await serverRequest(context.server, '/regenerate_id', {email: user.email, protocol});
+    const reGenerateId = useCallback(async (tag, user) => {
+        let result = await serverRequest(context.server, '/regenerate_id', {email: user.email, tag});
         if (result?.ok) {
             toast.success('ID generated');
             refreshInbounds();
@@ -159,6 +163,8 @@ export default function UsersPage() {
     const {data: statusFilters} = useSWR('/status_filters', serverRequest.bind(this, context.server));
 
     const prompt = usePrompt();
+
+    const changeInboundDialog = useDialog((context, inbounds, currentInbound, user, onEdit, onClose = null) => <ChangeInboundEditor context={context} inbounds={inbounds} currentInbound={currentInbound} user={user} onEdit={onEdit} dissmis={onClose}/>);
 
     const exportExcel = useCallback(() => {
         console.log('Export Excel');
@@ -219,11 +225,11 @@ export default function UsersPage() {
         <Head>
             <title>Users</title>
         </Head>
-        <AddUser className="py-2" disabled={isLoading} onRefresh={refreshInbounds} protocols={inbounds?.map(i => i.protocol ?? '') ?? []}/>
+        <AddUser className="py-2" disabled={isLoading} onRefresh={refreshInbounds} inbounds={inbounds ?? []}/>
         <FieldsGroup data={view} dataSetter={setView} title="View" className="border-t-2 py-2" containerClassName="items-center">
             <Field label="Page" htmlFor="page">
                 <select id="page" className={styles.input}>
-                    {[...new Array(totalPages)].map((x, i) => <option value={i+1}>{i+1}</option>)}
+                    {[...new Array(totalPages)].map((x, i) => <option key={i+1} value={i+1}>{i+1}</option>)}
                 </select>
             </Field>
             <Field label="Limit" htmlFor="limit">
@@ -313,9 +319,9 @@ export default function UsersPage() {
                     let from = i.settings ? i.settings['from'] ?? 0 : 0;
                     let to = i.settings ? i.settings['to'] ?? 0 : 0;
                     let {showId, fullTime, precision} = view;
-                    return <Fragment key={"inbound-" + i.protocol}>
-                        <tr key={"inbound-" + i.protocol}>
-                            <td colSpan={5} className="uppercase font-bold bg-slate-100 px-4 py-3">{i.protocol} ( {from}-{to} / {totalFiltered} users ) - Total = {totalUsers} users</td>
+                    return <Fragment key={"inbound-" + i.protocol + '-' + i.tag}>
+                        <tr>
+                            <td colSpan={5} className="uppercase font-bold bg-slate-100 px-4 py-3">{i.tag} ({i.protocol}) ( {from}-{to} / {totalFiltered} users ) - Total = {totalUsers} users</td>
                         </tr>
                         {users
                         .map((u, index) => {
@@ -364,7 +370,10 @@ export default function UsersPage() {
                                             }} editable={true} onEdit={value => setInfo(i.protocol, u, 'quotaLimit', value * 1024 * 1024 * 1024)} value={u.quotaLimit} postfix={'GB'}>
                                                 <Size size={u['quotaUsage'] ?? 0}/> / {u.quotaLimit && u.quotaLimit > 0 ? <Size size={u.quotaLimit ?? 0}/> : '∞' }
                                             </Editable>
-                                        </Info>                                        
+                                        </Info>
+                                        <Info label={'Last Connected IP'}>
+                                            {u['lastConnectIP'] ?? '-'}
+                                        </Info>
                                     </Infos>
                                 </td>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3">
@@ -403,15 +412,15 @@ export default function UsersPage() {
                                 </td>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3">
                                     <PopupMenu>
-                                        <PopupMenu.Item action={() => showQRCode(i.protocol, u)}>QR Code</PopupMenu.Item>
+                                        <PopupMenu.Item action={() => showQRCode(i.tag, u)}>QR Code</PopupMenu.Item>
                                         <PopupMenu.Item>
                                             <Copy className="block text-inherit" notifyText={`User "${u.email}" ID copied`} data={u.id}>Copy User ID</Copy>
                                         </PopupMenu.Item>
                                         <PopupMenu.Item>
-                                            <Copy className="block text-inherit" notifyText={`User "${u.email}" client config copied`} data={() => serverRequest(context.server, '/client_config?protocol=' + i.protocol, u).then(data => data.config)}>Copy Config</Copy>
+                                            <Copy className="block text-inherit" notifyText={`User "${u.email}" client config copied`} data={() => serverRequest(context.server, '/client_config?tag=' + i.tag, u).then(data => data.config)}>Copy Config</Copy>
                                         </PopupMenu.Item>
                                         {showAll || !u.deActiveReason?.includes('Expired') ? <PopupMenu.Item action={() => prompt(`Change user ${u.email} ${u.deActiveDate?'active':'de-active'} ?`, u.deActiveDate?'Active':'De-active', () => setActive(i.protocol, u, u.deActiveDate ? true : false))}>{u.deActiveDate?'Active User':'De-Active User'}</PopupMenu.Item>:null}
-                                        {(showAll || !u.firstConnect) ? <PopupMenu.Item action={() => prompt(`Delete user ${u.email} ?`, `Delete`,() => removeUser(i.protocol, u))}>
+                                        {(showAll || !u.firstConnect) ? <PopupMenu.Item action={() => prompt(`Delete user ${u.email} ?`, `Delete`,() => removeUser(i.protocol, i.tag, u))}>
                                             Remove User
                                         </PopupMenu.Item> : null }
                                         <PopupMenu.Item action={() => prompt(`Generate ID for ${u.email} ?`, `Generate`, () => reGenerateId(i.protocol, u))}>
@@ -433,6 +442,10 @@ export default function UsersPage() {
                                         {!u.createDate || showAll ? <PopupMenu.Item action={() => prompt(`Set first connect date as create date for user "${u.email}" ?`, `Set Create Date`, () => setInfo(i.protocol, u, 'createDate', u.firstConnect))}>Set First Connect as Create Date</PopupMenu.Item> : null}
                                         {showAll ? <PopupMenu.Item action={() => prompt(`Set user "${u.email}" ${u.private?"public":"private"}?`, `Change Private`, () => setInfo(i.protocol, u, 'private', !u.private))}>Set {u.private?'Public':'Private'}</PopupMenu.Item> : null}
                                         {showAll ? <PopupMenu.Item action={() => prompt(`Set user "${u.email}" as ${u.free?"Non-free":"Free"}?`, `Free/Paid`, () => setInfo(i.protocol, u, 'free', !u.free))}>Set {u.free?'Non-Free':'Free'}</PopupMenu.Item> : null}
+
+                                        <PopupMenu.Item action={() => changeInboundDialog.show(context, inbounds, i.tag, u.email, () => refreshInbounds())}>
+                                            Change Inbound
+                                        </PopupMenu.Item>
                                     </PopupMenu>
                                 </td>
                             </tr>

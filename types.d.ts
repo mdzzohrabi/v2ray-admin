@@ -59,6 +59,7 @@ interface V2RayConfigInboundSettings {
 interface V2RayConfigInboundStreamSettings {
     network?: string
     security?: string
+    tcpSettings?: any
 }
 
 interface V2RayConfigInbound {
@@ -238,6 +239,7 @@ interface UserUsage {
     lastConnect?: string
     quotaUsage?: number
     quotaUsageUpdate?: string
+    lastConnectIP?: string
 }
 
 interface UserUsages {

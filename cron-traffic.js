@@ -78,8 +78,10 @@ async function cronCommand() {
                 let usage = userUsage[name];
 
                 // Reset quota usage on month changes
-                if (usage.quotaUsageUpdate && intl.format(new Date(usage.quotaUsageUpdate)) != intl.format(new Date()))
+                if (usage.quotaUsageUpdate && intl.format(new Date(usage.quotaUsageUpdate)) != intl.format(new Date())) {
+                    showInfo(`Reset Quota usage for user "${name}" on date "${new Date()}"`)
                     usage.quotaUsage = 0;
+                }
 
                 // Update quota
                 usage.quotaUsage = (usage.quotaUsage ?? 0) + Number(value ?? 0);

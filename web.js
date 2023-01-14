@@ -102,14 +102,14 @@ app.get('/usages', async (req, res) => {
     res.json(encryptData(usages));
 });
 
-app.post('/client_config', (req, res) => {
+app.post('/client_config', async (req, res) => {
     /** @type {V2RayConfigInboundClient} */
     let user = req.body;
-    let protocol = req.query.protocol?.toString();
+    let tag = req.query.tag?.toString();
 
-    if (!user || !user.id || !user.email || !protocol) return res.status(500).json({ error: 'Invalid request' });
+    if (!user || !user.id || !user.email || !tag) return res.status(500).json({ error: 'Invalid request' });
 
-    let {strClientConfig} = getUserConfig(user, protocol);
+    let {strClientConfig} = await getUserConfig(user, tag);
 
     res.json({ config: strClientConfig });
 });
@@ -120,7 +120,7 @@ app.post('/restart', async (req, res) => {
 
 app.post('/active', async (req, res) => {
     try {
-        let {email, protocol, active} = req.body;
+        let {email, tag, active} = req.body;
         if (!email) return res.json({ error: 'Email not entered' });
         let {configPath} = getPaths();
         let config = readConfig(configPath);
@@ -136,7 +136,7 @@ app.post('/active', async (req, res) => {
 
 app.post('/max_connections', async (req, res) => {
     try {
-        let {email, protocol, value} = req.body;
+        let {email, tag, value} = req.body;
         if (!email) return res.json({ error: 'Email not entered' });
         let {configPath} = getPaths();
         let config = readConfig(configPath);
@@ -153,7 +153,7 @@ app.post('/max_connections', async (req, res) => {
 
 app.post('/expire_days', async (req, res) => {
     try {
-        let {email, protocol, value} = req.body;
+        let {email, tag, value} = req.body;
         if (!email) return res.json({ error: 'Email not entered' });
         let {configPath} = getPaths();
         let config = readConfig(configPath);
@@ -170,7 +170,7 @@ app.post('/expire_days', async (req, res) => {
 
 app.post('/set_info', async (req, res) => {
     try {
-        let {email, protocol, prop, value} = req.body;
+        let {email, tag, prop, value} = req.body;
         if (!email) return res.json({ error: 'Email not entered' });
         let {configPath} = getPaths();
         let config = readConfig(configPath);
@@ -190,7 +190,7 @@ app.post('/set_info', async (req, res) => {
 
 app.post('/change_username', async (req, res) => {
     try {
-        let {email, protocol, value} = req.body;
+        let {email, tag, value} = req.body;
         if (!email) return res.json({ error: 'Email not entered' });
         let {configPath} = getPaths();
         let config = readConfig(configPath);
@@ -208,7 +208,7 @@ app.post('/change_username', async (req, res) => {
 
 app.post('/regenerate_id', async (req, res) => {
     try {
-        let {email, protocol} = req.body;
+        let {email, tag} = req.body;
         if (!email) return res.json({ error: 'Email not entered' });
         let {configPath} = getPaths();
         let config = readConfig(configPath);
@@ -234,6 +234,51 @@ app.post('/remove_user', async (req, res) => {
         res.json({ ok: true });
         restartService().catch(console.error);
     } catch (err) {
+        res.json({ error: err.message });
+        console.error(err);
+    }
+});
+
+app.post('/change_user_inbound', async (req, res) => {
+    try {
+        let {email, fromTag, toTag} = req.body;
+        if (!email) return res.json({ error: 'Email not entered' });
+        if (!toTag || !fromTag) return res.json({ error: 'Invalid request' });
+
+        let {configPath} = getPaths();
+        let config = readConfig(configPath);
+
+        let sourceInbound = config.inbounds?.find(x => x.tag == fromTag);
+        if (!sourceInbound) return res.json({ error: 'Source inbound not found' });
+        
+        let targetInbound = config.inbounds?.find(x => x.tag == toTag);
+        if (!targetInbound) return res.json({ error: 'Target inbound not found' });
+        
+        let sourceUser = sourceInbound.settings?.clients?.find(x => x.email == email);
+        if (!sourceUser) return res.json({ error: 'User not found' });
+        let sourceUserIndex = sourceInbound?.settings?.clients?.indexOf(sourceUser) ?? -1;
+
+        if (!!targetInbound.settings?.clients?.find(x => x.email == email))
+            return res.json({ error: 'User already exists in target inbound' });
+
+        if (!targetInbound.settings)
+            targetInbound.settings = {};
+
+        if (!targetInbound.settings?.clients)
+            targetInbound.settings.clients = [];
+
+        // Add to target
+        targetInbound.settings.clients.push(sourceUser);
+
+        // Remove from source
+        sourceInbound.settings?.clients?.splice(sourceUserIndex, 1);
+
+        // Save
+        await writeConfig(configPath, config);
+        res.json({ ok: true });
+        restartService().catch(console.error);
+    }
+    catch (err) {
         res.json({ error: err.message });
         console.error(err);
     }
@@ -270,6 +315,7 @@ app.post('/inbounds', async (req, res) => {
             let usage = user.email ? usages[user.email] : {};
             user.firstConnect = user.firstConnect ?? usage?.firstConnect;
             user['lastConnect'] = usage?.lastConnect;
+            user['lastConnectIP'] = usage?.lastConnectIP;
             user['quotaUsage'] = usage?.quotaUsage;
             user['quotaUsageUpdate'] = usage?.quotaUsageUpdate;
             user.expireDays = user.expireDays || Number(env.V2RAY_EXPIRE_DAYS) || 30;
@@ -308,12 +354,12 @@ app.get('/inbounds_clients', async (req, res) => {
 
 app.post('/user', async (req, res) => {
     try {
-        let {email, protocol, fullName, mobile, emailAddress, private, free, quotaLimit} = req.body;
+        let {email, tag, fullName, mobile, emailAddress, private, free, quotaLimit} = req.body;
         if (!email) return res.json({ error: 'Email not entered' });
-        if (!protocol) return res.json({ error: 'Protocol not entered' });
+        if (!tag) return res.json({ error: 'Tag not entered' });
         let {configPath} = getPaths();
         if (quotaLimit) quotaLimit = Number(quotaLimit);
-        let result = await addUser(configPath, email, protocol, null, {
+        let result = await addUser(configPath, email, 'vmess', tag, {
             fullName, mobile, emailAddress, private, free, quotaLimit
         });
         if (!free) {

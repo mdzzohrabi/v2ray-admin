@@ -3,6 +3,7 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
 import React, { useContext } from 'react';
+import { useMemo } from "react";
 import useSWR from 'swr';
 import { AppContext } from "../../components/app-context";
 import { Container } from "../../components/container";
@@ -19,6 +20,18 @@ export default function TrafficUsagePage() {
     let router = useRouter();
     let showAll = router.query.all == '1';
     let email = router.query.user;
+
+    let isEn = router.query.date == 'en';
+    let dateLocale = isEn ? 'en-US' : 'fa-IR-u-nu-latn';
+    let intl = new Intl.DateTimeFormat(dateLocale, { dateStyle: 'short' });
+    let now = new Date();
+
+    const dateParts = (/** @type {Date} */ date) => ({
+        year: intl.formatToParts(date).find(x => x.type == 'year')?.value,
+        month: intl.formatToParts(date).find(x => x.type == 'month')?.value,
+        day: intl.formatToParts(date).find(x => x.type == 'day')?.value,
+    })
+
     let [view, setView] = useStoredState('usages-traffic-view', {
         showDetail: showAll ? true : false,
         sortColumn: 'type',
@@ -26,7 +39,9 @@ export default function TrafficUsagePage() {
         filter: '',
         direction: '',
         type: '',
-        date: '',
+        dateYear: dateParts(now).year,
+        dateMonth: dateParts(now).month,
+        dateDay: dateParts(now).day,
         zeroTraffic: false,
         top: 500,
         footer: true
@@ -38,6 +53,17 @@ export default function TrafficUsagePage() {
     let {data: usages, mutate: refreshUsages, isValidating: isLoading} = useSWR('/traffic' + queryString({ email, key: btoa(context.server.url) }), serverRequest.bind(this, context.server));
     const prompt = usePrompt();
 
+    let dates = useMemo(() => Object.keys(usages ?? {}).map(x => new Date(x)), [usages]);
+
+    let [years, months, days] = useMemo(() => {
+        return [
+            [...new Set(dates.map(d => new Intl.DateTimeFormat(dateLocale, { year: 'numeric' }).format(d)))],
+            [...new Set(dates.map(d => new Intl.DateTimeFormat(dateLocale, { month: 'numeric' }).format(d)))],
+            [...new Set(dates.map(d => new Intl.DateTimeFormat(dateLocale, { day: 'numeric' }).format(d)))]
+        ];
+
+    }, [dates]);
+
     return <Container>
         <Head>
             <title>Traffic Usages</title>
@@ -46,10 +72,22 @@ export default function TrafficUsagePage() {
             { email ? <Field label="User" className="border-x-[1px] px-3 mr-2">
                 <span className="text-gray-800 py-1 px-2 rounded-lg bg-yellow-100">{email}</span>
             </Field> : null }
-            <Field label="Date" htmlFor="date">
-                <select id="date" className={styles.input}>
+            <Field label="Year" htmlFor="dateYear">
+                <select id="dateYear" className={styles.input}>
                     <option value="">-</option>
-                    {Object.keys(usages ?? {}).map(date => <option value={date}>{date}</option>)}
+                    {years.map(date => <option key={date} value={date}>{date}</option>)}
+                </select>
+            </Field>
+            <Field label="/" htmlFor="dateMonth">
+                <select id="dateMonth" className={styles.input}>
+                    <option value="">-</option>
+                    {months.map(date => <option key={date} value={date}>{date}</option>)}
+                </select>
+            </Field>
+            <Field label="/" htmlFor="dateDay">
+                <select id="dateDay" className={styles.input}>
+                    <option value="">-</option>
+                    {days.map(date => <option key={date} value={date}>{date}</option>)}
                 </select>
             </Field>
             <Field label="Sort" htmlFor="sortColumn">
@@ -108,7 +146,16 @@ export default function TrafficUsagePage() {
             Loading ...
         </div> : null }
         <Table
-            rows={Object.keys(usages ?? {}).filter(date => !view.date || date == view.date).flatMap(date => [ ...(
+            rows={Object.keys(usages ?? {})
+            .filter(key => {
+                let {year, month, day} = dateParts(new Date(key));
+                return (
+                    (!view.dateYear || view.dateYear == year) &&
+                    (!view.dateMonth || view.dateMonth == month) &&
+                    (!view.dateDay || view.dateDay == day)
+                )
+            })
+            .flatMap(date => [ ...(
                 usages[date]
                     .map(x => ({ date, ...x }))
                     .sort(arrSort(view.sortColumn, view.sortAsc))
@@ -121,18 +168,25 @@ export default function TrafficUsagePage() {
             groupBy={x => x.date}
             group={date => <tr className="bg-slate-50">
                 <td></td>
-                <td className="font-bold text-lg py-1 px-2">{date}</td>
+                <td className="font-bold text-lg py-1 px-2">{intl.format(new Date(date))}</td>
                 <td colSpan={3}></td>
             </tr>}
             groupFooter={(date, items) => 
-                <tr className="bg-slate-50">
+                items.length > 1 ? <tr className="bg-slate-50">
                     <td></td>
                     <td colSpan={3} className='px-3 text-gray-400'>Day Total</td>
                     <td className="p-2 px-3 font-bold"><Size size={items.reduce((s, r) => s + r.traffic, 0)}/></td>
-                </tr>
+                </tr> : null
             }
             loading={isLoading}
             columns={[ 'Type', 'Name', 'Direction', 'Traffic' ]}
+            footer={items => {
+                return <tr className="bg-slate-50">
+                    <td></td>
+                    <td colSpan={3} className='px-3 text-gray-400 font-bold'>Total</td>
+                    <td className="p-2 px-3 font-bold"><Size size={items.reduce((s, r) => s + r.traffic, 0)}/></td>
+                </tr>
+            }}
             cells={x => [
                 // Date
                 x.type,

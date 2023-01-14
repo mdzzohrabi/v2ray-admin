@@ -55,20 +55,20 @@ export default function UsagesPage() {
                 // Date
                 <DateView options={{ dateStyle: 'full' }} date={x.date} full={true} containerClassName="text-center"/>,
                 // First connect
-                view.showDetail ? 
+                (view.showDetail ? 
                 <Infos>
                     {x.outbounds.map(o => {
                         return <Info label={o.tag}>{new Date(o.firstConnect).toLocaleTimeString()}</Info>
                     })}
-                </Infos> : x.outbounds.filter(o => o.tag == 'direct').map(o => new Date(o.firstConnect).toLocaleTimeString()).pop(),
+                </Infos> : x.outbounds.filter((o, i) => i == 0).map(o => new Date(o.firstConnect).toLocaleTimeString()).pop()) ?? '-',
                 // Last connect
-                view.showDetail ?
+                (view.showDetail ?
                 <Infos>
                     {x.outbounds.map(o => {
                         return <Info label={o.tag}>{new Date(o.lastConnect).toLocaleTimeString()}</Info>
                     })}
                 </Infos>
-                : x.outbounds.filter(o => o.tag == "direct").map(o => new Date(o.lastConnect).toLocaleTimeString()).pop(),
+                : x.outbounds.filter((o, i) => i == 0).map(o => new Date(o.lastConnect).toLocaleTimeString()).pop()) ?? '-',
                 // Requests
                 view.showDetail ?
                 <Infos>

@@ -13,12 +13,12 @@ import { Field, FieldsGroup } from "./fields";
  * @param {{
  *      onRefresh?: Function,
  *      setLoading?: Function,
- *      protocols?: string[],
+ *      inbounds?: V2RayConfigInbound[],
  *      disabled?: boolean,
  *      className?: string
  * }} param0 Parameters
  */
-export function AddUser({ disabled = false, onRefresh, setLoading, protocols, className = '' }) {
+export function AddUser({ disabled = false, onRefresh, setLoading, inbounds, className = '' }) {
 
     const context = useContext(AppContext);
     const router = useRouter();
@@ -74,10 +74,10 @@ export function AddUser({ disabled = false, onRefresh, setLoading, protocols, cl
             <Field label={"Bandwidth"} htmlFor="quotaLimit">
                 <input placeholder="5 GB" inputMode={"numeric"} disabled={disabled} className={styles.input} type="number" id="quotaLimit"/>
             </Field>
-            <Field label={"Protocol"} htmlFor="protocol">
-                <select disabled={disabled} id="protocol" className={styles.input}>
+            <Field label={"Inbound"} htmlFor="tag">
+                <select disabled={disabled} id="tag" className={styles.input}>
                     <option key={"no-protocol"} value={undefined}>-</option>
-                    {protocols?.map(p => <option key={"protocol-" + p} value={p}>{p}</option>)}
+                    {inbounds?.filter(x => x.protocol == 'vmess' && !!x.tag).map(p => <option key={`inbound-${p.tag}-${p.protocol}`} value={p.tag}>{p.tag} ({p.protocol})</option>)}
                 </select>
             </Field>
             {showAll?
