@@ -409,11 +409,9 @@ export default function UsersPage() {
                                             <Info label={'DeActived'}>
                                                 <DateView precision={precision} full={fullTime} date={u.deActiveDate}/>
                                             </Info>
-                                            {!u.deActiveDate?
-                                                <Info label={'Until Expire'}>
-                                                    <DateView precision={precision} full={fullTime} date={u['expireDate']}/>
-                                                </Info>
-                                            :null}
+                                            <Info label={'Until Expire'}>
+                                                <DateView precision={precision} full={fullTime} date={u['expireDate']}/>
+                                            </Info>
                                         </Infos>
                                         <Infos className="flex-1 xl:ml-2">
                                             <Info label={'Expired'}>
