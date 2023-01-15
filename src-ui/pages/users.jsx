@@ -15,6 +15,7 @@ import { DateView } from "../components/date-view";
 import { useDialog } from "../components/dialog";
 import { Editable } from "../components/editable";
 import { ChangeInboundEditor } from "../components/editor/change-inbound-editor";
+import { CopyUserEditor } from "../components/editor/copy-user";
 import { Field, FieldsGroup } from "../components/fields";
 import { Info, Infos } from "../components/info";
 import { Popup } from "../components/popup";
@@ -106,8 +107,8 @@ export default function UsersPage() {
         }
     }, [router]);
 
-    const addDays = useCallback(async (user, days) => {
-        let result = await serverRequest(context.server, '/add_days', {email: user.email, days});
+    const addDays = useCallback(async (tag, user, days) => {
+        let result = await serverRequest(context.server, '/add_days', {email: user.email, days, tag});
         if (result?.ok) {
             toast.success(`${days} days added to user ${user.email}`);
             refreshInbounds();
@@ -165,6 +166,9 @@ export default function UsersPage() {
     const prompt = usePrompt();
 
     const changeInboundDialog = useDialog((context, inbounds, currentInbound, user, onEdit, onClose = null) => <ChangeInboundEditor context={context} inbounds={inbounds} currentInbound={currentInbound} user={user} onEdit={onEdit} dissmis={onClose}/>);
+
+    const copyUserDialog = useDialog((context, inbounds, currentInbound, user, onEdit, onClose = null) => <CopyUserEditor context={context} inbounds={inbounds} currentInbound={currentInbound} user={user} onEdit={onEdit} dissmis={onClose}/>);
+
 
     const exportExcel = useCallback(() => {
         console.log('Export Excel');
@@ -334,16 +338,16 @@ export default function UsersPage() {
                                         </div>
                                         <div className="flex-1">
                                             <div className="flex flex-row">
-                                                <Editable editable={!u.firstConnect || showAll} className={"font-semibold inline-block"} onEdit={value => setUsername(i.protocol, u, value)} value={u.email}>{u.email}</Editable>
+                                                <Editable editable={!u.firstConnect || showAll} className={"font-semibold inline-block"} onEdit={value => setUsername(i.tag, u, value)} value={u.email}>{u.email}</Editable>
                                                 {u.private?<span className="ml-2 text-xs px-2 py-0 rounded-lg bg-gray-100 text-gray-500 cursor-default">Private</span>:null}
                                                 {u.free?<span className="ml-2 text-xs px-2 py-0 rounded-lg bg-green-100 text-green-500 cursor-default">Free</span>:null}
                                             </div>
-                                            <Editable className="text-gray-600 inline-block" onEdit={value => setInfo(i.protocol, u, 'fullName', value)} value={u.fullName}>{u.fullName ?? '-'}</Editable>
+                                            <Editable className="text-gray-600 inline-block" onEdit={value => setInfo(i.tag, u, 'fullName', value)} value={u.fullName}>{u.fullName ?? '-'}</Editable>
                                             {showId?<Info className="ml-3" label={"ID"}>{u.id}</Info>:null}
                                             {u.deActiveDate ? 
                                             <Info label={"De-active reason"} className="ml-2">
                                                 <Popup popup={u.deActiveReason?.length ?? 0 > 30 ? u.deActiveReason : null}>
-                                                    <Editable onEdit={value => setInfo(i.protocol, u, 'deActiveReason', value)} value={u.deActiveReason}>{(u.deActiveReason?.length ?? 0) > 30 ? u.deActiveReason?.substring(0,30) + '...' : (u.deActiveReason ?? '-')}</Editable>
+                                                    <Editable onEdit={value => setInfo(i.tag, u, 'deActiveReason', value)} value={u.deActiveReason}>{(u.deActiveReason?.length ?? 0) > 30 ? u.deActiveReason?.substring(0,30) + '...' : (u.deActiveReason ?? '-')}</Editable>
                                                 </Popup>
                                             </Info> : null }
                                         </div>
@@ -352,22 +356,22 @@ export default function UsersPage() {
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3">
                                     <Infos>
                                         <Info label={"Mobile"}>
-                                            <Editable onEdit={value => setInfo(i.protocol, u, 'mobile', value)} value={u.mobile}>{u.mobile ?? 'N/A'}</Editable>
+                                            <Editable onEdit={value => setInfo(i.tag, u, 'mobile', value)} value={u.mobile}>{u.mobile ?? 'N/A'}</Editable>
                                         </Info>
                                         <Info label={"Email"}>
-                                            <Editable onEdit={value => setInfo(i.protocol, u, 'emailAddress', value)} value={u.emailAddress}>{u.emailAddress ?? 'N/A'}</Editable>
+                                            <Editable onEdit={value => setInfo(i.tag, u, 'emailAddress', value)} value={u.emailAddress}>{u.emailAddress ?? 'N/A'}</Editable>
                                         </Info>
                                         <Info label={'Max Connections'}>
-                                            <Editable onEdit={value => setMaxConnection(i.protocol, u, value)} value={u.maxConnections}>{u.maxConnections}</Editable>
+                                            <Editable onEdit={value => setMaxConnection(i.tag, u, value)} value={u.maxConnections}>{u.maxConnections}</Editable>
                                         </Info>
                                         <Info label={'Expire Days'}>
-                                            <Editable editable={showAll} onEdit={value => setExpireDays(i.protocol, u, value)} value={u.expireDays}>{u.expireDays}</Editable>
+                                            <Editable editable={showAll} onEdit={value => setExpireDays(i.tag, u, value)} value={u.expireDays}>{u.expireDays}</Editable>
                                         </Info>
                                         <Info label={'Bandwidth'}>
                                             <Editable input={{
                                                 type: 'number',
                                                 placeholder: '1'
-                                            }} editable={true} onEdit={value => setInfo(i.protocol, u, 'quotaLimit', value * 1024 * 1024 * 1024)} value={u.quotaLimit} postfix={'GB'}>
+                                            }} editable={true} onEdit={value => setInfo(i.tag, u, 'quotaLimit', value * 1024 * 1024 * 1024)} value={u.quotaLimit} postfix={'GB'}>
                                                 <Size size={u['quotaUsage'] ?? 0}/> / {u.quotaLimit && u.quotaLimit > 0 ? <Size size={u.quotaLimit ?? 0}/> : '∞' }
                                             </Editable>
                                         </Info>
@@ -419,14 +423,14 @@ export default function UsersPage() {
                                         <PopupMenu.Item>
                                             <Copy className="block text-inherit" notifyText={`User "${u.email}" client config copied`} data={() => serverRequest(context.server, '/client_config?tag=' + i.tag, u).then(data => data.config)}>Copy Config</Copy>
                                         </PopupMenu.Item>
-                                        {showAll || !u.deActiveReason?.includes('Expired') ? <PopupMenu.Item action={() => prompt(`Change user ${u.email} ${u.deActiveDate?'active':'de-active'} ?`, u.deActiveDate?'Active':'De-active', () => setActive(i.protocol, u, u.deActiveDate ? true : false))}>{u.deActiveDate?'Active User':'De-Active User'}</PopupMenu.Item>:null}
+                                        {showAll || !u.deActiveReason?.includes('Expired') ? <PopupMenu.Item action={() => prompt(`Change user ${u.email} ${u.deActiveDate?'active':'de-active'} ?`, u.deActiveDate?'Active':'De-active', () => setActive(i.tag, u, u.deActiveDate ? true : false))}>{u.deActiveDate?'Active User':'De-Active User'}</PopupMenu.Item>:null}
                                         {(showAll || !u.firstConnect) ? <PopupMenu.Item action={() => prompt(`Delete user ${u.email} ?`, `Delete`,() => removeUser(i.protocol, i.tag, u))}>
                                             Remove User
                                         </PopupMenu.Item> : null }
-                                        <PopupMenu.Item action={() => prompt(`Generate ID for ${u.email} ?`, `Generate`, () => reGenerateId(i.protocol, u))}>
+                                        <PopupMenu.Item action={() => prompt(`Generate ID for ${u.email} ?`, `Generate`, () => reGenerateId(i.tag, u))}>
                                             ReGenerate ID
                                         </PopupMenu.Item>
-                                        <PopupMenu.Item action={() => prompt(`Add 1 Months to Expire Days for user "${u.email}" ?`, `Add Expire Days`, () => addDays(u, 30))}>
+                                        <PopupMenu.Item action={() => prompt(`Add 1 Months to Expire Days for user "${u.email}" ?`, `Add Expire Days`, () => addDays(i.tag, u, 30))}>
                                             +1 Months
                                         </PopupMenu.Item>
                                         <PopupMenu.Item action={() => router.push(`/transactions?user=${u.email}` + (showAll ? `&all=1` : ''))}>
@@ -439,13 +443,17 @@ export default function UsersPage() {
                                         <PopupMenu.Item action={() => router.push(`/logs?all=1&filter=`+u.email)}>
                                             Logs
                                         </PopupMenu.Item>: null}
-                                        {!u.createDate || showAll ? <PopupMenu.Item action={() => prompt(`Set first connect date as create date for user "${u.email}" ?`, `Set Create Date`, () => setInfo(i.protocol, u, 'createDate', u.firstConnect))}>Set First Connect as Create Date</PopupMenu.Item> : null}
-                                        {showAll ? <PopupMenu.Item action={() => prompt(`Set user "${u.email}" ${u.private?"public":"private"}?`, `Change Private`, () => setInfo(i.protocol, u, 'private', !u.private))}>Set {u.private?'Public':'Private'}</PopupMenu.Item> : null}
-                                        {showAll ? <PopupMenu.Item action={() => prompt(`Set user "${u.email}" as ${u.free?"Non-free":"Free"}?`, `Free/Paid`, () => setInfo(i.protocol, u, 'free', !u.free))}>Set {u.free?'Non-Free':'Free'}</PopupMenu.Item> : null}
+                                        {!u.createDate || showAll ? <PopupMenu.Item action={() => prompt(`Set first connect date as create date for user "${u.email}" ?`, `Set Create Date`, () => setInfo(i.tag, u, 'createDate', u.firstConnect))}>Set First Connect as Create Date</PopupMenu.Item> : null}
+                                        {showAll ? <PopupMenu.Item action={() => prompt(`Set user "${u.email}" ${u.private?"public":"private"}?`, `Change Private`, () => setInfo(i.tag, u, 'private', !u.private))}>Set {u.private?'Public':'Private'}</PopupMenu.Item> : null}
+                                        {showAll ? <PopupMenu.Item action={() => prompt(`Set user "${u.email}" as ${u.free?"Non-free":"Free"}?`, `Free/Paid`, () => setInfo(i.tag, u, 'free', !u.free))}>Set {u.free?'Non-Free':'Free'}</PopupMenu.Item> : null}
 
                                         <PopupMenu.Item action={() => changeInboundDialog.show(context, inbounds, i.tag, u.email, () => refreshInbounds())}>
                                             Change Inbound
                                         </PopupMenu.Item>
+
+                                        {showAll ? <PopupMenu.Item action={() => copyUserDialog.show(context, inbounds, i.tag, u.email, () => refreshInbounds())}>
+                                            Copy User
+                                        </PopupMenu.Item> : null}
                                     </PopupMenu>
                                 </td>
                             </tr>

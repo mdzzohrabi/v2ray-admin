@@ -140,7 +140,7 @@ app.post('/max_connections', async (req, res) => {
         if (!email) return res.json({ error: 'Email not entered' });
         let {configPath} = getPaths();
         let config = readConfig(configPath);
-        let user = findUser(config, email);
+        let user = findUser(config, email, tag);
         if (!user) throw Error('User not found');
         user.maxConnections = Number(value);
         await writeConfig(configPath, config);
@@ -157,7 +157,7 @@ app.post('/expire_days', async (req, res) => {
         if (!email) return res.json({ error: 'Email not entered' });
         let {configPath} = getPaths();
         let config = readConfig(configPath);
-        let user = findUser(config, email);
+        let user = findUser(config, email, tag);
         if (!user) throw Error('User not found');
         user.expireDays = Number(value);
         await writeConfig(configPath, config);
@@ -174,7 +174,7 @@ app.post('/set_info', async (req, res) => {
         if (!email) return res.json({ error: 'Email not entered' });
         let {configPath} = getPaths();
         let config = readConfig(configPath);
-        let user = findUser(config, email);
+        let user = findUser(config, email, tag);
         if (!user) throw Error('User not found');
         if (prop == 'quotaLimit' && value) value = Number(value);
         log(`Change user "${email}" property "${prop}" from "${user[prop]}" to "${value}"`);
@@ -194,7 +194,7 @@ app.post('/change_username', async (req, res) => {
         if (!email) return res.json({ error: 'Email not entered' });
         let {configPath} = getPaths();
         let config = readConfig(configPath);
-        let user = findUser(config, email);
+        let user = findUser(config, email, tag);
         if (!user) throw Error('User not found');
         user.email = String(value);
         await writeConfig(configPath, config);
@@ -212,7 +212,7 @@ app.post('/regenerate_id', async (req, res) => {
         if (!email) return res.json({ error: 'Email not entered' });
         let {configPath} = getPaths();
         let config = readConfig(configPath);
-        let user = findUser(config, email);
+        let user = findUser(config, email, tag);
         if (!user) throw Error('User not found');
         log(`Generate new id for user ${user.email} (Old ID: ${user.id})`)
         user.id = randomUUID();
@@ -272,6 +272,48 @@ app.post('/change_user_inbound', async (req, res) => {
 
         // Remove from source
         sourceInbound.settings?.clients?.splice(sourceUserIndex, 1);
+
+        // Save
+        await writeConfig(configPath, config);
+        res.json({ ok: true });
+        restartService().catch(console.error);
+    }
+    catch (err) {
+        res.json({ error: err.message });
+        console.error(err);
+    }
+});
+
+app.post('/copy_user', async (req, res) => {
+    try {
+        let {email, newEmail, fromTag, toTag} = req.body;
+        if (!email) return res.json({ error: 'Email not entered' });
+        if (!toTag || !fromTag) return res.json({ error: 'Invalid request' });
+
+        let {configPath} = getPaths();
+        let config = readConfig(configPath);
+
+        let sourceInbound = config.inbounds?.find(x => x.tag == fromTag);
+        if (!sourceInbound) return res.json({ error: 'Source inbound not found' });
+        
+        let targetInbound = config.inbounds?.find(x => x.tag == toTag);
+        if (!targetInbound) return res.json({ error: 'Target inbound not found' });
+        
+        let sourceUser = sourceInbound.settings?.clients?.find(x => x.email == email);
+        if (!sourceUser) return res.json({ error: 'User not found' });
+        let sourceUserIndex = sourceInbound?.settings?.clients?.indexOf(sourceUser) ?? -1;
+
+        if (!!targetInbound.settings?.clients?.find(x => x.email == email))
+            return res.json({ error: 'User already exists in target inbound' });
+
+        if (!targetInbound.settings)
+            targetInbound.settings = {};
+
+        if (!targetInbound.settings?.clients)
+            targetInbound.settings.clients = [];
+
+        // Add to target
+        targetInbound.settings.clients.push({ ...sourceUser, email: newEmail ?? sourceUser.email });
 
         // Save
         await writeConfig(configPath, config);
@@ -493,11 +535,11 @@ app.get('/daily_usage_logs', async (req, res) => {
 
 app.post('/add_days', async (req, res) => {
     try {
-        let {email, days} = req.body;
+        let {email, days, tag} = req.body;
         if (!email) return res.json({ error: 'Email not entered' });
         let {configPath} = getPaths();
         let config = readConfig(configPath);
-        let user = findUser(config, email);
+        let user = findUser(config, email, tag);
 
         if (!user) throw Error(`User not found`);
 
@@ -533,10 +575,6 @@ app.post('/add_days', async (req, res) => {
         res.json({ error: err.message });
         console.error(err);
     }
-});
-
-app.post('/sync_node', async (req, res) => {
-
 });
 
 let logWatch = socket.of('/logs');
