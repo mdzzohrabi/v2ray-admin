@@ -18,15 +18,19 @@ export function CopyUserEditor({ inbounds, currentInbound, user, onEdit, context
     let [email, setEmail] = useState(user);
 
     let ok = useCallback(async (/** @type {import("react").FormEvent} */ e) => {
-        e?.preventDefault();
+        try {
+            e?.preventDefault();
 
-        let result = await serverRequest(context.server, '/copy_user', {email: user, newEmail: email, fromTag: currentInbound, toTag: inbound});
-        if (result?.ok) {
-            toast.success(`User copied from "${currentInbound}" to "${inbound}"`);
-            onEdit();
-            dissmis();
-        } else {
-            toast.error(result?.error ?? 'Cannot save changes');
+            let result = await serverRequest(context.server, '/copy_user', {email: user, newEmail: email, fromTag: currentInbound, toTag: inbound});
+            if (result?.ok) {
+                toast.success(`User copied from "${currentInbound}" to "${inbound}"`);
+                onEdit();
+                dissmis();
+            } else {
+                toast.error(result?.error ?? 'Cannot save changes');
+            }
+        } catch (err) {
+            toast.error(err.message ?? 'Cannot save changes');
         }
     }, [onEdit, inbound, email, user, dissmis, context]);
 

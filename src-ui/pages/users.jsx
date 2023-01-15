@@ -34,6 +34,9 @@ export default function UsersPage() {
     /** @type {string[]} */
     let initStatusFilter = [];
 
+    /** @type {string[]} */
+    let initInboundsFilter = [];
+
     let [view, setView] = useState(stored('users-view', {
         sortColumn: '',
         sortAsc: true,
@@ -43,7 +46,8 @@ export default function UsersPage() {
         filter: '',
         statusFilter: initStatusFilter,
         page: 1,
-        limit: 20
+        limit: 20,
+        inbounds: initInboundsFilter
     }));
 
     useEffect(() => store('users-view', view), [view]);
@@ -231,6 +235,15 @@ export default function UsersPage() {
         </Head>
         <AddUser className="py-2" disabled={isLoading} onRefresh={refreshInbounds} inbounds={inbounds ?? []}/>
         <FieldsGroup data={view} dataSetter={setView} title="View" className="border-t-2 py-2" containerClassName="items-center">
+            <Field label="Inbounds" htmlFor="inbounds">
+                <div className="flex gap-1 mb-1">
+                    {view.inbounds?.map((filter, index) => <span key={index} onClick={() => setView({ ...view, inbounds: view.inbounds.filter(x => x != filter)})} className={classNames("whitespace-nowrap bg-slate-200 px-3 py-1 rounded-3xl cursor-pointer hover:bg-slate-700 hover:text-white")}>{filter}</span> )}
+                </div>
+                <select value={"-"} onChange={e => setView({ ...view, inbounds: [...(view.inbounds ?? []), e.currentTarget.value]})} id="inbounds" className="bg-slate-100 rounded-lg px-2 py-1">
+                    <option value="-">-</option>
+                    {(inbounds ?? []).map((x, index) => <option key={index} value={x.tag}>{x.tag} ({x.protocol})</option>)}
+                </select>
+            </Field>
             <Field label="Page" htmlFor="page">
                 <select id="page" className={styles.input}>
                     {[...new Array(totalPages)].map((x, i) => <option key={i+1} value={i+1}>{i+1}</option>)}
@@ -297,7 +310,7 @@ export default function UsersPage() {
                 <input type="checkbox" id="precision"/>
             </Field>
             <div className="flex flex-row">
-                {showAll ? <button className={styles.button} onClick={() => refreshInbounds()}>Reload</button> : null }
+                <button className={styles.button} onClick={() => refreshInbounds()}>Reload</button>
                 <button className={styles.button} onClick={exportExcel}>Export Excel</button>
             </div>
         </FieldsGroup>
@@ -316,7 +329,7 @@ export default function UsersPage() {
                 </tr>
             </thead>
             <tbody>
-                {!inbounds ? <tr><td colSpan={10} className="px-3 py-4">Loading ...</td></tr> : inbounds.map(i => {
+                {!inbounds ? <tr><td colSpan={10} className="px-3 py-4">Loading ...</td></tr> : inbounds.filter(x => !view.inbounds || view.inbounds?.length == 0 || view.inbounds.includes(x.tag ?? '')).map(i => {
                     let users = i.settings?.clients ?? [];
                     let totalUsers = i.settings ? i.settings['totalClients'] ?? 0 : 0;
                     let totalFiltered = i.settings ? i.settings['totalFiltered'] ?? 0 : 0;
@@ -325,7 +338,10 @@ export default function UsersPage() {
                     let {showId, fullTime, precision} = view;
                     return <Fragment key={"inbound-" + i.protocol + '-' + i.tag}>
                         <tr>
-                            <td colSpan={5} className="uppercase font-bold bg-slate-100 px-4 py-3">{i.tag} ({i.protocol}) ( {from}-{to} / {totalFiltered} users ) - Total = {totalUsers} users</td>
+                            <td colSpan={5} className="uppercase bg-slate-100 px-4 py-3">
+                                <span className="font-bold">{i.tag}</span>
+                                <span className="text-slate-500 pl-2">({i.protocol}) ( {from}-{to} / {totalFiltered} users ) - Total = {totalUsers} users</span>
+                            </td>
                         </tr>
                         {users
                         .map((u, index) => {
@@ -377,6 +393,7 @@ export default function UsersPage() {
                                         </Info>
                                         <Info label={'Last Connected IP'}>
                                             {u['lastConnectIP'] ?? '-'}
+                                            {u['lastConnectIP'] ? <a target={'_blank'} className={classNames(styles.link, 'pl-1')} href={`https://whatismyipaddress.com/ip/${u['lastConnectIP']}`}>(Info)</a> : null}
                                         </Info>
                                     </Infos>
                                 </td>
