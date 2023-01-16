@@ -1,6 +1,6 @@
 // @ts-check
 const { stat } = require('fs/promises');
-const { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile, readLogLines, cache } = require('./lib/util');
+const { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile, readLogLines, cache, db } = require('../lib/util');
 
 async function usages() {
     const { showError, showInfo, showOk } = createLogger();
@@ -15,10 +15,10 @@ async function usages() {
         return showInfo(`usage: node usages`);
 
     showInfo(`Process V2Ray log file to create usage informations`);
-    let size = await (await stat(accessLogPath)).size;
+    let size = (await stat(accessLogPath)).size;
     let lastSaveOffset = await cache('daily-usage-bytes') ?? 0;
     let lines = readLogLines(accessLogPath, 'daily-usage-bytes');
-    let dailyUsage = await cache('daily-usage') ?? {};
+    let dailyUsage = await db('daily-usages') ?? {};
     let lastSaveTime = Date.now();
     let secondsToSave = 10;
     
@@ -29,7 +29,7 @@ async function usages() {
             let speed = (line.offset - lastSaveOffset);
             let estimate = (size - line.offset) / (speed / secondsToSave);
             console.log(`Save data after ${secondsToSave} seconds of processing (${line.offset}/${size}) [${Math.round((line.offset / size) * 100)}%] [Est. ${Math.round(estimate)}s]...`);
-            await cache('daily-usage', dailyUsage);
+            await db('daily-usages', dailyUsage);
             await cache('daily-usage-bytes', line.offset);
             lastSaveOffset = line.offset;
         }
@@ -77,7 +77,7 @@ async function usages() {
 
     // Save data
     console.log(`Save data`);
-    await cache('daily-usage', dailyUsage);
+    await db('daily-usages', dailyUsage);
 
 }
 

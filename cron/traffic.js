@@ -1,6 +1,6 @@
 // @ts-check
 const { execSync } = require("child_process");
-const { getPaths, parseArgumentsAndOptions, readConfig, createLogger, cache } = require("./lib/util");
+const { getPaths, parseArgumentsAndOptions, readConfig, createLogger, cache, db } = require("../lib/util");
 
 const {
     cliArguments: [],
@@ -9,13 +9,13 @@ const {
 
 let {showInfo, showError, showWarn} = createLogger();
 
-async function cronCommand() {
+async function cronTrafficCommand() {
 
     if (help) {
         console.log(`V2Ray Cron Traffic help`);
         console.log(`Options :`);
         console.log(` --print               (only print result and dont make any changes, default: false)`);
-        console.log(` --delay               (cron timer delay in minutes, default: 5)`);
+        console.log(` --delay               (cron timer delay in minutes, default: 1)`);
         process.exit();
     }
 
@@ -26,12 +26,12 @@ async function cronCommand() {
     /**
      * @type {TrafficUsages}
      */
-    let trafficUsages = await cache('traffic-usage.json') ?? {};
+    let trafficUsages = await db('traffic-usages') ?? {};
 
     /**
      * @type {UserUsages}
      */
-    let userUsage = await cache('usages') ?? {};
+    let userUsage = await db('user-usages') ?? {};
 
     let date = new Date().toLocaleDateString();
 
@@ -89,8 +89,8 @@ async function cronCommand() {
             }
         }
 
-        await cache('traffic-usage.json', trafficUsages);
-        await cache('usages', userUsage);
+        await db('traffic-usages', trafficUsages);
+        await db('user-usages', userUsage);
 
     } catch (err) {
         showError(err);
@@ -103,7 +103,7 @@ async function cronCommand() {
 async function runCron() {
     showInfo(`Run traffic cron ${new Date().toLocaleString()}`);
     try {
-        await cronCommand();
+        await cronTrafficCommand();
     } finally {
         if (delay > 0)
             setTimeout(runCron, delay * 60 * 1000);

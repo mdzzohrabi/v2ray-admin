@@ -50,6 +50,8 @@ export default function UsersPage() {
         inbounds: initInboundsFilter
     }));
 
+    let [collapsed, setCollapsed] = useState({});
+
     useEffect(() => store('users-view', view), [view]);
 
     /**
@@ -336,15 +338,23 @@ export default function UsersPage() {
                     let from = i.settings ? i.settings['from'] ?? 0 : 0;
                     let to = i.settings ? i.settings['to'] ?? 0 : 0;
                     let {showId, fullTime, precision} = view;
+                    let isCollapsed = !!collapsed[i.tag ?? ''];
                     return <Fragment key={"inbound-" + i.protocol + '-' + i.tag}>
                         <tr>
-                            <td colSpan={5} className="uppercase bg-slate-100 px-4 py-3">
-                                <span className="font-bold">{i.tag}</span>
-                                <span className="text-slate-500 pl-2">({i.protocol}) ( {from}-{to} / {totalFiltered} users ) - Total = {totalUsers} users</span>
+                            <td colSpan={5} className="uppercase bg-slate-100 px-4 py-3 cursor-pointer" onClick={() => setCollapsed({ ...collapsed, [i.tag ?? '']: !isCollapsed })}>
+                                <div className="flex flex-row items-center">
+                                    <span className="font-bold w-6 text-center py-0 mr-2 inline-block rounded-full bg-gray-300 text-lg select-none">{isCollapsed ? '+' : '-'}</span>
+                                    <span className="font-bold">{i.tag}</span>
+                                    <span className="text-slate-500 pl-2">({i.protocol} - {i.streamSettings?.network}) ( {from}-{to} / {totalFiltered} users ) - <span className="font-bold">Total = {totalUsers} users</span></span>
+                                    <span className="ml-2 inline-block px-1 bg-slate-600 text-white">Max Client Number : {i.settings?.
+// @ts-ignore
+                                    maxClientNumber}</span>
+                                </div>
                             </td>
                         </tr>
                         {users
                         .map((u, index) => {
+                            if (isCollapsed) return null;
                             return <tr key={u.id} className={classNames("text-[0.78rem]",)}>
                                 <td className={classNames("whitespace-nowrap border-b-2 py-1 px-3 border-l-0", { 'border-l-red-700 text-red-900': !!u.deActiveDate })}>{index + 1}</td>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3">

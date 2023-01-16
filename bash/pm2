@@ -3,9 +3,11 @@ pm2 stop ui
 pm2 stop cron
 pm2 stop cron-usages
 pm2 stop cron-traffic
+pm2 stop update-month-traffic
 
 pm2 start web.js --name=api
-pm2 start cron.js --name=cron
-pm2 start usages.js --name=cron-usages
-pm2 start cron-traffic.js --name=cron-traffic
+pm2 start cron/cron.js --name=cron
+pm2 start cron/usages.js --name=cron-usages --cron="*/5 * * * *"
+pm2 start cron/traffic.js --name=cron-traffic
+pm2 start command/update-month-traffic.js --name=update-month-traffic --cron="*/5 * * * *"
 cd src-ui & pm2 start npm --name=ui -- run start

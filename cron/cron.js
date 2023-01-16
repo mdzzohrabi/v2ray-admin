@@ -1,10 +1,10 @@
 // @ts-check
 const { env } = require("process");
-const { getPaths, parseArgumentsAndOptions, readLogLines, readConfig, findUser, setUserActive, writeConfig, createLogger, restartService, cache, log, readLogFile, DateUtil } = require("./lib/util");
+const { getPaths, parseArgumentsAndOptions, readLogLines, readConfig, findUser, setUserActive, writeConfig, createLogger, restartService, cache, log, readLogFile, DateUtil } = require("../lib/util");
 
 const {
     cliArguments: [],
-    cliOptions: {print = false, delay = 5, reactive = true, range = 10, disableexpired = true, expiredays = 30, help = false}
+    cliOptions: {print = false, delay = 1, reactive = false, range = 1, disableexpired = true, expiredays = 30, help = false}
 } = parseArgumentsAndOptions();
 
 let {showInfo, showError, showWarn} = createLogger();
@@ -15,9 +15,9 @@ async function cronCommand() {
         console.log(`V2Ray Cron help`);
         console.log(`Options :`);
         console.log(` --print               (only print result and dont make any changes, default: false)`);
-        console.log(` --delay               (cron timer delay in minutes, default: 5)`);
-        console.log(` --reactive            (re-active bad-users, default: true)`);
-        console.log(` --range               (minutes ago to look for multiple access for bad users, default: 10)`);
+        console.log(` --delay               (cron timer delay in minutes, default: 1)`);
+        console.log(` --reactive            (re-active bad-users, default: false)`);
+        console.log(` --range               (minutes ago to look for multiple access for bad users, default: 1)`);
         console.log(` --disableexpired      (Disable expired users, default: true)`);
         console.log(` --expiredays          (Expire days, default: 30)`);
         process.exit();
@@ -28,6 +28,8 @@ async function cronCommand() {
     showInfo(`Re-Activate Account: ${reactive ? 'Yes': 'No'}`);
     showInfo(`Disable expired accounts: ${disableexpired ? 'Yes': 'No'}`);
     showInfo(`Default Expire Days: ${expiredays ?? 30}`);
+    showInfo(`Multiple IP Access Time Range (minutes): ${range} mins`);
+    showInfo(`Delay Interval (minutes): ${delay} mins`);
     let fromDate = new Date();
     let rangeMinutes = range;
     fromDate.setMinutes(fromDate.getMinutes() - rangeMinutes);

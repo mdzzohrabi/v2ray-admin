@@ -4,7 +4,7 @@ const express = require('express');
 const { env } = require('process');
 const { Server } = require('socket.io');
 const { createServer } = require('http');
-const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser, restartService, findUser, setUserActive, writeConfig, deleteUser, log, readLines, watchFile, cache, applyChanges, readLogLines, readLogLinesByOffset, DateUtil } = require('./lib/util');
+const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser, restartService, findUser, setUserActive, writeConfig, deleteUser, log, readLines, watchFile, cache, applyChanges, readLogLines, readLogLinesByOffset, DateUtil, db } = require('./lib/util');
 const { getTransactions, addTransaction, saveDb, readDb } = require('./lib/db');
 const { encrypt } = require('crypto-js/aes');
 
@@ -142,6 +142,7 @@ app.post('/max_connections', async (req, res) => {
         let config = readConfig(configPath);
         let user = findUser(config, email, tag);
         if (!user) throw Error('User not found');
+        log(`User ${email} : Change max connection from ${user.maxConnections} to ${value}`);
         user.maxConnections = Number(value);
         await writeConfig(configPath, config);
         res.json({ ok: true });
@@ -159,6 +160,7 @@ app.post('/expire_days', async (req, res) => {
         let config = readConfig(configPath);
         let user = findUser(config, email, tag);
         if (!user) throw Error('User not found');
+        log(`User ${email} : Change expire days from ${user.expireDays} to ${value}`);
         user.expireDays = Number(value);
         await writeConfig(configPath, config);
         res.json({ ok: true });
@@ -177,7 +179,7 @@ app.post('/set_info', async (req, res) => {
         let user = findUser(config, email, tag);
         if (!user) throw Error('User not found');
         if (prop == 'quotaLimit' && value) value = Number(value);
-        log(`Change user "${email}" property "${prop}" from "${user[prop]}" to "${value}"`);
+        log(`User ${email} : Change property "${prop}" from "${user[prop]}" to "${value}"`);
         user[prop] = value;
         await writeConfig(configPath, config);
         res.json({ ok: true });
@@ -196,6 +198,7 @@ app.post('/change_username', async (req, res) => {
         let config = readConfig(configPath);
         let user = findUser(config, email, tag);
         if (!user) throw Error('User not found');
+        log(`Change username from ${user.email} to ${value}`);
         user.email = String(value);
         await writeConfig(configPath, config);
         res.json({ ok: true });
@@ -214,7 +217,7 @@ app.post('/regenerate_id', async (req, res) => {
         let config = readConfig(configPath);
         let user = findUser(config, email, tag);
         if (!user) throw Error('User not found');
-        log(`Generate new id for user ${user.email} (Old ID: ${user.id})`)
+        log(`User ${email} : Generate new id (Old ID: ${user.id})`)
         user.id = randomUUID();
         await writeConfig(configPath, config);
         res.json({ ok: true });
@@ -273,6 +276,8 @@ app.post('/change_user_inbound', async (req, res) => {
         // Remove from source
         sourceInbound.settings?.clients?.splice(sourceUserIndex, 1);
 
+        log(`User ${email} : Change inbound from ${fromTag} to ${toTag}`);
+
         // Save
         await writeConfig(configPath, config);
         res.json({ ok: true });
@@ -315,6 +320,8 @@ app.post('/copy_user', async (req, res) => {
         // Add to target
         targetInbound.settings.clients.push({ ...sourceUser, email: newEmail ?? sourceUser.email });
 
+        log(`User ${email} : Copy to inbound from ${fromTag} to ${toTag} with username ${newEmail ?? email}`);
+
         // Save
         await writeConfig(configPath, config);
         res.json({ ok: true });
@@ -353,6 +360,7 @@ app.post('/inbounds', async (req, res) => {
     for (let inbound of inbounds) {
         let users = (inbound.settings?.clients ?? []).filter(u => private || !u.private);
         let total = users.length;
+        let maxClientNumber = 0;
         for (let user of users) {
             let usage = user.email ? usages[user.email] : {};
             user.firstConnect = user.firstConnect ?? usage?.firstConnect;
@@ -364,6 +372,9 @@ app.post('/inbounds', async (req, res) => {
             user.maxConnections = user.maxConnections || Number(env.V2RAY_MAX_CONNECTIONS) || 3;
             user.billingStartDate = user.billingStartDate ?? user.firstConnect;
             user['expireDate'] = DateUtil.addDays(user.billingStartDate, user.expireDays ?? 30);
+            let clientNumber = Number(user.email?.match(/[0-9]+/));
+            if (clientNumber && clientNumber > maxClientNumber)
+                maxClientNumber = clientNumber;
         }
         
         let filtered = users
@@ -375,6 +386,7 @@ app.post('/inbounds', async (req, res) => {
         if (inbound.settings) {
             inbound.settings.clients = filtered.slice(skip, skip + limit);
             inbound.settings['totalClients'] = total;
+            inbound.settings['maxClientNumber'] = maxClientNumber;
             inbound.settings['totalFiltered'] = filtered.length;
             inbound.settings['from'] = skip;
             inbound.settings['to'] = skip + limit;
@@ -467,13 +479,13 @@ app.post('/edit_transaction', async (req, res) => {
 });
 
 app.get('/traffic', async (req, res) => {
-    res.json(await cache('traffic-usage.json'))
+    res.json(await db('traffic-usages'))
 });
 
 app.get('/daily_usages', async (req, res) => {
     try {
         let email = String(req.query.email);
-        let dailyUsage = await cache('daily-usage') ?? {};
+        let dailyUsage = await db('daily-usages') ?? {};
         let result = Object.keys(dailyUsage).map(k => {
             let user = dailyUsage[k][email] ?? {};
             let outbounds = Object.keys(user).map(tag => ({ tag, ...user[tag] }));

@@ -1,0 +1,19 @@
+if [[ ! -f "db/daily-usages.json" && -f "var/daily-usage" ]]; then
+    print "Move Daiy Usage Db Collection"
+    mv var/daily-usage db/daily-usages.json
+fi
+
+if [[ ! -f "db/db.json" && -f "var/db.json" ]]; then
+    print "Move General/Transactions Db Collection"
+    mv var/db.json db/db.json
+fi
+
+if [[ ! -f "db/traffic-usages.json" && -f "var/traffic-usage.json" ]]; then
+    print "Move Traffic Usage Db Collection"
+    mv var/traffic-usage.json db/traffic-usages.json
+fi
+
+if [[ ! -f "db/user-usages.json" && -f "var/usages" ]]; then
+    print "Move User Usages Db Collection"
+    mv var/usages db/user-usages.json
+fi
