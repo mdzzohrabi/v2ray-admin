@@ -1,14 +1,6 @@
 cd /usr/local/etc/v2ray
-cp /home/v2ray-admin/var/db.json db.json
-cp /home/v2ray-admin/var/daily-usage daily-usage.json
-cp /home/v2ray-admin/var/usages usages.json
-cp /home/v2ray-admin/var/traffic-usage.json traffic-usage.json
-cp /home/v2ray-admin/db/* db/*
+cp /home/v2ray-admin/db/* db
 git add db/*
 git add config.json
-git add db.json
-git add daily-usage.json
-git add traffic-usage.json
-git add usages.json
 git commit -m "update"
 git push origin master
