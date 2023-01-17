@@ -124,7 +124,7 @@ app.post('/active', async (req, res) => {
         if (!email) return res.json({ error: 'Email not entered' });
         let {configPath} = getPaths();
         let config = readConfig(configPath);
-        let user = setUserActive(config, email, active);
+        setUserActive(config, tag, email, active);
         await writeConfig(configPath, config);
         res.json({ ok: true });
         restartService().catch(console.error);
@@ -562,7 +562,7 @@ app.post('/add_days', async (req, res) => {
         
         if (isDeActive && isExpired) {
             // Active user
-            setUserActive(config, email, true);
+            setUserActive(config, tag, email, true);
             needRestart = true;
             user.expireDays = days;
         }

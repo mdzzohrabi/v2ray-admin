@@ -1,6 +1,6 @@
 // @ts-check
 const { env } = require("process");
-const { getPaths, parseArgumentsAndOptions, readLogLines, readConfig, findUser, setUserActive, writeConfig, createLogger, restartService, cache, log, readLogFile, DateUtil } = require("../lib/util");
+const { getPaths, parseArgumentsAndOptions, readLogLines, readConfig, findUser, setUserActive, writeConfig, createLogger, restartService, cache, log, readLogFile, DateUtil, findUsers } = require("../lib/util");
 
 const {
     cliArguments: [],
@@ -38,18 +38,21 @@ async function cronCommand() {
     let config = readConfig(configPath);
 
     /**
-     * @type {{ [user: string]: { [ip: string]: Date } }}
+     * @type {{ [user: string]: { [ip: string]: { order: number, lastAccessDate: Date, accessTimes: number } } }}
      */
     let users = {};
     let lines = readLogLines(accessLogPath, `last-${rangeMinutes}-minutes-bytes`);
     let lastMinutesRecords = await cache(`last-${rangeMinutes}-minutes`) ?? [];
 
+    // Read log lines
     for await (let line of lines) {
         let {dateTime, status} = line;
         if (status != 'accepted') continue;
         if (dateTime < fromDate) continue;
         lastMinutesRecords.push(line);
     }
+
+    // Old log lines from cache that is not in time range
     let removed = [];
     for (let line of lastMinutesRecords) {
         let {clientAddress, user, dateTime} = line;
@@ -57,13 +60,22 @@ async function cronCommand() {
             removed.push(line);
             continue;
         }
+        // Users ip access
         let splits = clientAddress.split(':');
-        let clientIp = splits[splits.length - 2];
-        users[user] = users[user] ?? {};
-        users[user][clientIp] = dateTime;
+        let clientIpAddress = splits[splits.length - 2];
+        let clientIps = users[user] = users[user] ?? {};
+        let ipCounter = Object.values(clientIps).length;
+        let clientIP = clientIps[clientIpAddress] ?? { order: ipCounter, accessTimes: 1 };
+        clientIP.lastAccessDate = dateTime;
+        if (clientIP.order != ipCounter) {
+            clientIP.accessTimes++;
+        }
     }
     
+    // Log lines that is in time-range
     lastMinutesRecords = lastMinutesRecords.filter(x => !removed.includes(x));
+
+    // Cache time-ranged log lines
     await cache(`last-${rangeMinutes}-minutes`, lastMinutesRecords);
 
     /**
@@ -76,24 +88,30 @@ async function cronCommand() {
         let ips = users[userName];
         let user = findUser(config, userName);
         if (!user) continue;
-        let hasMultipleAccess = Object.values(ips).length > (user['maxConnections'] ?? 3);
+
+        // Check if user has multiple device access
+        let hasMultipleAccess = Object.values(ips).filter(x => x.accessTimes > 1).length > (user.maxConnections ?? 3);
+
         result.push({
             user: userName,
             hasMultipleAccess,
             ips: Object.keys(ips),
-            deActive: !user.deActiveDate
+            deActive: !user.deActiveDate    // De-active user only if it's active
         });
     }
 
+    // Configuration
     let configBeforeUpdate = readConfig(configPath);
+    // If true config must be write to disk
     let hasChange = false;
+    // If true server service must be restart
     let isRestartService = false;
 
     // De-active users
     for (let user of result) {
         if (user.hasMultipleAccess && user.deActive) {
             showInfo(`De-active user ${user.user} due to multiple ip access (${user.ips.length} ips)`);
-            setUserActive(configBeforeUpdate, user.user, false, `Used by ${user.ips.length} ips in ${range} mins ago (${user.ips.join(', ')})`, env.BAD_USER_TAG ?? 'baduser');
+            setUserActive(configBeforeUpdate, /** All inbounds */ null, user.user, false, `Used by ${user.ips.length} ips in ${range} mins ago (${user.ips.join(', ')})`, env.BAD_USER_TAG ?? 'baduser');
             hasChange = true;
             isRestartService = true;
         }
@@ -104,17 +122,15 @@ async function cronCommand() {
         let usersToActive = [];
         for (let inbound of configBeforeUpdate?.inbounds ?? []) {
             for (let user of inbound?.settings?.clients ?? []) {
-                if (!!user.deActiveDate && user.deActiveReason?.includes('Used by ') && !result.find(x => x.hasMultipleAccess && x.user == user.email)) {
-                    showInfo(`Re-active user ${user.email} due to normal usage`);
+                if (user.email && !!user.deActiveDate && user.deActiveReason?.includes('Used by ') && !result.find(x => x.hasMultipleAccess && x.user == user.email)) {
+                    showInfo(`Re-active user "${user.email}" due to normal usage in inbound "${inbound.tag}"`);
                     usersToActive.push(user.email);
                     hasChange = true;
                     isRestartService = true;
+                    setUserActive(configBeforeUpdate, inbound.tag ?? null, user.email, true, undefined, env.BAD_USER_TAG ?? 'baduser');
                 }
             }
         }
-
-        for (let user of usersToActive)
-            setUserActive(configBeforeUpdate, user ?? '', true, undefined, env.BAD_USER_TAG ?? 'baduser');
     }
 
     // Print Users with multiple access
@@ -126,45 +142,47 @@ async function cronCommand() {
     // Disable Expired Users
     if (disableexpired) {
         let usages = await readLogFile(accessLogPath);
-        let users = configBeforeUpdate?.inbounds?.flatMap(x => x.settings?.clients) ?? [];
-        for (let user of users) {
-            let expireDays = user?.expireDays ?? defaultExpireDays;
-            let usage = usages[user?.email ?? ''];
-            let strBillingStartDate = user?.billingStartDate ?? user?.firstConnect ?? usage?.firstConnect ?? user?.createDate;
-            // Ignore user without any date
-            if (!strBillingStartDate) continue;
-            let billingStartDate = new Date(strBillingStartDate);
-            let expireDate = DateUtil.addDays(billingStartDate, expireDays);
+        for (let inbound of configBeforeUpdate?.inbounds ?? []) {
+            let users = inbound.settings?.clients ?? [];
+            for (let user of users) {
+                let expireDays = user?.expireDays ?? defaultExpireDays;
+                let usage = usages[user?.email ?? ''];
+                let strBillingStartDate = user?.billingStartDate ?? user?.firstConnect ?? usage?.firstConnect ?? user?.createDate;
+                // Ignore user without any date
+                if (!strBillingStartDate) continue;
+                let billingStartDate = new Date(strBillingStartDate);
+                let expireDate = DateUtil.addDays(billingStartDate, expireDays);
 
-            if (user?.deActiveReason?.includes('Expired') == true || !billingStartDate || !user?.email)
-                continue;
-            
-            // Set user first connect
-            if (!user.firstConnect && usage?.firstConnect) {
-                user.firstConnect = String(usage.firstConnect) ?? user.firstConnect;
-                hasChange = true;
-            }
+                if (user?.deActiveReason?.includes('Expired') == true || !billingStartDate || !user?.email)
+                    continue;
+                
+                // Set user first connect
+                if (!user.firstConnect && usage?.firstConnect) {
+                    user.firstConnect = String(usage.firstConnect) ?? user.firstConnect;
+                    hasChange = true;
+                }
 
-            // Set billing start date
-            if (!user.billingStartDate && billingStartDate) {
-                user.billingStartDate = billingStartDate?.toString();
-                hasChange = true;
-            }
+                // Set billing start date
+                if (!user.billingStartDate && billingStartDate) {
+                    user.billingStartDate = billingStartDate?.toString();
+                    hasChange = true;
+                }
 
-            // User expired
-            if (expireDate && expireDate?.getTime() < Date.now()) {
-                hasChange = true;
-                isRestartService = true;
-                user.expiredDate = String(new Date());
-                setUserActive(configBeforeUpdate, user?.email, false, `Expired after ${expireDays} days`, env.EXPIRED_USER_TAG ?? 'baduser');
-                showInfo(`De-active user "${user?.email}" due to expiration at ${expireDate} after ${expireDays} days from ${billingStartDate}`);
-            }
-            // Quota limit
-            else if (user.quotaLimit && usage?.quotaUsage && usage?.quotaUsage > user.quotaLimit) {
-                hasChange = true;
-                isRestartService = true;
-                setUserActive(configBeforeUpdate, user?.email, false, `Bandwith used`, env.QUOTA_USER_TAG ?? 'baduser');
-                showInfo(`De-active user "${user?.email}" due to bandwidth usage`);
+                // User expired
+                if (expireDate && expireDate?.getTime() < Date.now()) {
+                    hasChange = true;
+                    isRestartService = true;
+                    user.expiredDate = String(new Date());
+                    setUserActive(configBeforeUpdate, inbound.tag ?? null, user?.email, false, `Expired after "${expireDays}" days`, env.EXPIRED_USER_TAG ?? 'baduser');
+                    showInfo(`De-active user "${user?.email}" due to expiration at "${expireDate}" after "${expireDays}" days from "${billingStartDate}"`);
+                }
+                // Quota limit
+                else if (user.quotaLimit && usage?.quotaUsage && usage?.quotaUsage > user.quotaLimit) {
+                    hasChange = true;
+                    isRestartService = true;
+                    setUserActive(configBeforeUpdate, inbound.tag ?? null, user?.email, false, `Bandwith used`, env.QUOTA_USER_TAG ?? 'baduser');
+                    showInfo(`De-active user "${user?.email}" due to bandwidth usage`);
+                }
             }
         }
     }
