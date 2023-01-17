@@ -1,5 +1,5 @@
 // @ts-check
-const { parseArgumentsAndOptions, createLogger, cache, DateUtil } = require("../lib/util");
+const { parseArgumentsAndOptions, createLogger, cache, DateUtil, db } = require("../lib/util");
 
 const {
     cliArguments: [],
@@ -16,12 +16,12 @@ async function updateUsersMonthTrafficCommand() {
     /**
      * @type {TrafficUsages}
      */
-    let trafficUsages = await cache('traffic-usage.json') ?? {};
+    let trafficUsages = await db('traffic-usages') ?? {};
 
     /**
      * @type {UserUsages}
      */
-    let userUsage = await cache('usages') ?? {};
+    let userUsage = await db('user-usages') ?? {};
 
     /** @type {string[]} */
     let reseted = [];
@@ -49,7 +49,7 @@ async function updateUsersMonthTrafficCommand() {
     }
 
     // Save usages
-    await cache('usages', userUsage);
+    await db('user-usages', userUsage);
 
     showInfo('Complete.');
 }
