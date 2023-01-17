@@ -95,7 +95,7 @@ async function cronCommand() {
         result.push({
             user: userName,
             hasMultipleAccess,
-            ips: Object.keys(ips),
+            ips: Object.keys(ips).filter(ip => ips[ip].accessTimes > 1),
             deActive: !user.deActiveDate    // De-active user only if it's active
         });
     }
