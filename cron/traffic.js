@@ -1,6 +1,6 @@
 // @ts-check
 const { execSync } = require("child_process");
-const { getPaths, parseArgumentsAndOptions, readConfig, createLogger, cache, db } = require("../lib/util");
+const { getPaths, parseArgumentsAndOptions, readConfig, createLogger, cache, db, log } = require("../lib/util");
 
 const {
     cliArguments: [],
@@ -93,6 +93,7 @@ async function cronTrafficCommand() {
         await db('user-usages', userUsage);
 
     } catch (err) {
+        log(`Error during traffic update : ${err.message}`);
         showError(err);
     }
 
