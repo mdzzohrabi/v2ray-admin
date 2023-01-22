@@ -117,7 +117,7 @@ export function Field({ label, children, className = '', horizontal = undefined,
 	})
 
 	return <div className={classNames("flex px-1", { 'flex-col': !horizontal, 'flex-row self-center': horizontal }, className)}>
-		<label htmlFor={htmlFor} className={classNames(styles.label, { 'pr-3': horizontal }, 'whitespace-nowrap')}>{label}</label>
+		{label ? <label htmlFor={htmlFor} className={classNames(styles.label, { 'pr-3': horizontal }, 'whitespace-nowrap')}>{label}</label> : null}
 		{childs}
 	</div>;
 }

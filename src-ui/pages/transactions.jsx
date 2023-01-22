@@ -9,6 +9,7 @@ import useSWR from 'swr';
 import { AppContext } from "../components/app-context";
 import { Container } from "../components/container";
 import { DateView } from "../components/date-view";
+import { Dialog, useDialog } from "../components/dialog";
 import { Editable } from "../components/editable";
 import { Field, FieldsGroup } from "../components/fields";
 import { PopupMenu } from "../components/popup-menu";
@@ -16,15 +17,54 @@ import { Price } from "../components/price";
 import { Table } from "../components/table";
 import { usePrompt, useStoredState } from "../lib/hooks";
 import { styles } from "../lib/styles";
-import { arrSort, serverRequest } from "../lib/util";
+import { arrSort, queryString, serverRequest } from "../lib/util";
+
+/**
+ * 
+ * @param {{
+ *      dismiss?: Function,
+ *      onSubmit?: (transaction: Partial<Transaction) => any,
+ *      users?: string[]
+ * }} param0 
+ * @returns 
+ */
+export function AddTransactionDialog({ onSubmit, users, dismiss }) {
+
+    let [newTransaction, setNewTransaction] = useState({});
+    let addTransaction = useCallback((e) => {
+        e?.preventDefault();
+        onSubmit?.call(this, newTransaction);
+        if (dismiss) dismiss();
+    }, [newTransaction, setNewTransaction])
+
+    return <Dialog onClose={dismiss} title={'New Transaction'} onSubmit={addTransaction}>
+        <FieldsGroup layoutVertical className="mt-2 pb-3" data={newTransaction} dataSetter={setNewTransaction}>
+            <Field label={"User"} htmlFor="user">
+                <select className={styles.input} id="user">
+                    <option value="">-</option>
+                    {(users ?? []).map((client, index) => <option key={index} value={client}>{client}</option>)}
+                </select>
+            </Field>
+            <Field label={"Description"} htmlFor="remark">
+                <input className={styles.input} id="remark" dir="rtl"/>
+            </Field>
+            <Field label={"Amount"} htmlFor="amount">
+                <input className={styles.input} id="amount" type={"text"}/>
+            </Field>
+            <Field className="pr-4 pt-4" horizontal={false}>
+                <button type={"submit"} className={styles.button}>Add Transaction</button>
+            </Field>
+        </FieldsGroup>
+    </Dialog>
+}
 
 export default function TransactionsPage() {
 
     let context = useContext(AppContext);
     let router = useRouter();
     let showAll = router.query.all == '1';
-    /** @type {[Partial<Transaction>, React.Dispatch<React.SetStateAction<Partial<Transaction>>>]} */
-    let [newTransaction, setNewTransaction] = useState({});
+    // /** @type {[Partial<Transaction>, React.Dispatch<React.SetStateAction<Partial<Transaction>>>]} */
+    // let [newTransaction, setNewTransaction] = useState({});
     let [view, setView] = useStoredState('transactions-view', {
         fullTime: true,
         user: router.query.user,
@@ -33,21 +73,27 @@ export default function TransactionsPage() {
         group: true
     });
     
+    let [expanded, setExpanded] = useStoredState('expanded-transactions', {
+
+    });
+
     const prompt = usePrompt();
 
     /**
      * @type {import("swr").SWRResponse<Transaction[]>}
      */
-    let {data: transactions, mutate: refreshList} = useSWR('/transactions?key=' + btoa(context.server.url), serverRequest.bind(this, context.server));
+    let {data: transactions, mutate: refreshList, isValidating: isLoading} = useSWR('/transactions?key=' + btoa(context.server.url), serverRequest.bind(this, context.server));
 
     /**
      * @type {import("swr").SWRResponse<string[]>}
      */
-     let {data: users, mutate: refreshUsers} = useSWR('/inbounds_clients?key=' + btoa(context.server.url), serverRequest.bind(this, context.server));
+     let {data: users, mutate: refreshUsers} = useSWR('/inbounds_clients' + queryString({
+        key: btoa(context.server.url),
+        showAll
+     }), serverRequest.bind(this, context.server));
 
-    const addTransaction = useCallback(async (e) => {
+    const addTransaction = useCallback(async (newTransaction) => {
         try {
-            e?.preventDefault();
             let result = serverRequest(context.server, `/transactions`, {
                 ...newTransaction
             });
@@ -58,7 +104,7 @@ export default function TransactionsPage() {
         catch (err) {
             toast.error(err.message);
         }
-    }, [newTransaction]);
+    }, [refreshList, context?.server]);
 
     const removeTransaction = useCallback(async (/** @type {Transaction} */ t) => {
         await serverRequest(context.server, `/remove_transaction`, { id: t.id })
@@ -74,6 +120,8 @@ export default function TransactionsPage() {
             .catch(err => toast.error(err));
     }, []);
 
+    const transactionDialog = useDialog((users, onSubmit, dismiss) => <AddTransactionDialog users={users} onSubmit={onSubmit} dismiss={dismiss}/>);
+
     let remain = 0;
     transactions = transactions
         ?.map(t => {
@@ -87,7 +135,7 @@ export default function TransactionsPage() {
         <Head>
             <title>Transactions</title>
         </Head>
-        {showAll ?
+        {/* {showAll ?
         <form onSubmit={addTransaction}>
             <FieldsGroup title="Add Transaction" className="mt-2 border-b-[1px] pb-3" horizontal={false} data={newTransaction} dataSetter={setNewTransaction}>
                 <Field label={"User"} htmlFor="user">
@@ -106,8 +154,8 @@ export default function TransactionsPage() {
                     <button type={"submit"} className={styles.button}>Add Transaction</button>
                 </Field>
             </FieldsGroup>
-        </form> : null }
-        <div className="flex flex-col lg:flex-row">
+        </form> : null } */}
+        <div className="flex flex-col lg:flex-col">
             <FieldsGroup title="Billing" horizontal className="border-b-[1px] lg:border-b-0">
                 <Field label="UnPaid" className="rounded-lg bg-red-100 px-4 items-center align-middle whitespace-nowrap">
                     <Price value={transactions?.filter(x => (Number(x.amount) ?? 0) > 0).reduce((result, t) => result + (Number(t.amount) || 0), 0) ?? 0}/>
@@ -120,17 +168,20 @@ export default function TransactionsPage() {
                 <Field label="Remain" className="rounded-lg bg-slate-100 px-4 items-center align-middle whitespace-nowrap">
                     <Price value={transactions?.reduce((result, t) => result + (Number(t.amount) || 0), 0) ?? 0}/>
                 </Field>
+                {showAll ? <button className={styles.button} onClick={() => transactionDialog.show(users, addTransaction)}>Add Transaction</button> : null}
+                <button className={styles.button} onClick={() => refreshList()}>Refresh</button>
             </FieldsGroup>
             <FieldsGroup className="my-2" data={view} dataSetter={setView} title="View" horizontal>
                 <Field htmlFor="fullTime" label="Full Time">
                     <input type={"checkbox"} id="fullTime"/>
                 </Field>
-                <Field htmlFor="group" label="Group">
+                <Field htmlFor="group" label="Group" className="px-[.75rem] mx-2 border-x-2">
                     <input type={"checkbox"} id="group"/>
                 </Field>
                 <Field htmlFor="sortColumn" label="Sort">
                     <select className={styles.input} id="sortColumn">
                         <option value="">-</option>
+                        <option value="id">ID</option>
                         <option value="user">User</option>
                         <option value="remark">Remark</option>
                         <option value="amount">Amount</option>
@@ -151,16 +202,19 @@ export default function TransactionsPage() {
                 </Field>
             </FieldsGroup>
         </div>
+        {isLoading ? <div className="fixed bg-slate-900 text-white z-50 rounded-lg px-3 py-1 bottom-3 left-3">
+            Loading ...
+        </div> : null }
         <Table
+            className="border-separate border-spacing-0"
             rows={transactions ?? []}
             columns={[ 'ID', 'User', 'Remark', 'Debt', 'Paid', 'Remain', 'Dates', 'Actions' ]}
             groupBy={t => !view.group ? null : t.createDate ? new Intl.DateTimeFormat('fa-IR', { month: 'long', year: 'numeric' }).format(new Date(t.createDate)) : null}
-            group={monthName => <tr className="bg-slate-50 border-t-2 border-t-gray-400">
-                <td className="py-2 px-6 text-md font-bold" colSpan={7}></td>
-                <td className="py-2 px-6 text-lg font-bold text-center" colSpan={1}>
+            group={monthName => <tr>
+                <td onClick={() => setExpanded({ ...expanded, [monthName]: !expanded[monthName] })} className="cursor-pointer py-2 px-6 text-lg font-bold sticky z-10 bg-zinc-50 top-[1.8rem] xl:top-[4.8rem] border-b-2 border-t-2 border-t-gray-400" colSpan={9}>
+                    <span className="font-bold w-7 text-center py-0 mr-4 inline-block rounded-full bg-gray-200 text-lg select-none text-gray-500">{expanded[monthName] ? '-' : '+'}</span>
                     {monthName}
                 </td>
-                <td className="py-2 px-6 text-lg font-bold text-center"></td>
             </tr>}
             groupFooter={(group, items) => 
                 <tr className="bg-slate-50">
@@ -174,6 +228,7 @@ export default function TransactionsPage() {
                     <td className="py-2 px-6 text-md font-bold" colSpan={3}></td>
                 </tr>
             }
+            rowContainer={(row, elRow, group) => !view.group || expanded[group] ? elRow :  null}
             cells={t => [
                 // ID
                 t.id,

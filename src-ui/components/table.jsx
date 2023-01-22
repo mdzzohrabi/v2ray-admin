@@ -12,12 +12,13 @@ import { styles } from "../lib/styles";
  *      rows: T[],
  *      cells?: (row: T) => any[],
  *      loading?: boolean,
- *      rowContainer?: (row: T, children: any) => any
+ *      rowContainer?: (row: T, children: any, group: G) => any
  *      index?: (row: T, index: number) => any
  *      groupBy?: (row: T, index: number) => G
  *      group?: (group: G) => any
  *      groupFooter?: (group: G, items: T[]) => any
  *      footer?: (items: T[]) => any
+ *      className?: string
  * }} TableProps
  */
 
@@ -28,12 +29,12 @@ import { styles } from "../lib/styles";
  * @template G
  * @param {TableProps<T, G>} param0 
  */
-export function Table({ columns, rows, cells, loading, rowContainer, index: indexGetter, groupBy, group, groupFooter, footer }) {
+export function Table({ columns, rows, cells, loading, rowContainer, index: indexGetter, groupBy, group, groupFooter, footer, className }) {
 
     let prevGroup = null;
     let groupItems = [];
 
-    return <table className="w-full text-xs">
+    return <table className={classNames("w-full text-xs", className)}>
         <thead className="sticky top-0 xl:top-12 bg-white shadow-md z-40">
             <tr className="bg-white">
                 <th className={classNames(styles.tableHead)}>#</th>
@@ -52,8 +53,9 @@ export function Table({ columns, rows, cells, loading, rowContainer, index: inde
             {rows?.map((row, index) => {
                 let elGroupFooter = null;
                 let elGroup = null;
+                let rowGroup;
                 if (groupBy && group) {
-                    let rowGroup = groupBy(row, index);
+                    rowGroup = groupBy(row, index);
                     if (rowGroup) {
                         // New Group
                         if (rowGroup != prevGroup) {
@@ -79,7 +81,7 @@ export function Table({ columns, rows, cells, loading, rowContainer, index: inde
                 return <Fragment key={index}>
                     {elGroupFooter}
                     {elGroup}
-                    {rowContainer ? rowContainer(row, elRow) : elRow}
+                    {rowContainer ? rowContainer(row, elRow, rowGroup) : elRow}
                     {/* End of table */}
                     {!!groupFooter && !!prevGroup && rows.length == index + 1 ? groupFooter(prevGroup, groupItems) : null}
                 </Fragment>;

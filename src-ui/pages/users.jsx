@@ -316,7 +316,7 @@ export default function UsersPage() {
                 <button className={styles.button} onClick={exportExcel}>Export Excel</button>
             </div>
         </FieldsGroup>
-        {isLoading ? <div className="absolute bg-slate-900 text-white rounded-lg px-3 py-1 bottom-3 left-3">
+        {isLoading ? <div className="fixed z-50 bg-slate-900 text-white rounded-lg px-3 py-1 bottom-3 left-3">
             Loading ...
         </div> : null }
         <div className="">

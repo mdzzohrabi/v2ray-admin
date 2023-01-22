@@ -398,11 +398,12 @@ app.post('/inbounds', async (req, res) => {
 
 app.get('/inbounds_clients', async (req, res) => {
     let {configPath} = getPaths();
+    let {showAll} = req.query;
     let config = readConfig(configPath);
     if (Array.isArray(config.inbounds) == false)
         return res.status(500).end('No inbounds defined in configuration');
     let inbounds = config.inbounds ?? [];
-    let clients = inbounds.flatMap(x => x.settings?.clients ?? [])?.map(x => x.email);
+    let clients = inbounds.flatMap(x => x.settings?.clients ?? [])?.filter(x => showAll == 'true' || !x.private).map(x => x.email);
     res.json(encryptData(clients));
 });
 
