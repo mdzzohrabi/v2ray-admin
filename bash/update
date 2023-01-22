@@ -5,5 +5,4 @@ npm i
 cd src-ui
 npm i
 npm run build
-sh migrate
 pm2 start all
