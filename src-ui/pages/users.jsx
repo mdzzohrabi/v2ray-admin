@@ -321,7 +321,7 @@ export default function UsersPage() {
         </div> : null }
         <div className="">
         <table className="w-full">
-            <thead className="sticky top-0 xl:top-12 bg-white shadow-md z-40">
+            <thead className="sticky top-0 xl:top-0 bg-white shadow-md z-40">
                 <tr className="bg-white">
                     <th className={classNames(headClass)}>#</th>
                     <th onClick={() => setView({ ...view, sortColumn:'email', sortAsc: !view.sortAsc })} className={classNames(headClass, 'cursor-pointer', {'bg-slate-200': view.sortColumn == 'email'})}>User / FullName</th>

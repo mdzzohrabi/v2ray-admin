@@ -35,7 +35,7 @@ export function Table({ columns, rows, cells, loading, rowContainer, index: inde
     let groupItems = [];
 
     return <table className={classNames("w-full text-xs", className)}>
-        <thead className="sticky top-0 xl:top-12 bg-white shadow-md z-40">
+        <thead className="sticky top-0 xl:top-0 bg-white shadow-md z-40">
             <tr className="bg-white">
                 <th className={classNames(styles.tableHead)}>#</th>
                 {columns?.map(column => <th key={column} className={classNames(styles.tableHead)}>{column}</th>)}
