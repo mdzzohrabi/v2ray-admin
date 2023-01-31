@@ -2,7 +2,7 @@ import { Context, createContext, Dispatch, SetStateAction, useEffect, useState }
 import { store, stored } from "../lib/util";
 
 /**
- * @typedef {{ url: string, token: string }} ServerContext
+ * @typedef {{ url: string, token: string, name?: string }} ServerContext
  * 
  * @typedef {{ server: ServerContext, setServer: Dispatch<SetStateAction<ServerContext>> }} AppContext
  */

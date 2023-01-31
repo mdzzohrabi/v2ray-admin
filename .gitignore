@@ -2,7 +2,7 @@ node_modules
 /fixture
 .env
 *.log
-/var
+/var/*
 *.sh
 config.bridge.json
 /db/*
