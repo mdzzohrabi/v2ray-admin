@@ -1,25 +1,16 @@
 // @ts-check
 const { execSync } = require("child_process");
-const { getPaths, parseArgumentsAndOptions, readConfig, createLogger, cache, db, log } = require("../lib/util");
+const { getPaths, createLogger, db, log } = require("../lib/util");
 
-const {
-    cliArguments: [],
-    cliOptions: {print = false, delay = 1, help = false}
-} = parseArgumentsAndOptions();
+/**
+ * Cron Traffic Usage
+ * @param {import("./cron").CronContext} cron Cron context
+*/
+async function cronTrafficUsage(cron) {
+    
+    let {showInfo, showError} = createLogger();
 
-let {showInfo, showError, showWarn} = createLogger();
-
-async function cronTrafficCommand() {
-
-    if (help) {
-        console.log(`V2Ray Cron Traffic help`);
-        console.log(`Options :`);
-        console.log(` --print               (only print result and dont make any changes, default: false)`);
-        console.log(` --delay               (cron timer delay in minutes, default: 1)`);
-        process.exit();
-    }
-
-    showInfo(`Start V2Rary Cron Traffic`);
+    showInfo(`Start Traffic Usage Cron`);
     
     let {v2ray} = getPaths();
 
@@ -53,8 +44,8 @@ async function cronTrafficCommand() {
             stats.stat = [];
         }
 
-        if (print)
-            console.log(stats);
+        // if (print)
+        //     console.log(stats);
 
         // Stat items
         for (let item of stats.stat) {
@@ -96,19 +87,6 @@ async function cronTrafficCommand() {
         log(`Error during traffic update : ${err.message}`);
         showError(err);
     }
-
-    showInfo('Complete.');
-
 }
 
-async function runCron() {
-    showInfo(`Run traffic cron ${new Date().toLocaleString()}`);
-    try {
-        await cronTrafficCommand();
-    } finally {
-        if (delay > 0)
-            setTimeout(runCron, delay * 60 * 1000);
-    }
-}
-
-runCron();
+module.exports = { cronTrafficUsage };

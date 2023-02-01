@@ -12,7 +12,7 @@ import { styles } from "../lib/styles";
  *      rows: T[],
  *      cells?: (row: T) => any[],
  *      loading?: boolean,
- *      rowContainer?: (row: T, children: any, group: G) => any
+ *      rowContainer?: (row: T, children: any, group?: G) => any
  *      index?: (row: T, index: number) => any
  *      groupBy?: (row: T, index: number) => G
  *      group?: (group: G) => any

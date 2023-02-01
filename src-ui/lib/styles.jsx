@@ -1,7 +1,7 @@
 
 export const className = {
     tableHead: 'px-3 py-2 border-b-2 text-left border-b-blue-900 rounded-tl-lg rounded-tr-lg',
-    td: "whitespace-nowrap border-b-2 py-1 px-3",
+    td: "whitespace-nowrap border-b-[1px] py-1 px-3",
     button: "border-2 border-slate-200 whitespace-nowrap rounded-3xl px-5 py-1 ml-2 duration-100 hover:border-blue-400 hover:text-blue-400 disabled:text-gray-400 disabled:border-slate-100",
     buttonPrimary: "border-2 border-green-600 text-green-600 whitespace-nowrap rounded-3xl px-5 py-1 ml-2 duration-100 hover:border-green-900 hover:text-green-900",
     addButtonSmall: "whitespace-nowrap text-xs rounded-3xl px-3 py-1 duration-150 hover:ring-2 ring-green-200 bg-slate-200 hover:bg-green-700 hover:text-white",

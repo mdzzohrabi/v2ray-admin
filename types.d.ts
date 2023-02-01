@@ -8,6 +8,12 @@ interface V2RayConfig {
     outbounds?: V2RayConfigOutbound[]
     policy?: V2RayConfigPolicy
     stats?: {}
+    nodes?: V2RayNode[]
+}
+
+interface V2RayNode {
+    apiKey?: string
+    name?: string
 }
 
 interface V2RayConfigPolicy {
