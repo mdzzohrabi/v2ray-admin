@@ -66,6 +66,13 @@ interface V2RayConfigInboundStreamSettings {
     network?: string
     security?: string
     tcpSettings?: any
+    tlsSettings?: {
+        alpn?: string[]
+        certificates?: {
+            certificateFile?: string
+            keyFile?: string
+        }[]
+    }
 }
 
 interface V2RayConfigInbound {

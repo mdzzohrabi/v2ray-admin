@@ -124,6 +124,14 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }) {
                     <input type={"number"} id="port" className={styles.input}/>
                 </Field>
             </div>
+            {/* {inbound?.protocol == 'vmess' || inbound?.protocol == 'vless' ?
+            <div className="flex flex-row pt-2">
+                <FieldObject path={"settings"}>
+                    <Field label="Decryption" htmlFor="decryption" className="flex-1">
+                        <input type="text" id="decryption" className={styles.input} placeholder={"none"}/>
+                    </Field>
+                </FieldObject>
+            </div> : null } */}
             <div className="flex flex-col">
                 <FieldObject path={"streamSettings"}>
                 <h3 className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 font-smibold">Stream settings</h3>
@@ -191,6 +199,69 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }) {
                                 </FieldObject>
                             </FieldObject>
                         </FieldObject>
+                    </div> : null}
+                    {inbound?.streamSettings?.security=='tls'? <div className="flex flex-col flex-1">
+                        <Collection data={inbound?.streamSettings?.tlsSettings?.certificates ?? []} dataSetter={certificates => setInbound({
+                            ...inbound,
+                            streamSettings: {
+                                ...(inbound.streamSettings ?? {}),
+                                tlsSettings: {
+                                    ...(inbound.streamSettings?.tlsSettings ?? {}),
+                                    certificates
+                                }
+                            }
+                        })}>
+                        {certificates => <>
+                            <div className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 flex flex-row">
+                                <h3 className="font-semibold flex-1">TLS Settings</h3>
+                                <button type={"button"} onClick={() => certificates.addItem(null, {})} className={styles.addButtonSmall}>+ Add Certificate</button>
+                            </div>
+                            <Table
+                            rows={certificates.items ?? []}
+                            columns={[ 'Certificate file', 'Key file', 'Action' ]}
+                            cells={row => [
+                                // Certificate
+                                <Field htmlFor="certificateFile"><input type="text" id="certificateFile" className={styles.input} placeholder={"/path/to/certificate.crt"}/></Field>,
+                                // Key
+                                <Field htmlFor="keyFile"><input type="text" id="keyFile" className={styles.input} placeholder={"/path/to/key.key"}/></Field>,
+                                // Actions
+                                <PopupMenu>
+                                    <PopupMenu.Item action={() => certificates.deleteItem(row)} >Delete</PopupMenu.Item>
+                                </PopupMenu>
+                            ]}
+                            rowContainer={(row, children) => <FieldsGroup data={row} dataSetter={certificate => certificates.updateItem(row, certificate)}>{children}</FieldsGroup>}
+                        />       
+                        </>}
+                        </Collection>
+                        <Collection data={inbound?.streamSettings?.tlsSettings?.alpn ?? []} dataSetter={alpn => setInbound({
+                            ...inbound,
+                            streamSettings: {
+                                ...(inbound.streamSettings ?? {}),
+                                tlsSettings: {
+                                    ...(inbound.streamSettings?.tlsSettings ?? {}),
+                                    alpn
+                                }
+                            }
+                        })}>
+                        {alpns => <>
+                            <div className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 flex flex-row">
+                                <h3 className="font-semibold flex-1">TLS Alpn Settings</h3>
+                                <button type={"button"} onClick={() => alpns.addItem(null, '')} className={styles.addButtonSmall}>+ Add ALPN</button>
+                            </div>
+                            <Table
+                            rows={alpns.items ?? []}
+                            columns={[ 'ALPN', 'Action' ]}
+                            cells={(alpn, index) => [
+                                // Certificate
+                                <Field data={alpn} dataSetter={newAlpn => alpns.updateItem(alpn, newAlpn)}><input type="text" className={styles.input} placeholder={"http/1.1"}/></Field>,
+                                // Actions
+                                <PopupMenu>
+                                    <PopupMenu.Item action={() => alpns.deleteItem(alpn)} >Delete</PopupMenu.Item>
+                                </PopupMenu>
+                            ]}
+                        />       
+                        </>}
+                        </Collection>
                     </div> : null}
                     </FieldObject>
             </div>

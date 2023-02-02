@@ -133,6 +133,7 @@ export function Field({ label, children, className = '', horizontal = undefined,
  * 			addItem: (_: any, item: T) => any,
  * 			deleteItem: (deletedItem: T) => any,
  * 			updateItem: (item: T, edited: T) => any
+ * 			dataSetter?: (value: T[]) => any
  * 		}) => any
  * }} param0
  */
@@ -141,7 +142,7 @@ export function Collection({ data, dataSetter, children }) {
 	let deleteItem = useArrayDelete(data, dataSetter);
 	let updateItem = useArrayUpdate(data, dataSetter);
 
-	return children({ items: data, addItem, deleteItem, updateItem });
+	return children({ items: data, addItem, deleteItem, updateItem, dataSetter });
 }
 
 
