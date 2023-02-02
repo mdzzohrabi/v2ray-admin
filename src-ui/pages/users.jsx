@@ -65,7 +65,7 @@ export default function UsersPage() {
         }
     }, serverRequest.bind(this, context.server));
 
-    let inbounds = useMemo(() => inboundsResponse?.filter(x => x.protocol == 'vmess') ?? [], [inboundsResponse]);
+    let inbounds = useMemo(() => inboundsResponse?.filter(x => x.protocol == 'vmess' || x.protocol == 'vless') ?? [], [inboundsResponse]);
 
     const showQRCode = useCallback(async (tag, user) => {
         let config = await serverRequest(context.server, '/client_config?tag=' + tag, user).then(data => data.config)

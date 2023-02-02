@@ -10,9 +10,9 @@ import { styles } from "../lib/styles";
  * @typedef {{
  *      columns?: string[],
  *      rows: T[],
- *      cells?: (row: T) => any[],
+ *      cells?: (row: T, index: number) => any[],
  *      loading?: boolean,
- *      rowContainer?: (row: T, children: any, group: G) => any
+ *      rowContainer?: (row: T, children: any, group?: G) => any
  *      index?: (row: T, index: number) => any
  *      groupBy?: (row: T, index: number) => G
  *      group?: (group: G) => any
@@ -75,7 +75,7 @@ export function Table({ columns, rows, cells, loading, rowContainer, index: inde
 
                 let elRow = <tr className="bg-white odd:bg-slate-50" key={index}>
                     <td className={classNames(styles.td)}>{indexGetter ? indexGetter(row, index) : index}</td>
-                    {cells?.call(this, row)?.map((cell, index) => <td key={index} className={classNames(styles.td)}>{cell}</td>)}
+                    {cells?.call(this, row, index)?.map((cell, index) => <td key={index} className={classNames(styles.td)}>{cell}</td>)}
                 </tr>;
 
                 return <Fragment key={index}>
