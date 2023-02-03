@@ -13,7 +13,7 @@ const encryptData = (data) => {
     return { encoded: encrypt(JSON.stringify(data), 'masoud').toString() }
 }
 
-let {showInfo} = createLogger();
+let {showInfo, showError} = createLogger();
 let app = express();
 let server = createServer(app);
 let socket = new Server(server, {
@@ -587,6 +587,89 @@ app.post('/add_days', async (req, res) => {
     } catch (err) {
         res.json({ error: err.message });
         console.error(err);
+    }
+});
+
+app.get('/nodes', async (req, res) => {
+    try {
+        /** @type {ServerNode[]} */
+        let nodes = await db('server-nodes') ?? [];
+
+        res.json(nodes);
+    }
+    catch (err) {
+        res.json({ error: err.message });
+        showError(err);
+    }
+});
+
+app.post('/nodes', async (req, res) => {
+    try {
+        let { name } = req.body;
+        /** @type {ServerNode[]} */
+        let nodes = await db('server-nodes') ?? [];
+
+        if (nodes.find(x => x.name == name)) {
+            res.json({ ok: false, error: 'This Node already exists' });
+            return;
+        }
+
+        nodes.push({
+            id: randomUUID(),
+            name,
+            apiKey: randomUUID()
+        });
+
+        await db('server-nodes', nodes);
+
+        res.json(nodes);
+    }
+    catch (err) {
+        res.json({ error: err.message });
+        showError(err);
+    }
+});
+
+app.put('/nodes', async (req, res) => {
+    try {
+        let { id, name } = req.body;
+        /** @type {ServerNode[]} */
+        let nodes = await db('server-nodes') ?? [];
+
+        let node = nodes.find(x => x.id == id);
+
+        if (!node) {
+            res.json({ ok: false, error: 'Node not found' });
+            return;
+        }
+
+        node.name = name;
+
+        await db('server-nodes', nodes);
+
+        res.json({ ok: true, message: 'Node changed successful' });
+    }
+    catch (err) {
+        res.json({ error: err.message });
+        showError(err);
+    }
+});
+
+app.delete('/nodes', async (req, res) => {
+    try {
+        let { id } = req.body;
+        /** @type {ServerNode[]} */
+        let nodes = await db('server-nodes') ?? [];
+
+        nodes = nodes.filter(x => x.id != id);
+
+        await db('server-nodes', nodes);
+
+        res.json({ ok: true, message: 'Node removed successful' });
+    }
+    catch (err) {
+        res.json({ error: err.message });
+        showError(err);
     }
 });
 

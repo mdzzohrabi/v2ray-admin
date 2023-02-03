@@ -17,6 +17,7 @@ export function Container({ children }) {
             <span className="self-center font-light px-4 text-lg select-none border-r-[1px] border-r-slate-400">Management</span>
             <ul className="px-2 py-3 flex xl:sticky top-0 z-50 bg-slate-100 flex-1 self-center">
                 {isFull ? <MenuLink href={"/logs" + (isFull ? '?all=1' : '')} text={"Logs"}/> : null}
+                {isFull ? <MenuLink href={"/nodes" + (isFull ? '?all=1' : '')} text={"Nodes"}/> : null}
                 {isFull ? <MenuLink href={"/usages/traffic" + (isFull ? '?all=1' : '')} text={"Traffic Usages"}/> : null}
                 <MenuLink href={"/transactions" + (isFull ? '?all=1' : '')} text={"Transactions"}/>
                 <MenuLink href={"/users" + (isFull ? '?all=1' : '')} text={"Users"}/>

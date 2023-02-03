@@ -1,23 +1,22 @@
 // @ts-check
 
 const { env } = require("process");
-const { getPaths, readLogLines, cache, findUser, setUserActive, createLogger } = require("../lib/util");
+const { getPaths, readLogLines, cache, findUser, setUserActive, createLogger, readConfig, writeConfig } = require("../lib/util");
 
 /**
  * Cron Bad Users
- * @param {import("./cron").CronContext} cron Cron context
+ * @param {import("./index").CronContext} cron Cron context
  */
 async function cronBadUsers(cron, range = 1, reActiveUsers = true) {
-    let { showInfo } = createLogger();
+    let { showInfo } = createLogger('[Bad-Users]');
 
-    showInfo(`Start Bad Users Cron`)
+    showInfo(`Start`)
 
     let fromDate = new Date();
     let rangeMinutes = range;
     fromDate.setMinutes(fromDate.getMinutes() - rangeMinutes);
     
-    let { accessLogPath } = getPaths();
-    let { config } = cron;
+    let { accessLogPath, configPath } = getPaths();
 
     /**
      * @type {{ [user: string]: { [ip: string]: { order: number, lastAccessDate: Date, accessTimes: number } } }}
@@ -65,6 +64,9 @@ async function cronBadUsers(cron, range = 1, reActiveUsers = true) {
      */
     let result = [];
 
+    let config = readConfig(configPath);
+    let isConfigChanged = false;
+
     // Check bad users
     for (let userName in users) {
         let ips = users[userName];
@@ -87,7 +89,7 @@ async function cronBadUsers(cron, range = 1, reActiveUsers = true) {
         if (user.hasMultipleAccess && user.deActive) {
             showInfo(`De-active user ${user.user} due to multiple ip access (${user.ips.length} ips)`);
             setUserActive(config, /** All inbounds */ null, user.user, false, `Used by ${user.ips.length} ips in ${range} mins ago (${user.ips.join(', ')})`, env.BAD_USER_TAG ?? 'baduser');
-            cron.isConfigChanged = true;
+            isConfigChanged = true;
             cron.needRestartService = true;
         }
     }
@@ -100,13 +102,18 @@ async function cronBadUsers(cron, range = 1, reActiveUsers = true) {
                 if (user.email && !!user.deActiveDate && user.deActiveReason?.includes('Used by ') && !result.find(x => x.hasMultipleAccess && x.user == user.email)) {
                     showInfo(`Re-active user "${user.email}" due to normal usage in inbound "${inbound.tag}"`);
                     usersToActive.push(user.email);
-                    cron.isConfigChanged = true;
+                    isConfigChanged = true;
                     cron.needRestartService = true;
                     setUserActive(config, inbound.tag ?? null, user.email, true, undefined, env.BAD_USER_TAG ?? 'baduser');
                 }
             }
         }
     }
+
+    if (isConfigChanged)
+        writeConfig(configPath, config);
+
+    showInfo(`Complete`);
 }
 
 module.exports = { cronBadUsers };

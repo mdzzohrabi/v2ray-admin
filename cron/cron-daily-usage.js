@@ -2,19 +2,19 @@
 const { stat } = require('fs/promises');
 const { parseArgumentsAndOptions, createLogger, getPaths, readConfig, readLogFile, readLogLines, cache, db } = require('../lib/util');
 
-async function usages() {
-    const { showError, showInfo, showOk } = createLogger();
+/**
+ * 
+ * @param {import('./index').CronContext} cron 
+ * @returns 
+ */
+async function cronDailyUsage(cron) {
+    const { showInfo } = createLogger('[Daily-Usage]');
 
-    let {configPath, accessLogPath} = getPaths();
-    let {
-        cliOptions: { help }
-    } = parseArgumentsAndOptions();
+    let { accessLogPath } = getPaths();
 
-    
-    if (help)
-        return showInfo(`usage: node usages`);
-
+    showInfo(`Start`);
     showInfo(`Process V2Ray log file to create usage informations`);
+
     let size = (await stat(accessLogPath)).size;
     let lastSaveOffset = await cache('daily-usage-bytes') ?? 0;
     let lines = readLogLines(accessLogPath, 'daily-usage-bytes');
@@ -28,7 +28,7 @@ async function usages() {
             lastSaveTime = Date.now();
             let speed = (line.offset - lastSaveOffset);
             let estimate = (size - line.offset) / (speed / secondsToSave);
-            console.log(`Save data after ${secondsToSave} seconds of processing (${line.offset}/${size}) [${Math.round((line.offset / size) * 100)}%] [Est. ${Math.round(estimate)}s]...`);
+            showInfo(`Save data after ${secondsToSave} seconds of processing (${line.offset}/${size}) [${Math.round((line.offset / size) * 100)}%] [Est. ${Math.round(estimate)}s]...`);
             await db('daily-usages', dailyUsage);
             await cache('daily-usage-bytes', line.offset);
             lastSaveOffset = line.offset;
@@ -76,9 +76,10 @@ async function usages() {
     }
 
     // Save data
-    console.log(`Save data`);
+    showInfo(`Save data`);
     await db('daily-usages', dailyUsage);
 
+    showInfo(`Complete`);
 }
 
-usages();
+module.exports = { cronDailyUsage };

@@ -1,16 +1,30 @@
 // @ts-check
-const { execSync } = require("child_process");
+const { execSync, exec } = require("child_process");
 const { getPaths, createLogger, db, log } = require("../lib/util");
 
 /**
+ * Exec async
+ * @param {string} command Command
+ * @returns {Promise<string>}
+ */
+async function execAsync(command) {
+    return new Promise((done, reject) => {
+        exec(command, (err, stdout, stderr) => {
+            if (err) reject(err);
+            done(stdout ?? stderr);
+        });
+    })
+}
+
+/**
  * Cron Traffic Usage
- * @param {import("./cron").CronContext} cron Cron context
+ * @param {import("./index").CronContext} cron Cron context
 */
 async function cronTrafficUsage(cron) {
     
-    let {showInfo, showError} = createLogger();
+    let {showInfo, showError} = createLogger('[Traffic-Usage]');
 
-    showInfo(`Start Traffic Usage Cron`);
+    showInfo(`Start`);
     
     let {v2ray} = getPaths();
 
@@ -35,7 +49,7 @@ async function cronTrafficUsage(cron) {
             isNewDate = true;
         }
 
-        let stats = JSON.parse(execSync(`${v2ray} api stats -json -reset`).toString('utf-8'));
+        let stats = JSON.parse(await execAsync(`${v2ray} api stats -json -reset`));
         let intl = new Intl.DateTimeFormat('fa-IR', { month: 'numeric' });
 
         // New Date (Ignore stats from last day)
@@ -82,6 +96,7 @@ async function cronTrafficUsage(cron) {
 
         await db('traffic-usages', trafficUsages);
         await db('user-usages', userUsage);
+        showInfo(`Complete`)
 
     } catch (err) {
         log(`Error during traffic update : ${err.message}`);

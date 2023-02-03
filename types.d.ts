@@ -258,3 +258,11 @@ interface UserUsage {
 interface UserUsages {
     [user?: string]: UserUsage
 }
+
+interface ServerNode {
+    id?: string
+    apiKey: string
+    name: string
+    lastConnect?: string
+    lastConnectedNodeIP?: string
+}
