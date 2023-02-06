@@ -3,27 +3,75 @@
 import classNames from "classnames";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import React, { useContext, useEffect, useState } from 'react';
-import { useMemo } from "react";
+import React, { useContext, useMemo, useState } from 'react';
 import { useCallback } from "react";
-import toast from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import useSWR from 'swr';
 import { AppContext } from "../components/app-context";
 import { Container } from "../components/container";
 import { Dialog, useDialog } from "../components/dialog";
-import { InboundEditor } from "../components/editor/inbound-editor";
-import { OutboundEditor } from "../components/editor/outbound-editor";
-import { RoutingBalancerEditor } from "../components/editor/routing-balancer-editor";
-import { RoutingRuleEditor } from "../components/editor/routing-rule-editor";
-import { Collection, Field, FieldsGroup, ObjectCollection } from "../components/fields";
+import { Field, FieldsGroup } from "../components/fields";
 import { Info, Infos } from "../components/info";
-import { JsonView } from "../components/json";
 import { PopupMenu } from "../components/popup-menu";
 import { Table } from "../components/table";
-import { Tabs } from "../components/tabs";
 import { styles } from "../lib/styles";
-import { deepCopy, getChanges, serverRequest, withoutKey } from "../lib/util";
-import { Editable } from "../components/editable";
+import { serverRequest } from "../lib/util";
+
+/**
+ * 
+ * @param {{
+ *      onEdit: (node?: Partial<ServerNode>) => any
+ *      onClose: Function
+ *      node: Partial<ServerNode>
+ * }} param0 Parameters
+ * @returns 
+ */
+function ServerNodeDialog({ onEdit, onClose, node: nodeProp }) {
+
+    let [serverNode, setServerNode] = useState(nodeProp ?? {});
+
+    let onSubmit = useCallback(e => {
+        e?.preventDefault();
+        onEdit(serverNode);
+    }, [onEdit, serverNode]);
+
+    return <Dialog title="Server Node" onClose={onClose} onSubmit={onSubmit}>
+        <FieldsGroup data={serverNode} dataSetter={setServerNode}>
+            <div className="flex flex-row">
+                <Field className={'flex-1'} label="Name" htmlFor="name">
+                    <input type="text" id="name" className={styles.input} placeholder={'Server 1'}/>
+                </Field>
+                <Field label="Type" htmlFor="type">
+                    <select id="type" className={styles.input}>
+                        <option value="client">Client</option>
+                        <option value="server">Server</option>
+                    </select>
+                </Field>
+            </div>
+            <Field className={'flex-1'} label="Address" htmlFor="address">
+                <input type="text" id="address" className={styles.input} placeholder={'0.0.0.0'}/>
+            </Field>
+            {serverNode?.type == 'server' ?
+            <Field label="Sync Database" htmlFor="sync" horizontal>
+                <input type="checkbox" id="sync" className={styles.input}/>
+            </Field> : null }
+            {serverNode?.type == 'server' ? <Field label="Api Key" htmlFor="apiKey">
+                <input type="text" id="apiKey" className={styles.input} readOnly={serverNode?.type == 'server'}/>
+            </Field> : null }
+            <Infos className={'p-2 leading-8'}>
+                <Info label={'ID'}>{serverNode?.id ?? '-'}</Info>
+                {serverNode?.type == 'client' ? <Info label={'Api Key'}>{serverNode?.apiKey ?? '-'}</Info> : null }
+                <Info label={'Last Conencted IP'}>{serverNode?.lastConnectIP ?? '-'}</Info>
+                <Info label={'Last Connect Date'}>{serverNode?.lastConnectDate ?? '-'}</Info>
+                <Info label={'Last Sync Date'}>{serverNode?.lastSyncDate ?? '-'}</Info>
+            </Infos>
+        </FieldsGroup>
+        <div className="flex flex-row justify-end border-t-[1px] pt-2 mt-2">
+            <button type="submit" className={styles.buttonPrimary}>Save Server Node</button>
+            <button type="button" onClick={e => onClose()} className={styles.button}>Cancel</button>
+        </div>
+    </Dialog>
+}
 
 export default function NodesPage() {
 
@@ -46,6 +94,48 @@ export default function NodesPage() {
         revalidateOnReconnect: false
     });
 
+    let addNode = useCallback(async node => {
+        try {
+            let result = await serverRequest(context.server, 'post:/nodes', node);
+            if (result?.ok) {
+                toast.success(result?.message);
+                refreshNodes();
+            }
+        } catch (e) {
+            toast.error(e?.message);
+        }
+    }, []);
+
+    let editNode = useCallback(async node => {
+        try {
+            let result = await serverRequest(context.server, 'put:/nodes', node);
+            if (result?.ok) {
+                toast.success(result?.message);
+                refreshNodes();
+            }
+        } catch (e) {
+            toast.error(e?.message);
+        }
+    }, []);
+
+    let deleteNode = useCallback(async node => {
+        try {
+            let result = await serverRequest(context.server, 'delete:/nodes', node);
+            if (result?.ok) {
+                toast.success(result?.message);
+                refreshNodes();
+            }
+        } catch (e) {
+            toast.error(e?.message);
+        }
+    }, []);
+
+    let serverNodeDialog = useDialog((node, onEdit, onClose) => <ServerNodeDialog
+        onClose={onClose}
+        node={node}
+        onEdit={onEdit}
+    />)
+
     // Not-Available value element
     let NA = <span className="text-gray-400 text-xs">-</span>;
 
@@ -53,31 +143,37 @@ export default function NodesPage() {
         <Head>
             <title>Server Nodes</title>
         </Head>
-        <FieldsGroup title="Nodes" className="px-3">
+        <FieldsGroup title="Server Nodes" className="px-3">
             <div className="flex-1 flex-row flex items-center">
                 {isLoading? <span className="rounded-lg bg-gray-700 text-white px-3 py-0">Loading</span> :null}
             </div>
+            <div className="flex flex-row">
+                <button onClick={e => serverNodeDialog.show({}, addNode)} className={classNames(styles.addButton)}>+ Add Node</button>
+            </div>
         </FieldsGroup>
         <div className="p-3">
-            <Tabs>
-                <Tabs.Tab title="Nodes" className="space-y-2">
-                    <div className="rounded-lg flex flex-col flex-1 border-2">
-                        <Table
-                            rows={nodes ?? []}
-                            columns={[ 'ID', 'Name', 'Api Key', 'Last Connect' ]}
-                            cells={row => [
-                                row.id,
-                                row.name,
-                                row.apiKey,
-                                row.lastConnect
-                            ]}
-                        />
-                    </div>
-                </Tabs.Tab>
-                <Tabs.Tab title="Current Node">
-
-                </Tabs.Tab>
-            </Tabs>
+            <div className="rounded-lg flex flex-col flex-1 border-2">
+                <Table
+                    rows={nodes ?? []}
+                    columns={[ 'ID', 'Name', 'Address', 'Api Key', 'Last Connect', 'Actions' ]}
+                    cells={row => [
+                        row.id,
+                        row.name,
+                        row.address ?? NA,
+                        row.apiKey ?? NA,
+                        row.lastConnectDate ?? NA,
+                        <PopupMenu>
+                            <PopupMenu.Item action={() => deleteNode(row)}>
+                                Delete
+                            </PopupMenu.Item>
+                            <PopupMenu.Item action={() => serverNodeDialog.show(row, editNode)}>
+                                Edit Node
+                            </PopupMenu.Item>
+                        </PopupMenu>
+                    ]}
+                    
+                />
+            </div>
         </div>
     </Container>
 }

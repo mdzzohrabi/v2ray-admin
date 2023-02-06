@@ -15,8 +15,17 @@ export function serverRequest(server, action, body = undefined) {
         action = action['url'];
     }
 
+    let method = body ? 'post' : 'get';
+
+    if (action.match(/^(post|get|delete|put)\:/i)) {
+        let [m, ...u] = action.split(':');
+        method = m;
+        action = u.join(':');
+        console.log(action);
+    }
+    
     return fetch(server.url + action, {
-        method: body ? 'POST' : 'GET',
+        method: method,
         body: body ? JSON.stringify(body) : undefined,
         headers: {
             'Content-Type': 'application/json',

@@ -1,3 +1,4 @@
+// @ts-check
 
 interface V2RayConfig {
     log?: V2RayConfigLog,
@@ -261,8 +262,12 @@ interface UserUsages {
 
 interface ServerNode {
     id?: string
+    name?: string
+    type?: 'client' | 'server'
+    address?: string
     apiKey: string
-    name: string
-    lastConnect?: string
-    lastConnectedNodeIP?: string
+    lastConnectDate?: string
+    lastConnectIP?: string
+    lastSyncDate?: string
+    sync?: boolean
 }

@@ -6,16 +6,16 @@ import { DialogsContainer } from '../components/dialog';
 import '../styles/globals.scss';
 
 function MyApp({ Component, pageProps }) {
-  return <DialogsContainer>
-    <AppContextContainer>
-        <SWRConfig value={{ revalidateOnFocus: false }}>
-        <CheckConfig>
-          <Component {...pageProps} />
-        </CheckConfig>
-        <Toaster/>
-        </SWRConfig>
-    </AppContextContainer> 
-  </DialogsContainer>
+  return <AppContextContainer>
+        <DialogsContainer>
+          <SWRConfig value={{ revalidateOnFocus: false }}>
+          <CheckConfig>
+            <Component {...pageProps} />
+          </CheckConfig>
+          <Toaster/>
+          </SWRConfig>
+      </DialogsContainer>
+  </AppContextContainer> 
 }
 
 export default MyApp

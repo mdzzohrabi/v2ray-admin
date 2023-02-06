@@ -605,24 +605,29 @@ app.get('/nodes', async (req, res) => {
 
 app.post('/nodes', async (req, res) => {
     try {
-        let { name } = req.body;
+        /** @type {Partial<ServerNode>} */
+        let { address, type = 'client', sync = false, apiKey, name } = req.body;
+
         /** @type {ServerNode[]} */
         let nodes = await db('server-nodes') ?? [];
 
-        if (nodes.find(x => x.name == name)) {
+        if (nodes.find(x => x.address == address)) {
             res.json({ ok: false, error: 'This Node already exists' });
             return;
         }
 
         nodes.push({
-            id: randomUUID(),
             name,
-            apiKey: randomUUID()
+            id: randomUUID(),
+            apiKey: type == 'client' ? randomUUID() : apiKey ?? '',
+            address,
+            type,
+            sync
         });
 
         await db('server-nodes', nodes);
 
-        res.json(nodes);
+        res.json({ ok: true, message: 'Server node added successful' });
     }
     catch (err) {
         res.json({ error: err.message });
@@ -632,7 +637,9 @@ app.post('/nodes', async (req, res) => {
 
 app.put('/nodes', async (req, res) => {
     try {
-        let { id, name } = req.body;
+        /** @type {Partial<ServerNode>} */
+        let { id, type, address, sync, name, apiKey } = req.body;
+
         /** @type {ServerNode[]} */
         let nodes = await db('server-nodes') ?? [];
 
@@ -644,6 +651,11 @@ app.put('/nodes', async (req, res) => {
         }
 
         node.name = name;
+        if (apiKey && type == 'server')
+            node.apiKey = apiKey;
+        node.address = address;
+        node.type = type;
+        node.sync = sync;
 
         await db('server-nodes', nodes);
 
