@@ -54,7 +54,7 @@ async function cronExpiredUsers(cron, defaultExpireDays) {
                 showInfo(`De-active user "${user?.email}" due to expiration at "${expireDate}" after "${expireDays}" days from "${billingStartDate}"`);
             }
             // Quota limit
-            else if (user.quotaLimit && usage?.quotaUsage && usage?.quotaUsage > user.quotaLimit) {
+            else if (!user.deActiveDate && user.quotaLimit && usage?.quotaUsage && usage?.quotaUsage > user.quotaLimit) {
                 isConfigChanged = true;
                 cron.needRestartService = true;
                 setUserActive(config, inbound.tag ?? null, user?.email, false, `Bandwith used`, env.QUOTA_USER_TAG ?? 'baduser');
