@@ -14,6 +14,7 @@ import { Field, FieldsGroup } from "../components/fields";
 import { Info, Infos } from "../components/info";
 import { PopupMenu } from "../components/popup-menu";
 import { Table } from "../components/table";
+import { usePrompt } from "../lib/hooks";
 import { styles } from "../lib/styles";
 import { serverRequest } from "../lib/util";
 
@@ -33,6 +34,7 @@ function ServerNodeDialog({ onEdit, onClose, node: nodeProp }) {
     let onSubmit = useCallback(e => {
         e?.preventDefault();
         onEdit(serverNode);
+        onClose();
     }, [onEdit, serverNode]);
 
     return <Dialog title="Server Node" onClose={onClose} onSubmit={onSubmit}>
@@ -56,7 +58,7 @@ function ServerNodeDialog({ onEdit, onClose, node: nodeProp }) {
                 <input type="checkbox" id="sync" className={styles.input}/>
             </Field> : null }
             {serverNode?.type == 'server' ? <Field label="Api Key" htmlFor="apiKey">
-                <input type="text" id="apiKey" className={styles.input} readOnly={serverNode?.type == 'server'}/>
+                <input type="text" id="apiKey" className={styles.input} readOnly={serverNode?.type != 'server'}/>
             </Field> : null }
             <Infos className={'p-2 leading-8'}>
                 <Info label={'ID'}>{serverNode?.id ?? '-'}</Info>
@@ -67,8 +69,8 @@ function ServerNodeDialog({ onEdit, onClose, node: nodeProp }) {
             </Infos>
         </FieldsGroup>
         <div className="flex flex-row justify-end border-t-[1px] pt-2 mt-2">
-            <button type="submit" className={styles.buttonPrimary}>Save Server Node</button>
             <button type="button" onClick={e => onClose()} className={styles.button}>Cancel</button>
+            <button type="submit" className={styles.buttonPrimary}>Save Server Node</button>
         </div>
     </Dialog>
 }
@@ -139,6 +141,8 @@ export default function NodesPage() {
     // Not-Available value element
     let NA = <span className="text-gray-400 text-xs">-</span>;
 
+    let prompt = usePrompt();
+
     return <Container>
         <Head>
             <title>Server Nodes</title>
@@ -147,7 +151,8 @@ export default function NodesPage() {
             <div className="flex-1 flex-row flex items-center">
                 {isLoading? <span className="rounded-lg bg-gray-700 text-white px-3 py-0">Loading</span> :null}
             </div>
-            <div className="flex flex-row">
+            <div className="flex flex-row space-x-2">
+                <button onClick={e => refreshNodes()} className={classNames(styles.button)}>Refresh</button>
                 <button onClick={e => serverNodeDialog.show({}, addNode)} className={classNames(styles.addButton)}>+ Add Node</button>
             </div>
         </FieldsGroup>
@@ -163,11 +168,11 @@ export default function NodesPage() {
                         row.apiKey ?? NA,
                         row.lastConnectDate ?? NA,
                         <PopupMenu>
-                            <PopupMenu.Item action={() => deleteNode(row)}>
-                                Delete
-                            </PopupMenu.Item>
                             <PopupMenu.Item action={() => serverNodeDialog.show(row, editNode)}>
                                 Edit Node
+                            </PopupMenu.Item>
+                            <PopupMenu.Item action={() => prompt(`Delete selected node "${row.name}" ?`, 'Delete Node', () => deleteNode(row))}>
+                                Delete
                             </PopupMenu.Item>
                         </PopupMenu>
                     ]}

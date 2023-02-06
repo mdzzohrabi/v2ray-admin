@@ -86,10 +86,12 @@ async function cronTrafficUsage(cron) {
                 if (usage.quotaUsageUpdate && intl.format(new Date(usage.quotaUsageUpdate)) != intl.format(new Date())) {
                     showInfo(`Reset Quota usage for user "${name}" on date "${new Date()}"`)
                     usage.quotaUsage = 0;
+                    usage.quotaUsage_local = 0;
                 }
 
                 // Update quota
-                usage.quotaUsage = (usage.quotaUsage ?? 0) + Number(value ?? 0);
+                usage.quotaUsage_local = (usage.quotaUsage ?? 0) + Number(value ?? 0);
+                usage.quotaUsage = Object.keys(usage).filter(x => x.startsWith('quotaUsage_')).map(x => usage[x]).reduce((s, v) => s + v, 0);
                 usage.quotaUsageUpdate = new Date().toString();
             }
         }

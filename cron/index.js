@@ -4,13 +4,14 @@ const { parseArgumentsAndOptions, createLogger, restartService } = require("../l
 const { cronBadUsers } = require("./cron-bad-users");
 const { cronDailyUsage } = require("./cron-daily-usage");
 const { cronExpiredUsers } = require("./cron-expired-users");
+const { cronSync } = require("./cron-sync");
 const { cronTrafficUsage } = require("./cron-traffic-usage");
 
 const {
-    cliArguments: [],
+    cliArguments: jobNames,
     cliOptions: {
         print = false,
-        delay = 5,
+        delay = 1,
         reactive: reActive = false,
         range = 1,
         disableExpired = true,
@@ -65,19 +66,28 @@ async function startCronJob() {
         needRestartService: false
     }
 
-    let jobs = [
+    let tasks = {
+        // Sync
+        'sync': () => cronSync(cron),
+
         // Cron Bad Users
-        () => cronBadUsers(cron, range, reActive).catch(catchError),
+        'bad-users': () => cronBadUsers(cron, range, reActive).catch(catchError),
 
         // Cron Expired Users
-        () => cronExpiredUsers(cron, expireDays).catch(catchError),
+        'expired-users': () => cronExpiredUsers(cron, expireDays).catch(catchError),
 
         // Cron Daily Usage
-        () => cronDailyUsage(cron).catch(catchError),
+        'daily-usage': () => cronDailyUsage(cron).catch(catchError),
 
         // Cron Traffic Usage
-        () => cronTrafficUsage(cron).catch(catchError)
-    ];
+        'traffic-usage': () => cronTrafficUsage(cron).catch(catchError)
+    };
+
+    let jobs = Object.values(tasks);
+
+    if (jobNames && jobNames.length > 0) {
+        jobs = Object.keys(tasks).filter(k => jobNames.includes(k)).map(k => tasks[k]);
+    }
 
     let allJobs = new Promise(async (done, reject) => {
         let ignoreJobs = setTimeout(() => {

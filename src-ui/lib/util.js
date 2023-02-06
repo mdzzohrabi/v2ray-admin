@@ -112,14 +112,23 @@ export function dateDiff(date1, date2 = undefined) {
  * 
  * @param {string} sortColumn Sort column name
  * @param {boolean} sortAsc Sort asc
+ * @param {((value: any) => any)?} transform Tranform value
  * @returns 
  */
-export function arrSort(sortColumn, sortAsc) {
-    return (a, b) => !sortColumn ? 0 : 
-            a[sortColumn] == b[sortColumn] ? 0 : 
-                a[sortColumn] < b[sortColumn] ? 
+export function arrSort(sortColumn, sortAsc, transform = null) {
+    return (a, b) => {
+        let aValue = a[sortColumn];
+        let bValue = b[sortColumn];
+        if (transform) {
+            aValue = transform(aValue);
+            bValue = transform(bValue);
+        }
+        return !sortColumn ? 0 : 
+            aValue == bValue ? 0 : 
+                aValue < bValue ? 
                     (sortAsc ? -1 : 1) : 
                     (sortAsc ? 1 : -1);
+    }
 }
 
 export const DateUtil = {

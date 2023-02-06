@@ -55,6 +55,8 @@ interface V2RayConfigInboundClient {
     private?: boolean
     free?: boolean
     quotaLimit?: number
+    serverNode?: string
+    serverNodeInbound?: string
 }
 
 interface V2RayConfigInboundSettings {
@@ -85,6 +87,8 @@ interface V2RayConfigInbound {
     tag?: string,
     sniffing?: V2RayConfigInboundSiffingObject
     allocate?: any
+    usersServerNode?: string
+    mirrorInbound?: string
 }
 
 interface V2RayConfigInboundSiffingObject {
@@ -215,12 +219,13 @@ interface V2RayConfigRoutingRule {
 }
 
 interface Transaction {
-    id?: number
+    id?: string
     user?: string
     remark?: string
     amount?: number
     createDate?: string
     creator?: string
+    serverNodeId?: string
 }
 
 interface V2RayDb {
@@ -252,6 +257,7 @@ interface UserUsage {
     firstConnect?: string
     lastConnect?: string
     quotaUsage?: number
+    quotaUsage_local?: number
     quotaUsageUpdate?: string
     lastConnectIP?: string
 }

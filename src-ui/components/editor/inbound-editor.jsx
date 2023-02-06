@@ -136,11 +136,16 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }) {
                 <Field label="Port" htmlFor="port">
                     <input type={"number"} id="port" className={styles.input}/>
                 </Field>
-                <Field label="Users Server Node" htmlFor="usersServerNode">
+            </div>
+            <div className="flex flex-row pt-2">
+                <Field label="Users Server Node" htmlFor="usersServerNode" className="flex-1">
                     <select id="usersServerNode" className={styles.input}>
                         <option value={''}>-</option>
-                        {nodes?.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}
+                        {nodes?.filter(x => x.type == 'server')?.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}
                     </select>
+                </Field>
+                <Field label="Mirror Inbound (tag)" htmlFor="mirrorInbound">
+                    <input type="text" id="mirrorInbound" className={styles.input} disabled={!inbound?.usersServerNode}/>
                 </Field>
             </div>
             {/* {inbound?.protocol == 'vmess' || inbound?.protocol == 'vless' ?
