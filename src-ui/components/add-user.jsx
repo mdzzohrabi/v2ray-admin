@@ -77,7 +77,7 @@ export function AddUser({ disabled = false, onRefresh, setLoading, inbounds, cla
             <Field label={"Inbound"} htmlFor="tag">
                 <select disabled={disabled} id="tag" className={styles.input}>
                     <option key={"no-protocol"} value={undefined}>-</option>
-                    {inbounds?.filter(x => x.protocol == 'vmess' && !!x.tag).map(p => <option key={`inbound-${p.tag}-${p.protocol}`} value={p.tag}>{p.tag} ({p.protocol})</option>)}
+                    {inbounds?.filter(x => (x.protocol == 'vmess' || x.protocol == 'vless') && !!x.tag).map(p => <option key={`inbound-${p.tag}-${p.protocol}`} value={p.tag}>{p.tag} ({p.protocol})</option>)}
                 </select>
             </Field>
             {showAll?

@@ -148,14 +148,14 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }) {
                     <input type="text" id="mirrorInbound" className={styles.input} disabled={!inbound?.usersServerNode}/>
                 </Field>
             </div>
-            {/* {inbound?.protocol == 'vmess' || inbound?.protocol == 'vless' ?
+            {inbound?.protocol == 'vmess' || inbound?.protocol == 'vless' ?
             <div className="flex flex-row pt-2">
                 <FieldObject path={"settings"}>
                     <Field label="Decryption" htmlFor="decryption" className="flex-1">
                         <input type="text" id="decryption" className={styles.input} placeholder={"none"}/>
                     </Field>
                 </FieldObject>
-            </div> : null } */}
+            </div> : null }
             <div className="flex flex-col">
                 <FieldObject path={"streamSettings"}>
                 <h3 className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 font-smibold">Stream settings</h3>
