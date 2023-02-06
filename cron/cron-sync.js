@@ -47,6 +47,11 @@ async function cronSync(cron) {
     /** @type {ServerNode[]} */
     let serverNodes = await db('server-nodes');
 
+    if (!serverNodes) {
+        showInfo(`No server nodes defined`);
+        return;
+    }
+
     // Sync Inbounds - Begin
     let inbounds = tempConfig.inbounds?.filter(x => !!x.usersServerNode) ?? [];
 
