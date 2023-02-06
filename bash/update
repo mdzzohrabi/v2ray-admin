@@ -2,7 +2,7 @@ git stash
 git pull
 pm2 stop all
 npm i
-if [ $UI -ne 0 ]; then
+if [[ $UI -ne 0 ]]; then
     cd src-ui
     npm i
     npm run build
