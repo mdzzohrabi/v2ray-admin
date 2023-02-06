@@ -65,7 +65,7 @@ export default function UsersPage() {
         }
     }, serverRequest.bind(this, context.server));
 
-    /** @type {import("swr").SWRResponse<ServerNode[]} */
+    /** @type {import("swr").SWRResponse<ServerNode[]>} */
     let {data: nodes, mutate: refreshNodes} = useSWR('/nodes', serverRequest.bind(this, context.server));
 
     let inbounds = useMemo(() => inboundsResponse?.filter(x => x.protocol == 'vmess' || x.protocol == 'vless').map(x => {

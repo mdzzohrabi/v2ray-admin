@@ -84,6 +84,9 @@ export default function TransactionsPage() {
      */
     let {data: transactions, mutate: refreshList, isValidating: isLoading} = useSWR('/transactions?key=' + btoa(context.server.url), serverRequest.bind(this, context.server));
 
+    /** @type {import("swr").SWRResponse<ServerNode[]>} */
+    let {data: nodes, mutate: refreshNodes} = useSWR('/nodes', serverRequest.bind(this, context.server));
+
     /**
      * @type {import("swr").SWRResponse<string[]>}
      */
@@ -124,6 +127,8 @@ export default function TransactionsPage() {
 
     let remain = 0;
     transactions = transactions
+        ?.sort(arrSort('createDate', true, value => new Date(value.replace(' ', ' '))))
+
         ?.map(t => {
             remain += (Number(t.amount) ?? 0);
             return { ...t, remain };
@@ -133,7 +138,8 @@ export default function TransactionsPage() {
             if (view.sortColumn == 'createDate')
                 return new Date(value.replace(' ', ' '));
             return value;
-        }));
+        }))
+    ;
 
     return <Container>
         <Head>
@@ -192,8 +198,15 @@ export default function TransactionsPage() {
         <Table
             className="border-separate border-spacing-0"
             rows={transactions ?? []}
-            columns={[ 'User', 'Remark', 'Debt', 'Paid', 'Remain', 'Dates', 'Actions' ]}
-            groupBy={t => !view.group ? null : t.createDate ? new Intl.DateTimeFormat('fa-IR', { month: 'long', year: 'numeric' }).format(new Date(t.createDate.replace(' ', ''))) : null}
+            columns={[ 'User', 'Remark', 'Debt', 'Paid', 'Remain', 'Node Server', 'Dates', 'Actions' ]}
+            groupBy={t => {
+                try {
+                    return !view.group ? null : t.createDate ? new Intl.DateTimeFormat('fa-IR', { month: 'long', year: 'numeric' }).format(new Date(t.createDate.replace(' ', ' '))) : null;
+                } catch (err) {
+                    console.error(err);
+                    return 'Bad Group';
+                }
+            }}
             group={monthName => <tr>
                 <td onClick={() => setExpanded({ ...expanded, [monthName]: !expanded[monthName] })} className="cursor-pointer py-2 px-6 text-lg font-bold sticky z-10 bg-zinc-50 top-[1.8rem] xl:top-[1.8rem] border-b-2 border-t-2 border-t-gray-400" colSpan={9}>
                     <span className="font-bold w-7 text-center py-0 mr-4 inline-block rounded-full bg-gray-200 text-lg select-none text-gray-500">{expanded[monthName] ? '-' : '+'}</span>
@@ -226,18 +239,20 @@ export default function TransactionsPage() {
                     <span className={classNames("rounded-lg inline-block px-2 text-rtl", { 'bg-red-50 text-red-700': (t.amount ?? 0) >= 0, 'bg-green-50 text-green-700': (t.amount ?? 0) < 0 })}>
                         <Price value={t.amount}/>
                     </span>
-                </Editable> : null,
+                </Editable> : '-',
                 // Paid
                 (t.amount ?? 0) < 0 ?
                 <Editable onEdit={value => editTransaction(t, 'amount', value)} value={t.amount} editable={showAll}>
                     <span className={classNames("rounded-lg inline-block px-2 text-rtl", { 'bg-red-50 text-red-700': (t.amount ?? 0) >= 0, 'bg-green-50 text-green-700': (t.amount ?? 0) < 0 })}>
                         <Price value={Math.abs(Number(t.amount) ?? 0)}/>
                     </span>
-                </Editable> : null,
+                </Editable> : '-',
                 // Remain
                 <span className={classNames("rounded-lg inline-block px-2 text-rtl", { 'bg-red-50 text-red-700': (t['remain'] ?? 0) >= 0, 'bg-green-50 text-green-700': (t['remain'] ?? 0) < 0 })}>
                     <Price value={t['remain']}/>
                 </span>,
+                // Node
+                t.serverNodeId ? nodes?.find(x => x.id == t.serverNodeId)?.name : '-',
                 // Date
                 <DateView containerClassName="text-center" precision={true} full={view.fullTime} date={t.createDate?.replace(' ', ' ')}/>,
                 // Action
