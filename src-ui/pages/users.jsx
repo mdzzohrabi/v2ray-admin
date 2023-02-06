@@ -65,7 +65,16 @@ export default function UsersPage() {
         }
     }, serverRequest.bind(this, context.server));
 
-    let inbounds = useMemo(() => inboundsResponse?.filter(x => x.protocol == 'vmess' || x.protocol == 'vless') ?? [], [inboundsResponse]);
+    /** @type {import("swr").SWRResponse<ServerNode[]} */
+    let {data: nodes, mutate: refreshNodes} = useSWR('/nodes', serverRequest.bind(this, context.server));
+
+    let inbounds = useMemo(() => inboundsResponse?.filter(x => x.protocol == 'vmess' || x.protocol == 'vless').map(x => {
+        x.settings?.clients?.map(client => {
+            let lastConnectNode = client['lastConnectNode'];
+            client['lastConnectNode'] = nodes?.find(x => x.id == lastConnectNode) ?? lastConnectNode;
+        });
+        return x;
+    }) ?? [], [inboundsResponse, nodes]);
 
     const showQRCode = useCallback(async (tag, user) => {
         let config = await serverRequest(context.server, '/client_config?tag=' + tag, user).then(data => data.config)
@@ -369,7 +378,9 @@ export default function UsersPage() {
                                                 {u.free?<span className="ml-2 text-xs px-2 py-0 rounded-lg bg-green-100 text-green-500 cursor-default">Free</span>:null}
                                             </div>
                                             <Editable className="text-gray-600 inline-block" onEdit={value => setInfo(i.tag, u, 'fullName', value)} value={u.fullName}>{u.fullName ?? '-'}</Editable>
-                                            {showId?<Info className="ml-3" label={"ID"}>{u.id}</Info>:null}
+                                            {showId?<Info className="ml-3" label={"ID"}>
+                                                <Editable editable={showAll} onEdit={newId => setInfo(i.tag, u, 'id', newId)} value={u.id}>{u.id}</Editable>
+                                            </Info>:null}
                                             {u.deActiveDate ? 
                                             <Info label={"De-active reason"} className="ml-2">
                                                 <Popup popup={u.deActiveReason?.length ?? 0 > 30 ? u.deActiveReason : null}>
@@ -404,6 +415,11 @@ export default function UsersPage() {
                                         <Info label={'Last Connected IP'}>
                                             {u['lastConnectIP'] ?? '-'}
                                             {u['lastConnectIP'] ? <a target={'_blank'} className={classNames(styles.link, 'pl-1')} href={`https://whatismyipaddress.com/ip/${u['lastConnectIP']}`}>(Info)</a> : null}
+                                        </Info>
+                                        <Info label={'Last Connect Node'}>
+                                            {typeof u['lastConnectNode'] == 'object' ? <Popup popup={u['lastConnectNode'].lastConnectIP}>
+                                                <Copy data={u['lastConnectNode']?.id} copiedText="Node Server ID Copied">{u['lastConnectNode']?.name}</Copy>
+                                            </Popup> : u['lastConnectNode'] ?? '-'}
                                         </Info>
                                     </Infos>
                                 </td>

@@ -152,6 +152,7 @@ app.post('/api/sync/user-usages', async (req, res) => {
 
                 if (usage.lastConnect && (!local.lastConnect || new Date(local.lastConnect) < new Date(usage.lastConnect) )) {
                     local.lastConnect = usage.lastConnect;
+                    local.lastConnectNode = serverNodeId;
                     local.lastConnectIP = usage.lastConnectIP;
                 }
 
@@ -488,6 +489,7 @@ app.post('/inbounds', async (req, res) => {
             let usage = user.email ? usages[user.email] : {};
             user.firstConnect = user.firstConnect ?? usage?.firstConnect;
             user['lastConnect'] = usage?.lastConnect;
+            user['lastConnectNode'] = usage?.lastConnectNode;
             user['lastConnectIP'] = usage?.lastConnectIP;
             user['quotaUsage'] = usage?.quotaUsage;
             user['quotaUsageUpdate'] = usage?.quotaUsageUpdate;
@@ -501,7 +503,7 @@ app.post('/inbounds', async (req, res) => {
         }
         
         let filtered = users
-            .filter(u => !filter || (u.id == filter || u['lastConnectIP'] == filter || u.fullName?.toLowerCase().includes(filter.toLowerCase()) || u.email?.toLowerCase().includes(filter.toLowerCase())))
+            .filter(u => !filter || (u.id == filter || u['lastConnectIP'] == filter || u['lastConnectNode'] == filter || u.fullName?.toLowerCase().includes(filter.toLowerCase()) || u.email?.toLowerCase().includes(filter.toLowerCase())))
             .filter(u => statusFilter.length == 0 || statusFilter.map(filter => statusFilters[filter]).every(filter => filter(u)))
             .sort((a, b) => !sortColumn ? 0 : a[sortColumn] == b[sortColumn] ? 0 : a[sortColumn] < b[sortColumn] ? (sortAsc ? -1 : 1) : (sortAsc ? 1 : -1))
         ;

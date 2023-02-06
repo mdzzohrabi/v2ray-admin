@@ -9,6 +9,7 @@ import { toast } from "react-hot-toast";
 import useSWR from 'swr';
 import { AppContext } from "../components/app-context";
 import { Container } from "../components/container";
+import { DateView } from "../components/date-view";
 import { Dialog, useDialog } from "../components/dialog";
 import { Field, FieldsGroup } from "../components/fields";
 import { Info, Infos } from "../components/info";
@@ -160,13 +161,17 @@ export default function NodesPage() {
             <div className="rounded-lg flex flex-col flex-1 border-2">
                 <Table
                     rows={nodes ?? []}
-                    columns={[ 'ID', 'Name', 'Address', 'Api Key', 'Last Connect', 'Actions' ]}
+                    columns={[ 'ID', 'Type', 'Name', 'Address', 'Api Key', 'Last Connect', 'Actions' ]}
                     cells={row => [
                         row.id,
+                        row.type,
                         row.name,
                         row.address ?? NA,
                         row.apiKey ?? NA,
-                        row.lastConnectDate ?? NA,
+                        <Infos>
+                            <Info label={'IP'}>{row.lastConnectIP ?? '-'}</Info>
+                            <Info label={'Date'}><DateView locale="en" date={row.lastConnectDate}/></Info>
+                        </Infos>,
                         <PopupMenu>
                             <PopupMenu.Item action={() => serverNodeDialog.show(row, editNode)}>
                                 Edit Node

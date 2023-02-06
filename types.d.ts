@@ -256,6 +256,7 @@ interface TrafficUsages {
 interface UserUsage {
     firstConnect?: string
     lastConnect?: string
+    lastConnectNode?: string
     quotaUsage?: number
     quotaUsage_local?: number
     quotaUsageUpdate?: string
