@@ -131,7 +131,7 @@ export default function TransactionsPage() {
         ?.filter(u => !view.user || u.user == view.user)
         ?.sort(arrSort(view.sortColumn, view.sortOrder == 'asc', value => {
             if (view.sortColumn == 'createDate')
-                return new Date(value);
+                return new Date(value.replace(' ', ' '));
             return value;
         }));
 
@@ -239,7 +239,7 @@ export default function TransactionsPage() {
                     <Price value={t['remain']}/>
                 </span>,
                 // Date
-                <DateView containerClassName="text-center" precision={true} full={view.fullTime} date={t.createDate}/>,
+                <DateView containerClassName="text-center" precision={true} full={view.fullTime} date={t.createDate?.replace(' ', ' ')}/>,
                 // Action
                 <PopupMenu text="Actions">
                     {showAll?<PopupMenu.Item action={() => prompt(`Do you want to remove transaction "${t.remark}" ?`, `Remove`, () => removeTransaction(t))}>Delete</PopupMenu.Item>:null}
