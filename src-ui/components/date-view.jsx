@@ -26,6 +26,7 @@ export function DateView({ date, className = '', containerClassName ='', full = 
     let router = useRouter();
     let isEN = (locale ?? router.query.date) == 'en';
     if (!date) return <>-</>;
+    if (typeof date == 'string') date = date.replace(' ', ' ');
     date = date instanceof Date ? date : new Date(date);
     // return <>
     //     {isEN ? date.toLocaleString() : moment(date).locale('fa').format('YYYY/MM/DD hh:mm:ss a')}
