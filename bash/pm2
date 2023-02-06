@@ -1,13 +1,13 @@
-pm2 stop api
-pm2 stop ui
-pm2 stop cron
-pm2 stop cron-usages
-pm2 stop cron-traffic
-pm2 stop update-month-traffic
+pm2 stop v2ray-api
+pm2 stop v2ray-ui
+pm2 stop v2ray-cron
 
-pm2 start web.js --name=api
-pm2 start cron/cron.js --name=cron
-pm2 start cron/usages.js --name=cron-usages --cron="*/5 * * * *"
-pm2 start cron/traffic.js --name=cron-traffic
-pm2 start command/update-month-traffic.js --name=update-month-traffic --cron="*/5 * * * *"
-cd src-ui & pm2 start npm --name=ui -- run start
+pm2 start web.js --name=v2ray-api
+pm2 start cron/index.js --name=v2ray-cron
+
+if [[ $UI -ne false ]]; then
+    cd src-ui & pm2 start npm --name=v2ray-ui -- run start
+fi
+
+pm2 save
+pm2 startup

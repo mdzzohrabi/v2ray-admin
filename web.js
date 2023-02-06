@@ -4,7 +4,7 @@ const express = require('express');
 const { env } = require('process');
 const { Server } = require('socket.io');
 const { createServer } = require('http');
-const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser, restartService, findUser, setUserActive, writeConfig, deleteUser, log, readLines, watchFile, cache, applyChanges, readLogLines, readLogLinesByOffset, DateUtil, db } = require('./lib/util');
+const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser, restartService, findUser, setUserActive, writeConfig, deleteUser, log, readLines, watchFile, cache, applyChanges, readLogLines, readLogLinesByOffset, DateUtil, arrSync, db } = require('./lib/util');
 const { getTransactions, addTransaction, saveDb, readDb } = require('./lib/db');
 const { encrypt } = require('crypto-js/aes');
 
@@ -13,7 +13,7 @@ const encryptData = (data) => {
     return { encoded: encrypt(JSON.stringify(data), 'masoud').toString() }
 }
 
-let {showInfo} = createLogger();
+let {showInfo, showError} = createLogger();
 let app = express();
 let server = createServer(app);
 let socket = new Server(server, {
@@ -70,7 +70,130 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(express.json());
+app.use(express.json({
+    limit: '5mb'
+}));
+
+app.use('/api', async (req, res, next) => {
+
+    let { headers: { authorization } } = req;
+    
+    if (!authorization)
+        return res.status(401).json({ error: `Api Authentication required` });
+
+    let apiKey = Buffer.from(authorization?.split(' ')[1], 'base64').toString('utf-8');
+
+    res.locals.apiKey = apiKey;
+
+    /** @type {ServerNode[]} */
+    let serverNodes = await db('server-nodes');
+
+    let serverNode = serverNodes.find(x => x.apiKey == apiKey);
+
+    if (!serverNode)
+        return res.status(401).json({ error: 'Api Authentication failed' });
+
+    serverNode.lastConnectDate = new Date().toLocaleString();
+    serverNode.lastConnectIP = req.ip;
+
+    await db('server-nodes', serverNodes);
+
+    res.locals.serverNode = serverNode;
+
+    next();
+
+});
+
+
+app.post('/api/sync/transactions', async (req, res) => {
+    try {
+        let serverNodeId = res.locals.serverNode.id;       
+        let db = await readDb();
+
+        /** @type {Transaction[]} */
+        let newTransactions = [ ...(req.body ?? []) ];
+
+        /** @type {Transaction[]} */
+        let transactions = db.transactions ?? [];
+        let { result: syncResult, ...syncStats } = arrSync(transactions, newTransactions.map(x => {
+            x.serverNodeId = serverNodeId;
+            return x;
+        }), t => t.id, t => t.serverNodeId == serverNodeId, t => t.serverNodeId == serverNodeId);
+
+        transactions = syncResult;
+        db.transactions = transactions;
+        await saveDb(db);
+
+        res.json({ message: 'Transaction updated', ok: true, removed: syncStats.removed.length, inserted: syncStats.inserted.length, modified: syncStats.modified.length });
+    } catch (err) {
+        res.json({ ok: false, error: err?.message });
+        console.log(err);
+    }
+});
+
+app.post('/api/sync/user-usages', async (req, res) => {
+    try {
+        let serverNodeId = res.locals.serverNode.id;       
+        /** @type {UserUsages} */
+        let userUsages = await db('user-usages');
+
+        /** @type {UserUsages} */
+        let nodeUserUsages = req.body;
+
+        for (let user in nodeUserUsages) {
+            let usage = nodeUserUsages[user];
+            let local = userUsages[user];
+            if (!local) {
+                userUsages[user] = usage;
+            }
+            else {
+                if (usage.firstConnect && (!local.firstConnect || new Date(local.firstConnect) < new Date(usage.firstConnect) ))
+                    local.firstConnect = usage.firstConnect;
+
+                if (usage.lastConnect && (!local.lastConnect || new Date(local.lastConnect) < new Date(usage.lastConnect) )) {
+                    local.lastConnect = usage.lastConnect;
+                    local.lastConnectIP = usage.lastConnectIP;
+                }
+
+                let qouta = usage['quotaUsage_local'] || usage.quotaUsage;
+                
+                if (qouta) {
+                    if (local.quotaUsage && !local['quotaUsage_local']) {
+                        local['quotaUsage_local'] = local.quotaUsage;
+                    }
+
+                    local['quotaUsage_' + serverNodeId] = qouta;
+                    local['quotaUsageUpdate_' + serverNodeId] = usage.quotaUsageUpdate;
+
+                    local.quotaUsage = Object.keys(local).filter(x => x.startsWith('quotaUsage_')).map(x => local[x]).reduce((s, v) => s + v, 0);
+                }
+            }
+        }
+
+        await db('user-usages', userUsages);
+
+        res.json({ message: 'User usage updated', ok: true });
+    } catch (err) {
+        res.json({ ok: false, error: err?.message });
+        console.log(err);
+    }
+});
+
+app.get('/api/clients', (req, res) => {
+    try {
+        let { tag } = req.query;
+        let {configPath} = getPaths();
+        let config = readConfig(configPath);
+        
+        res.json({
+            clients: config?.inbounds?.find(x => x.tag == tag)?.settings?.clients ?? []
+        });
+    } catch (err) {
+        res.json({ ok: false, error: err?.message });
+        console.log(err);
+    }
+});
+
 
 app.use((req, res, next) => {
     if (!req.headers.authorization)
@@ -587,6 +710,101 @@ app.post('/add_days', async (req, res) => {
     } catch (err) {
         res.json({ error: err.message });
         console.error(err);
+    }
+});
+
+app.get('/nodes', async (req, res) => {
+    try {
+        /** @type {ServerNode[]} */
+        let nodes = await db('server-nodes') ?? [];
+
+        res.json(nodes);
+    }
+    catch (err) {
+        res.json({ error: err.message });
+        showError(err);
+    }
+});
+
+app.post('/nodes', async (req, res) => {
+    try {
+        /** @type {Partial<ServerNode>} */
+        let { address, type = 'client', sync = false, apiKey, name } = req.body;
+
+        /** @type {ServerNode[]} */
+        let nodes = await db('server-nodes') ?? [];
+
+        if (nodes.find(x => x.address == address)) {
+            res.json({ ok: false, error: 'This Node already exists' });
+            return;
+        }
+
+        nodes.push({
+            name,
+            id: randomUUID(),
+            apiKey: type == 'client' ? randomUUID() : apiKey ?? '',
+            address,
+            type,
+            sync
+        });
+
+        await db('server-nodes', nodes);
+
+        res.json({ ok: true, message: 'Server node added successful' });
+    }
+    catch (err) {
+        res.json({ error: err.message });
+        showError(err);
+    }
+});
+
+app.put('/nodes', async (req, res) => {
+    try {
+        /** @type {Partial<ServerNode>} */
+        let { id, type, address, sync, name, apiKey } = req.body;
+
+        /** @type {ServerNode[]} */
+        let nodes = await db('server-nodes') ?? [];
+
+        let node = nodes.find(x => x.id == id);
+
+        if (!node) {
+            res.json({ ok: false, error: 'Node not found' });
+            return;
+        }
+
+        node.name = name;
+        if (apiKey && type == 'server')
+            node.apiKey = apiKey;
+        node.address = address;
+        node.type = type;
+        node.sync = sync;
+
+        await db('server-nodes', nodes);
+
+        res.json({ ok: true, message: 'Node changed successful' });
+    }
+    catch (err) {
+        res.json({ error: err.message });
+        showError(err);
+    }
+});
+
+app.delete('/nodes', async (req, res) => {
+    try {
+        let { id } = req.body;
+        /** @type {ServerNode[]} */
+        let nodes = await db('server-nodes') ?? [];
+
+        nodes = nodes.filter(x => x.id != id);
+
+        await db('server-nodes', nodes);
+
+        res.json({ ok: true, message: 'Node removed successful' });
+    }
+    catch (err) {
+        res.json({ error: err.message });
+        showError(err);
     }
 });
 

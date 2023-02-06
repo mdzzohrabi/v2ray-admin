@@ -1,25 +1,30 @@
 // @ts-check
-const { execSync } = require("child_process");
-const { getPaths, parseArgumentsAndOptions, readConfig, createLogger, cache, db, log } = require("../lib/util");
+const { execSync, exec } = require("child_process");
+const { getPaths, createLogger, db, log } = require("../lib/util");
 
-const {
-    cliArguments: [],
-    cliOptions: {print = false, delay = 1, help = false}
-} = parseArgumentsAndOptions();
+/**
+ * Exec async
+ * @param {string} command Command
+ * @returns {Promise<string>}
+ */
+async function execAsync(command) {
+    return new Promise((done, reject) => {
+        exec(command, (err, stdout, stderr) => {
+            if (err) reject(err);
+            done(stdout ?? stderr);
+        });
+    })
+}
 
-let {showInfo, showError, showWarn} = createLogger();
+/**
+ * Cron Traffic Usage
+ * @param {import("./index").CronContext} cron Cron context
+*/
+async function cronTrafficUsage(cron) {
+    
+    let {showInfo, showError} = createLogger('[Traffic-Usage]');
 
-async function cronTrafficCommand() {
-
-    if (help) {
-        console.log(`V2Ray Cron Traffic help`);
-        console.log(`Options :`);
-        console.log(` --print               (only print result and dont make any changes, default: false)`);
-        console.log(` --delay               (cron timer delay in minutes, default: 1)`);
-        process.exit();
-    }
-
-    showInfo(`Start V2Rary Cron Traffic`);
+    showInfo(`Start`);
     
     let {v2ray} = getPaths();
 
@@ -44,7 +49,7 @@ async function cronTrafficCommand() {
             isNewDate = true;
         }
 
-        let stats = JSON.parse(execSync(`${v2ray} api stats -json -reset`).toString('utf-8'));
+        let stats = JSON.parse(await execAsync(`${v2ray} api stats -json -reset`));
         let intl = new Intl.DateTimeFormat('fa-IR', { month: 'numeric' });
 
         // New Date (Ignore stats from last day)
@@ -53,8 +58,8 @@ async function cronTrafficCommand() {
             stats.stat = [];
         }
 
-        if (print)
-            console.log(stats);
+        // if (print)
+        //     console.log(stats);
 
         // Stat items
         for (let item of stats.stat) {
@@ -81,34 +86,24 @@ async function cronTrafficCommand() {
                 if (usage.quotaUsageUpdate && intl.format(new Date(usage.quotaUsageUpdate)) != intl.format(new Date())) {
                     showInfo(`Reset Quota usage for user "${name}" on date "${new Date()}"`)
                     usage.quotaUsage = 0;
+                    usage.quotaUsage_local = 0;
                 }
 
                 // Update quota
-                usage.quotaUsage = (usage.quotaUsage ?? 0) + Number(value ?? 0);
+                usage.quotaUsage_local = (usage.quotaUsage ?? 0) + Number(value ?? 0);
+                usage.quotaUsage = Object.keys(usage).filter(x => x.startsWith('quotaUsage_')).map(x => usage[x]).reduce((s, v) => s + v, 0);
                 usage.quotaUsageUpdate = new Date().toString();
             }
         }
 
         await db('traffic-usages', trafficUsages);
         await db('user-usages', userUsage);
+        showInfo(`Complete`)
 
     } catch (err) {
         log(`Error during traffic update : ${err.message}`);
         showError(err);
     }
-
-    showInfo('Complete.');
-
 }
 
-async function runCron() {
-    showInfo(`Run traffic cron ${new Date().toLocaleString()}`);
-    try {
-        await cronTrafficCommand();
-    } finally {
-        if (delay > 0)
-            setTimeout(runCron, delay * 60 * 1000);
-    }
-}
-
-runCron();
+module.exports = { cronTrafficUsage };

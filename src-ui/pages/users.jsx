@@ -320,7 +320,7 @@ export default function UsersPage() {
             Loading ...
         </div> : null }
         <div className="">
-        <table className="w-full">
+        <table className="w-full border-separate border-spacing-0">
             <thead className="sticky top-0 xl:top-0 bg-white shadow-md z-40">
                 <tr className="bg-white">
                     <th className={classNames(headClass)}>#</th>
@@ -341,7 +341,7 @@ export default function UsersPage() {
                     let isCollapsed = !!collapsed[i.tag ?? ''];
                     return <Fragment key={"inbound-" + i.protocol + '-' + i.tag}>
                         <tr>
-                            <td colSpan={5} className="uppercase bg-slate-100 px-4 py-3 cursor-pointer" onClick={() => setCollapsed({ ...collapsed, [i.tag ?? '']: !isCollapsed })}>
+                            <td colSpan={5} className="uppercase bg-slate-100 px-4 py-3 cursor-pointer sticky top-[2.4rem] z-10 border-b-2" onClick={() => setCollapsed({ ...collapsed, [i.tag ?? '']: !isCollapsed })}>
                                 <div className="flex flex-row items-center">
                                     <span className="font-bold w-6 text-center py-0 mr-2 inline-block rounded-full bg-gray-300 text-lg select-none">{isCollapsed ? '+' : '-'}</span>
                                     <span className="font-bold">{i.tag}</span>

@@ -2,7 +2,11 @@
 
 import classNames from "classnames";
 import React, { useCallback, useState } from "react";
+import { useContext } from "react";
+import useSWR from "swr";
 import { styles } from "../../lib/styles";
+import { serverRequest } from "../../lib/util";
+import { AppContext } from "../app-context";
 import { Dialog } from "../dialog";
 import { Collection, Field, FieldObject, FieldsGroup } from "../fields";
 import { PopupMenu } from "../popup-menu";
@@ -15,11 +19,20 @@ import { Table } from "../table";
  */
 export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }) {
     let [inbound, setInbound] = useState({...inboundProp});
+    let context = useContext(AppContext);
+
     let ok = useCallback((/** @type {import("react").FormEvent} */ e) => {
         e?.preventDefault();
         onEdit(inboundProp, inbound);
         dissmis();
     }, [onEdit, inbound, dissmis, inboundProp]);
+
+    /**
+     * @type {import("swr").SWRResponse<ServerNode[]>}
+     */
+    let {data: nodes} = useSWR('/nodes', serverRequest.bind(this, context?.server));
+
+    console.log(nodes, context);
 
     return <Dialog onClose={dissmis} onSubmit={ok} title="Inbound">
         <FieldsGroup data={inbound} dataSetter={setInbound}>
@@ -122,6 +135,17 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }) {
                 </Field>
                 <Field label="Port" htmlFor="port">
                     <input type={"number"} id="port" className={styles.input}/>
+                </Field>
+            </div>
+            <div className="flex flex-row pt-2">
+                <Field label="Users Server Node" htmlFor="usersServerNode" className="flex-1">
+                    <select id="usersServerNode" className={styles.input}>
+                        <option value={''}>-</option>
+                        {nodes?.filter(x => x.type == 'server')?.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}
+                    </select>
+                </Field>
+                <Field label="Mirror Inbound (tag)" htmlFor="mirrorInbound">
+                    <input type="text" id="mirrorInbound" className={styles.input} disabled={!inbound?.usersServerNode}/>
                 </Field>
             </div>
             {/* {inbound?.protocol == 'vmess' || inbound?.protocol == 'vless' ?

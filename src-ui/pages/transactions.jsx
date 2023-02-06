@@ -129,32 +129,16 @@ export default function TransactionsPage() {
             return { ...t, remain };
         })
         ?.filter(u => !view.user || u.user == view.user)
-        ?.sort(arrSort(view.sortColumn, view.sortOrder == 'asc'));
+        ?.sort(arrSort(view.sortColumn, view.sortOrder == 'asc', value => {
+            if (view.sortColumn == 'createDate')
+                return new Date(value);
+            return value;
+        }));
 
     return <Container>
         <Head>
             <title>Transactions</title>
         </Head>
-        {/* {showAll ?
-        <form onSubmit={addTransaction}>
-            <FieldsGroup title="Add Transaction" className="mt-2 border-b-[1px] pb-3" horizontal={false} data={newTransaction} dataSetter={setNewTransaction}>
-                <Field label={"User"} htmlFor="user">
-                    <select className={styles.input} id="user">
-                        <option value="">-</option>
-                        {(users ?? []).map((client, index) => <option key={index} value={client}>{client}</option>)}
-                    </select>
-                </Field>
-                <Field label={"Description"} htmlFor="remark">
-                    <input className={styles.input} id="remark" dir="rtl"/>
-                </Field>
-                <Field label={"Amount"} htmlFor="amount">
-                    <input className={styles.input} id="amount" type={"text"}/>
-                </Field>
-                <Field label="-">
-                    <button type={"submit"} className={styles.button}>Add Transaction</button>
-                </Field>
-            </FieldsGroup>
-        </form> : null } */}
         <div className="flex flex-col lg:flex-col">
             <FieldsGroup title="Billing" horizontal className="border-b-[1px] lg:border-b-0">
                 <Field label="UnPaid" className="rounded-lg bg-red-100 px-4 items-center align-middle whitespace-nowrap">
@@ -208,10 +192,10 @@ export default function TransactionsPage() {
         <Table
             className="border-separate border-spacing-0"
             rows={transactions ?? []}
-            columns={[ 'ID', 'User', 'Remark', 'Debt', 'Paid', 'Remain', 'Dates', 'Actions' ]}
+            columns={[ 'User', 'Remark', 'Debt', 'Paid', 'Remain', 'Dates', 'Actions' ]}
             groupBy={t => !view.group ? null : t.createDate ? new Intl.DateTimeFormat('fa-IR', { month: 'long', year: 'numeric' }).format(new Date(t.createDate)) : null}
             group={monthName => <tr>
-                <td onClick={() => setExpanded({ ...expanded, [monthName]: !expanded[monthName] })} className="cursor-pointer py-2 px-6 text-lg font-bold sticky z-10 bg-zinc-50 top-[1.8rem] xl:top-[4.8rem] border-b-2 border-t-2 border-t-gray-400" colSpan={9}>
+                <td onClick={() => setExpanded({ ...expanded, [monthName]: !expanded[monthName] })} className="cursor-pointer py-2 px-6 text-lg font-bold sticky z-10 bg-zinc-50 top-[1.8rem] xl:top-[1.8rem] border-b-2 border-t-2 border-t-gray-400" colSpan={9}>
                     <span className="font-bold w-7 text-center py-0 mr-4 inline-block rounded-full bg-gray-200 text-lg select-none text-gray-500">{expanded[monthName] ? '-' : '+'}</span>
                     {monthName}
                 </td>
@@ -230,8 +214,6 @@ export default function TransactionsPage() {
             }
             rowContainer={(row, elRow, group) => !view.group || expanded[group] ? elRow :  null}
             cells={t => [
-                // ID
-                t.id,
                 // User
                 <Editable value={t.user} editable={showAll} onEdit={value => editTransaction(t, 'user', value)}>{t.user ?? '-'}</Editable>,
                 // Remark
@@ -260,7 +242,7 @@ export default function TransactionsPage() {
                 <DateView containerClassName="text-center" precision={true} full={view.fullTime} date={t.createDate}/>,
                 // Action
                 <PopupMenu text="Actions">
-                    {showAll?<PopupMenu.Item action={() => prompt(`Do you want to remove transaction ${t.id} ?`, `Remove`, () => removeTransaction(t))}>Delete</PopupMenu.Item>:null}
+                    {showAll?<PopupMenu.Item action={() => prompt(`Do you want to remove transaction "${t.remark}" ?`, `Remove`, () => removeTransaction(t))}>Delete</PopupMenu.Item>:null}
                 </PopupMenu>
             ]}
         />

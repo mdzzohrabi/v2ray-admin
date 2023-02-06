@@ -9,7 +9,7 @@ const {
 
 let {showInfo, showError, showWarn} = createLogger();
 
-async function cronTrafficCommand() {
+async function cronNetworkMonitor() {
 
     if (help) {
         console.log(`Cron Network Monitoring`);
@@ -28,7 +28,7 @@ async function cronTrafficCommand() {
 async function runNetworkMonitorCron() {
     showInfo(`Run network monitor test on ${new Date().toLocaleString()}`);
     try {
-        await cronTrafficCommand();
+        await cronNetworkMonitor();
     } finally {
         if (delay > 0)
             setTimeout(runNetworkMonitorCron, delay * 60 * 1000);

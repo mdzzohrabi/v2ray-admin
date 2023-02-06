@@ -1,3 +1,4 @@
+// @ts-check
 
 interface V2RayConfig {
     log?: V2RayConfigLog,
@@ -8,6 +9,12 @@ interface V2RayConfig {
     outbounds?: V2RayConfigOutbound[]
     policy?: V2RayConfigPolicy
     stats?: {}
+    nodes?: V2RayNode[]
+}
+
+interface V2RayNode {
+    apiKey?: string
+    name?: string
 }
 
 interface V2RayConfigPolicy {
@@ -48,6 +55,8 @@ interface V2RayConfigInboundClient {
     private?: boolean
     free?: boolean
     quotaLimit?: number
+    serverNode?: string
+    serverNodeInbound?: string
 }
 
 interface V2RayConfigInboundSettings {
@@ -78,6 +87,8 @@ interface V2RayConfigInbound {
     tag?: string,
     sniffing?: V2RayConfigInboundSiffingObject
     allocate?: any
+    usersServerNode?: string
+    mirrorInbound?: string
 }
 
 interface V2RayConfigInboundSiffingObject {
@@ -208,12 +219,13 @@ interface V2RayConfigRoutingRule {
 }
 
 interface Transaction {
-    id?: number
+    id?: string
     user?: string
     remark?: string
     amount?: number
     createDate?: string
     creator?: string
+    serverNodeId?: string
 }
 
 interface V2RayDb {
@@ -245,10 +257,23 @@ interface UserUsage {
     firstConnect?: string
     lastConnect?: string
     quotaUsage?: number
+    quotaUsage_local?: number
     quotaUsageUpdate?: string
     lastConnectIP?: string
 }
 
 interface UserUsages {
     [user?: string]: UserUsage
+}
+
+interface ServerNode {
+    id?: string
+    name?: string
+    type?: 'client' | 'server'
+    address?: string
+    apiKey: string
+    lastConnectDate?: string
+    lastConnectIP?: string
+    lastSyncDate?: string
+    sync?: boolean
 }
