@@ -90,7 +90,7 @@ async function cronTrafficUsage(cron) {
                 }
 
                 // Update quota
-                usage.quotaUsage_local = (usage.quotaUsage ?? 0) + Number(value ?? 0);
+                usage.quotaUsage_local = (usage.quotaUsage_local ?? 0) + Number(value ?? 0);
                 usage.quotaUsage = Object.keys(usage).filter(x => x.startsWith('quotaUsage_')).map(x => usage[x]).reduce((s, v) => s + v, 0);
                 usage.quotaUsageUpdate = new Date().toString();
             }
