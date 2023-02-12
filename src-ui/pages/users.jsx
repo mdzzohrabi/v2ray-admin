@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import useSWR from 'swr';
 import { AddUser } from "../components/add-user";
 import { AppContext } from "../components/app-context";
+import { ClientConfig } from "../components/client-config";
 import { Container } from "../components/container";
 import { Copy } from "../components/copy";
 import { DateView } from "../components/date-view";
@@ -184,6 +185,11 @@ export default function UsersPage() {
 
     const copyUserDialog = useDialog((context, inbounds, currentInbound, user, onEdit, onClose = null) => <CopyUserEditor context={context} inbounds={inbounds} currentInbound={currentInbound} user={user} onEdit={onEdit} dissmis={onClose}/>);
 
+    const clientConfigDialog = useDialog((user, tag, onClose = null) => <ClientConfig
+        onClose={onClose}
+        user={user}
+        tag={tag}
+    />)
 
     const exportExcel = useCallback(() => {
         console.log('Export Excel');
@@ -457,6 +463,7 @@ export default function UsersPage() {
                                 </td>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3">
                                     <PopupMenu>
+                                        <PopupMenu.Item action={() => clientConfigDialog.show(u, i.tag)}>Client Config</PopupMenu.Item>
                                         <PopupMenu.Item action={() => showQRCode(i.tag, u)}>QR Code</PopupMenu.Item>
                                         <PopupMenu.Item>
                                             <Copy className="block text-inherit" notifyText={`User "${u.email}" ID copied`} data={u.id}>Copy User ID</Copy>

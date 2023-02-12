@@ -195,6 +195,29 @@ app.get('/api/clients', (req, res) => {
     }
 });
 
+app.post('/api/user_inbounds', async (req, res) => {
+    /** @type {V2RayConfigInboundClient} */
+    let user = req.body;
+    if (!user || !user.id || !user.email) return res.status(500).json({ error: 'Invalid request' });
+    let {configPath} = getPaths();
+    let config = readConfig(configPath);
+    let inbounds = config?.inbounds?.filter(x => !!x.settings?.clients?.find(u => u.email == user.email));
+    res.json(inbounds?.map(x => x.tag) ?? []);
+});
+
+
+app.post('/api/client_config', async (req, res) => {
+    /** @type {V2RayConfigInboundClient} */
+    let user = req.body;
+    let tag = req.query.tag?.toString();
+
+    if (!user || !user.id || !user.email || !tag) return res.status(500).json({ error: 'Invalid request' });
+
+    let {strClientConfig} = await getUserConfig(user, tag);
+
+    res.json({ config: strClientConfig });
+});
+
 
 app.use((req, res, next) => {
     if (!req.headers.authorization)
