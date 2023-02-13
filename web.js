@@ -83,6 +83,9 @@ app.use('/api', async (req, res, next) => {
 
     let apiKey = Buffer.from(authorization?.split(' ')[1], 'base64').toString('utf-8');
 
+    if (apiKey == env.WEB_TOKEN)
+        return next();
+
     res.locals.apiKey = apiKey;
 
     /** @type {ServerNode[]} */

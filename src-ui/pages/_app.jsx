@@ -7,14 +7,14 @@ import '../styles/globals.scss';
 
 function MyApp({ Component, pageProps }) {
   return <AppContextContainer>
+        <SWRConfig value={{ revalidateOnFocus: false }}>
         <DialogsContainer>
-          <SWRConfig value={{ revalidateOnFocus: false }}>
           <CheckConfig>
             <Component {...pageProps} />
           </CheckConfig>
           <Toaster/>
-          </SWRConfig>
       </DialogsContainer>
+      </SWRConfig>
   </AppContextContainer> 
 }
 
