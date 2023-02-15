@@ -83,6 +83,8 @@ async function cronSync(cron) {
                 }
                 await db('server-nodes', serverNodesToUpdate);
 
+                let localCount = inbound?.settings?.clients?.length ?? 0;
+
                 let localClients = inbound.settings?.clients ?? [];
                 for (let client of clients) {
                     // Ignore de-active users
@@ -96,12 +98,17 @@ async function cronSync(cron) {
 
                 localClients = localClients.filter(client => {
                     if (client.serverNode != serverNode?.id) return true;
-                    return localClients.some(x => x.email == client.email && !x.deActiveDate)
+                    return clients.some(x => x.email == client.email && !x.deActiveDate)
                 });
 
                 if (!inbound.settings) inbound.settings = {};
 
                 inbound.settings.clients = localClients;
+
+                // Restart Service if Client count changed
+                if (inbound?.settings?.clients?.length ?? 0 != localCount) {
+                    cron.needRestartService = true;
+                }
 
             } catch (e) {
                 showError(e?.message);
