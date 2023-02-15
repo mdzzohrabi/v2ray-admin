@@ -491,7 +491,7 @@ app.post('/inbounds', async (req, res) => {
 
     let {configPath, accessLogPath} = getPaths();
     let {view, private} = req.body;
-    let {sortColumn, sortAsc, filter, statusFilter, showId, fullTime, precision, page = 1, limit = 20} = view;
+    let {sortColumn, sortAsc, filter, statusFilter, serverNode, showId, fullTime, precision, page = 1, limit = 20} = view;
 
     let config = readConfig(configPath);
 
@@ -530,6 +530,7 @@ app.post('/inbounds', async (req, res) => {
         
         let filtered = users
             .filter(u => !filter || (u.id == filter || u['lastConnectIP'] == filter || u['lastConnectNode'] == filter || u.fullName?.toLowerCase().includes(filter.toLowerCase()) || u.email?.toLowerCase().includes(filter.toLowerCase())))
+            .filter(u => !serverNode ? true : serverNode == 'local' ? !u['lastConnectNode'] || u['lastConnectNode'] == 'local' : u['lastConnectNode'] == serverNode)
             .filter(u => statusFilter.length == 0 || statusFilter.map(filter => statusFilters[filter]).every(filter => filter(u)))
             .sort((a, b) => !sortColumn ? 0 : a[sortColumn] == b[sortColumn] ? 0 : a[sortColumn] < b[sortColumn] ? (sortAsc ? -1 : 1) : (sortAsc ? 1 : -1))
         ;

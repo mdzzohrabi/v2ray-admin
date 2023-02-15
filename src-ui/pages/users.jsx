@@ -252,6 +252,13 @@ export default function UsersPage() {
         </Head>
         <AddUser className="py-2" disabled={isLoading} onRefresh={refreshInbounds} inbounds={inbounds ?? []}/>
         <FieldsGroup data={view} dataSetter={setView} title="View" className="border-t-2 py-2" containerClassName="items-center">
+            <Field label="Node" htmlFor="serverNode">
+                <select id="serverNode" className={styles.input}>
+                    <option value="">All</option>
+                    <option value="local">local</option>
+                    {nodes?.map(x => <option value={x.id}>{x.name}</option>)}
+                </select>
+            </Field>
             <Field label="Inbounds" htmlFor="inbounds">
                 <div className="flex gap-1 mb-1">
                     {view.inbounds?.map((filter, index) => <span key={index} onClick={() => setView({ ...view, inbounds: view.inbounds.filter(x => x != filter)})} className={classNames("whitespace-nowrap bg-slate-200 px-3 py-1 rounded-3xl cursor-pointer hover:bg-slate-700 hover:text-white")}>{filter}</span> )}
