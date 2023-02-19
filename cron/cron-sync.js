@@ -1,6 +1,7 @@
 // @ts-check
 const { getTransactions } = require("../lib/db");
 const { readConfig, getPaths, db, createLogger, writeConfig } = require("../lib/util");
+const { equals } = require("../src-ui/lib/util");
 
 /**
  * 
@@ -83,19 +84,43 @@ async function cronSync(cron) {
                 }
                 await db('server-nodes', serverNodesToUpdate);
 
-                let localCount = inbound?.settings?.clients?.length ?? 0;
-
+                // Local Clients
                 let localClients = inbound.settings?.clients ?? [];
+
+                // Local Clients counter
+                let localCount = localClients.length;
+
+                // Iterate over remote fetched clients
                 for (let client of clients) {
                     // Ignore de-active users
                     if (!!client.deActiveDate) continue;
-                    if (localClients.some(x => x.email == client.email)) continue;
-                    client.serverNode = inbound.usersServerNode;
-                    client.serverNodeInbound = inbound.mirrorInbound;
-                    localClients.push(client);
-                    cron.needRestartService = true;
+
+                    // Find if client exists
+                    let localClient = localClients.find(x => x.email == client.email);
+
+                    // Insert new
+                    if (!localClient) {
+                        client.serverNode = inbound.usersServerNode;
+                        client.serverNodeInbound = inbound.mirrorInbound;
+                        localClients.push(client);
+                        // Restart service
+                        cron.needRestartService = true;
+                    }
+                    // Update client
+                    else if (localClient.serverNode == inbound.usersServerNode && localClient.serverNodeInbound == inbound.mirrorInbound) {
+                        let localIndex = localClients.indexOf(localClient);
+                        // Check if client changed
+                        if (localIndex >= 0) {
+                            localClients[localIndex] = client;
+                            // Restart service only if user-id was changed
+                            if (localClient?.id != client?.id) {
+                                cron.needRestartService = true;
+                            }
+                        }
+                    }
                 }
 
+                // Remove removed or de-activated clients
                 localClients = localClients.filter(client => {
                     if (client.serverNode != serverNode?.id) return true;
                     return clients.some(x => x.email == client.email && !x.deActiveDate)
