@@ -1,7 +1,6 @@
 // @ts-check
 const { getTransactions } = require("../lib/db");
 const { readConfig, getPaths, db, createLogger, writeConfig } = require("../lib/util");
-const { equals } = require("../src-ui/lib/util");
 
 /**
  * 
