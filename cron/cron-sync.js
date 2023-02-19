@@ -46,7 +46,7 @@ async function cronSync(cron) {
     let tempConfig = readConfig(configPath);
 
     /** @type {ServerNode[]} */
-    let serverNodes = await db('server-nodes');
+    let serverNodes = await db('server-nodes') ?? [];
 
     if (!serverNodes) {
         showInfo(`No server nodes defined`);
@@ -76,7 +76,7 @@ async function cronSync(cron) {
                 let clients = result.clients ?? [];
 
                 /** @type {ServerNode[]} */
-                let serverNodesToUpdate = await db('server-nodes');
+                let serverNodesToUpdate = await db('server-nodes') ?? [];
                 let node = serverNodesToUpdate.find(x => x.id == serverNode?.id);
                 if (node) {
                     node.lastConnectDate = new Date().toLocaleString();
