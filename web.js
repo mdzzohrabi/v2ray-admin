@@ -89,7 +89,7 @@ app.use('/api', async (req, res, next) => {
     res.locals.apiKey = apiKey;
 
     /** @type {ServerNode[]} */
-    let serverNodes = await db('server-nodes');
+    let serverNodes = await db('server-nodes') ?? [];
 
     let serverNode = serverNodes.find(x => x.apiKey == apiKey);
 
@@ -138,7 +138,7 @@ app.post('/api/sync/user-usages', async (req, res) => {
     try {
         let serverNodeId = res.locals.serverNode.id;       
         /** @type {UserUsages} */
-        let userUsages = await db('user-usages');
+        let userUsages = await db('user-usages') ?? {};
 
         /** @type {UserUsages} */
         let nodeUserUsages = req.body;

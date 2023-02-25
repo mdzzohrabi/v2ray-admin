@@ -1,0 +1,86 @@
+restoreDir=__restored
+configDir=/usr/local/etc/v2ray
+
+while getopts h:f:c:r: flag; do
+    case $flag in
+        h) commitHash=${OPTARG};;
+        f) file=${OPTARG};;
+        c) configDir=${OPTARG};;
+        r) repo=${OPTARG};;
+    esac
+done
+
+# Argument validation
+if [ -z "$repo" ]; then
+    echo "Please give backup repository address as first argument"
+    exit
+fi
+
+if [[ -d $restoreDir ]]; then
+    echo "Cleanup old restored files"
+    rm -rf $restoreDir
+fi
+
+echo "Backup repository : $repo"
+[[ ! -z "$commitHash" ]] && echo "Commit to Checkout : $commitHash"
+[[ ! -z "$file" ]] && echo "File to restore : $file"
+
+# Clone backup repository
+echo "Clone backup repository into \"$restoreDir\" directory"
+git clone --depth 1 $repo $restoreDir
+
+# Checkout commit
+if [ ! -z "$commitHash" ]; then
+    cd $restoreDir
+    echo "Check out commit \"$commitHash\""
+    git checkout $commitHash
+    cd ../
+fi
+
+declare -A files
+
+files=(
+    ["config.json"]="$configDir/config.json"
+    ["db/db.json"]="db/db.json"
+    ["db/daily-usages.json"]="db/daily-usages.json"
+    ["db/server-nodes.json"]="db/server-nodes.json"
+    ["db/traffic-usages.json"]="db/traffic-usages.json"
+    ["db/user-usages.json"]="db/user-usages.json"
+)
+
+restore() {
+    local key="$1"
+    if [ ! -v files[$key] ]; then
+        echo "No restorable file \"$file\" found"
+        exit 1
+    fi
+    local dest=${files[$key]}
+    local src=$restoreDir/$key
+    echo "Restore \"$src\" to \"$dest\""
+    local dirName=$(dirname $dest)
+    if [ ! -d $dirName ]; then
+        echo "Make directory \"$dirName\""
+        mkdir -p $dirName
+    fi
+    cp $src $dest
+}
+
+if [ -z "$file" ]; then
+    echo "Restore all"
+    for item in "${!files[@]}"; do
+        restore $item
+    done
+else
+    restore $file
+fi
+
+# Cleanup
+echo "Cleanup"
+rm -rf $restoreDir
+
+# cd /usr/local/etc/v2ray
+# cp /home/v2ray-admin/db/* db
+# git add db/*
+# git add config.json
+# git commit -m "update"
+# git push origin master
