@@ -37,7 +37,9 @@ download_speed=${download_speed%.*}
 
 if [[ "$download_speed" -le "$low_speed" ]]; then
     echo "Download speed is very low ($fmt_download_speed)"
-    echo "Download speed is very low ($fmt_download_speed) at server '$server'" | mail -s "Download speed of server '$server' is '$fmt_download_speed'" mdzzohrabi@gmail.com
+    if [ ! -z $mail ]; then
+        echo "Download speed is very low ($fmt_download_speed) at server '$server'" | mail -s "Download speed of server '$server' is '$fmt_download_speed'" $mail
+    fi
 else
     echo "Download speed is good ($fmt_download_speed)"
 fi
