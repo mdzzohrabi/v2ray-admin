@@ -1,6 +1,6 @@
 // @ts-check
 const { execSync, exec } = require("child_process");
-const { getPaths, createLogger, db, log } = require("../lib/util");
+const { getPaths, createLogger, db, log, readConfig } = require("../lib/util");
 
 /**
  * Exec async
@@ -68,12 +68,17 @@ async function cronTrafficUsage(cron) {
             if (!itemName.includes('>>>')) continue;
             let [type, name, , direction] = itemName.split('>>>');
 
-            let node = trafficUsages[date].find(x => x.type == type && x.name == name && x.direction == direction);
+            // Find traffic usage node
+            let node = trafficUsages[date].find(x => (x.server == 'local' || !x.server) && x.type == type && x.name == name && x.direction == direction);
 
+            // Create traffic usage node
             if (!node) {
-                node = { name, type, direction, traffic: 0 };
+                node = { name, type, direction, traffic: 0, server: 'local' };
                 trafficUsages[date].push(node);
             }
+            
+            if (!node.server)
+                node.server = 'local';
 
             node.traffic = node.traffic + Number(value ?? 0);
 
@@ -94,6 +99,45 @@ async function cronTrafficUsage(cron) {
                 usage.quotaUsage = Object.keys(usage).filter(x => x.startsWith('quotaUsage_')).map(x => usage[x]).reduce((s, v) => s + v, 0);
                 usage.quotaUsageUpdate = new Date().toString();
             }
+        }
+
+        /****** Calculating Traffic Usage after Billing Date ******/
+
+        let config = readConfig(getPaths().configPath);
+        let clients = config?.inbounds?.flatMap(x => x.settings?.clients) ?? [];
+        /** @type {{ [user: string]: string }} */
+        let billingDates = {};
+        /** @type {{ [user: string]: number }} */
+        let trafficSum = {};
+        
+        // User billing dates
+        clients.forEach(x => {
+            if (x?.email && x.billingStartDate)
+                billingDates[x?.email] = x?.billingStartDate;
+        });
+
+        // Update user traffic usage from billing date
+        for (let date in trafficUsages) {
+            let usages = trafficUsages[date];
+            // Iterate over day usages
+            for (let usage of usages) {
+                // Only users
+                if (usage.type != 'user') continue;
+                let billingDate = billingDates[usage.name];
+                // User not found
+                if (!billingDate) continue;
+
+                // Ignore prev days before billing date
+                if (new Date(billingDate) < new Date(date)) continue;
+
+                // Sum traffic usage
+                trafficSum[usage.name] = (trafficSum[usage.name] ?? 0) + usage.traffic;
+            }
+        }
+
+        // Traffic usages after billing date
+        for (let user in trafficSum) {
+            userUsage[user].quotaUsageAfterBilling = trafficSum[user];
         }
 
         await db('traffic-usages', trafficUsages);

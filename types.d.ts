@@ -250,7 +250,7 @@ interface Change {
 }
 
 interface TrafficUsages {
-    [date: string]: { name: string, direction: string, type: string, traffic: number }[]
+    [date: string]: { name: string, direction: string, type: string, traffic: number, server: string }[]
 }
 
 interface UserUsage {
@@ -258,6 +258,7 @@ interface UserUsage {
     lastConnect?: string
     lastConnectNode?: string
     quotaUsage?: number
+    quotaUsageAfterBilling?: number
     quotaUsage_local?: number
     quotaUsageUpdate?: string
     lastConnectIP?: string

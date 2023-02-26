@@ -41,6 +41,9 @@ const statusFilters = {
     'Not Connected (10 Hours)': u => !u['lastConnect'] || (Date.now() - new Date(u['lastConnect']).getTime() >= 1000 * 60 * 60 * 10),
     'Not Connected (1 Day)': u => !u['lastConnect'] || (Date.now() - new Date(u['lastConnect']).getTime() >= 1000 * 60 * 60 * 24),
     'Not Connected (1 Month)': u => !u['lastConnect'] || (Date.now() - new Date(u['lastConnect']).getTime() >= 1000 * 60 * 60 * 24 * 30),
+    'Connected (1 Minutes)': u => !!u['lastConnect'] && (Date.now() - new Date(u['lastConnect']).getTime() <= 1000 * 60 * 1),
+    'Connected (2 Minutes)': u => !!u['lastConnect'] && (Date.now() - new Date(u['lastConnect']).getTime() <= 1000 * 60 * 2),
+    'Connected (5 Minutes)': u => !!u['lastConnect'] && (Date.now() - new Date(u['lastConnect']).getTime() <= 1000 * 60 * 5),
     'Connected (1 Hour)': u => !!u['lastConnect'] && (Date.now() - new Date(u['lastConnect']).getTime() <= 1000 * 60 * 60),
     'Connected (10 Hours)': u => !!u['lastConnect'] && (Date.now() - new Date(u['lastConnect']).getTime() <= 1000 * 60 * 60 * 10),
     'Connected (1 Day)': u => !!u['lastConnect'] && (Date.now() - new Date(u['lastConnect']).getTime() <= 1000 * 60 * 60 * 24),
@@ -128,6 +131,47 @@ app.post('/api/sync/transactions', async (req, res) => {
         await saveDb(db);
 
         res.json({ message: 'Transaction updated', ok: true, removed: syncStats.removed.length, inserted: syncStats.inserted.length, modified: syncStats.modified.length });
+    } catch (err) {
+        res.json({ ok: false, error: err?.message });
+        console.log(err);
+    }
+});
+
+
+app.post('/api/sync/traffic-usages', async (req, res) => {
+    try {
+        let serverNodeId = res.locals.serverNode.id;       
+        /** @type {TrafficUsages} */
+        let localTrafficUsages = await db('traffic-usages') ?? {};
+
+        /** @type {TrafficUsages} */
+        let remoteTrafficUsages = req.body;
+
+        for (let remoteDate in remoteTrafficUsages) {
+            let remoteUsages = remoteTrafficUsages[remoteDate];
+
+            // Create local date
+            if (!localTrafficUsages[remoteDate]) {
+                localTrafficUsages[remoteDate] = [];
+            }
+
+            let localUsages = localTrafficUsages[remoteDate];
+
+            for (let remoteUsage of remoteUsages) {
+                remoteUsage.server = serverNodeId;
+                let localIndex = localUsages.findIndex(x => x.type == remoteUsage.type && x.name == remoteUsage.name && x.direction == remoteUsage.direction && x.server == remoteUsage.server);
+                // Update
+                if (localIndex >= 0)
+                    localUsages[localIndex] = remoteUsage;
+                // Insert
+                else
+                    localUsages.push(remoteUsage);
+            }
+        }
+
+        await db('traffic-usages', localTrafficUsages);
+
+        res.json({ message: 'Traffic usages updated', ok: true });
     } catch (err) {
         res.json({ ok: false, error: err?.message });
         console.log(err);

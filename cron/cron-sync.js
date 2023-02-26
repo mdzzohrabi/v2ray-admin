@@ -1,4 +1,5 @@
 // @ts-check
+const { env } = require("process");
 const { getTransactions } = require("../lib/db");
 const { readConfig, getPaths, db, createLogger, writeConfig } = require("../lib/util");
 
@@ -174,12 +175,37 @@ async function cronSync(cron) {
         }
     }
 
-    // Sync usages
-    let userUsages = await db('user-usages');
+    /**
+     * Update user usages
+     * @type {UserUsages}
+     */
+    let userUsages = await db('user-usages') ?? {};
     for (let server of syncServers) {
         try {
             showInfo(`Upload user usages to "${server.name}"`)
             let result = await request(server, '/api/sync/user-usages', 'POST', userUsages);
+            showInfo(result?.message);
+        }
+        catch (err) {
+            showError(err?.message);
+        }
+    }
+
+    /**
+     * Update traffic usages
+     * @type {TrafficUsages}
+     */
+    let trafficUsages = await db('traffic-usages') ?? {};
+
+    if (env.SYNC_ALL_DAYS != 'true') {
+        let date = new Date().toLocaleDateString();
+        trafficUsages = { [date]: trafficUsages[date] ?? [] };
+    }
+
+    for (let server of syncServers) {
+        try {
+            showInfo(`Upload traffic usages to "${server.name}"`)
+            let result = await request(server, '/api/sync/traffic-usages', 'POST', trafficUsages);
             showInfo(result?.message);
         }
         catch (err) {
