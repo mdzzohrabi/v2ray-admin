@@ -110,6 +110,8 @@ async function cronSync(cron) {
                         let localIndex = localClients.indexOf(localClient);
                         // Check if client changed
                         if (localIndex >= 0) {
+                            client.serverNode = inbound.usersServerNode;
+                            client.serverNodeInbound = inbound.mirrorInbound;
                             localClients[localIndex] = client;
                             // Restart service only if user-id was changed
                             if (localClient?.id != client?.id) {
