@@ -1,0 +1,43 @@
+file="http://78.47.37.253:8080/1GB.bin"
+server=MyServer
+verbose="-qs"
+one_mb=1048576
+low_speed=$(expr 5 \* $one_mb)
+limit=$(expr 100 \* $one_mb)
+
+while getopts :m:f:s:p:v:l: args; do
+    case $args in
+        m) mail=${OPTARG};;
+        f) file=${OPTARG};;
+        s) server=${OPTARG};;
+        p) proxy=${OPTARG};;
+        v) verbose="";;
+        l) limit=$(expr $one_mb \* ${OPTARG})
+    esac
+done
+
+echo "Monitor Server Download Speed"
+
+[ ! -z $proxy ] && echo "Proxy : $proxy"
+
+[ ! -z $mail ] && echo "Send Report to '$mail'"
+
+echo "Download file from : '$file'"
+
+# Only 100Mb
+if [ -z $proxy ]; then
+    download_speed=$(curl $verbose --url $file -o /dev/null -r 0-$limit -w "%{speed_download}")
+else
+    download_speed=$(curl $verbose --url $file -o /dev/null -r 0-$limit -w "%{speed_download}" -x $proxy)
+fi
+
+fmt_download_speed=$(numfmt --to=iec-i --suffix=B --format="%.3f" $download_speed)
+
+download_speed=${download_speed%.*}
+
+if [[ "$download_speed" -le "$low_speed" ]]; then
+    echo "Download speed is very low ($fmt_download_speed)"
+    echo "Download speed is very low ($fmt_download_speed) at server '$server'" | mail -s "Download speed of server '$server' is '$fmt_download_speed'" mdzzohrabi@gmail.com
+else
+    echo "Download speed is good ($fmt_download_speed)"
+fi
