@@ -562,6 +562,7 @@ app.post('/inbounds', async (req, res) => {
             user['lastConnectNode'] = usage?.lastConnectNode;
             user['lastConnectIP'] = usage?.lastConnectIP;
             user['quotaUsage'] = usage?.quotaUsage;
+            user['quotaUsageAfterBilling'] = usage?.quotaUsageAfterBilling;
             user['quotaUsageUpdate'] = usage?.quotaUsageUpdate;
             user.expireDays = user.expireDays || Number(env.V2RAY_EXPIRE_DAYS) || 30;
             user.maxConnections = user.maxConnections || Number(env.V2RAY_MAX_CONNECTIONS) || 3;

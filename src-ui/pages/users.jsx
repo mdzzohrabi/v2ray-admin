@@ -425,6 +425,9 @@ export default function UsersPage() {
                                                 <Size size={u['quotaUsage'] ?? 0}/> / {u.quotaLimit && u.quotaLimit > 0 ? <Size size={u.quotaLimit ?? 0}/> : '∞' }
                                             </Editable>
                                         </Info>
+                                        <Info label={'Bandwidth (After Billing Date)'}>
+                                            <Size size={u['quotaUsageAfterBilling'] ?? 0}/>
+                                        </Info>
                                         <Info label={'Last Connected IP'}>
                                             {u['lastConnectIP'] ?? '-'}
                                             {u['lastConnectIP'] ? <a target={'_blank'} className={classNames(styles.link, 'pl-1')} href={`https://whatismyipaddress.com/ip/${u['lastConnectIP']}`}>(Info)</a> : null}
