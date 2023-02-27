@@ -128,7 +128,7 @@ export default function TrafficUsagePage() {
                 <input type={"text"} id="filter" className={styles.input}/>
             </Field>
             <Field label="Select Top" htmlFor="top">
-                <input type={"number"} id="top" className={styles.input}/>
+                <input type={"number"} id="top" width={4} className={styles.input}/>
             </Field>
             <Field label="Zero Traffic" htmlFor="zeroTraffic">
                 <input type={"checkbox"} id="zeroTraffic" className={styles.input}/>
@@ -163,7 +163,7 @@ export default function TrafficUsagePage() {
                 usages[date]
                     .map(x => ({ date, ...x }))
                     .sort(arrSort(view.sortColumn, view.sortAsc))
-                    .filter(x => !!view.serverNode ? x.server == view.serverNode : true)
+                    .filter(x => !!view.serverNode ? view.serverNode == 'local' ? !x.server || x.server == 'local' : x.server == view.serverNode : true)
                     .filter(x => view.filter ? view.filter?.startsWith('=') ? x.name == view.filter.substring(1) : x.name.includes(view.filter) : true)
                     .filter(x => !!view.direction ? x.direction == view.direction : true)
                     .filter(x => !!view.type ? x.type == view.type : true)
