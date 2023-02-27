@@ -128,7 +128,7 @@ async function cronTrafficUsage(cron) {
                 if (!billingDate) continue;
 
                 // Ignore prev days before billing date
-                if (new Date(billingDate) < new Date(date)) continue;
+                if (new Date(billingDate) > new Date(date)) continue;
 
                 // Sum traffic usage
                 trafficSum[usage.name] = (trafficSum[usage.name] ?? 0) + usage.traffic;
