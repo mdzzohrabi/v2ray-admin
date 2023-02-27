@@ -50,7 +50,8 @@ async function cronTrafficUsage(cron) {
         }
 
         let stats = JSON.parse(await execAsync(`${v2ray} api stats -json -reset`));
-        let intl = new Intl.DateTimeFormat('fa-IR', { month: 'numeric' });
+        let intlMonth = new Intl.DateTimeFormat('fa-IR', { month: 'numeric' });
+        let intlYear = new Intl.DateTimeFormat('fa-IR', { year: 'numeric' });
 
         // New Date (Ignore stats from last day)
         if (isNewDate)
@@ -88,7 +89,7 @@ async function cronTrafficUsage(cron) {
                 let usage = userUsage[name];
 
                 // Reset quota usage on month changes
-                if (usage.quotaUsageUpdate && intl.format(new Date(usage.quotaUsageUpdate)) != intl.format(new Date())) {
+                if (usage.quotaUsageUpdate && intlMonth.format(new Date(usage.quotaUsageUpdate)) != intlMonth.format(new Date())) {
                     showInfo(`Reset Quota usage for user "${name}" on date "${new Date()}"`)
                     usage.quotaUsage = 0;
                     usage.quotaUsage_local = 0;
@@ -105,10 +106,15 @@ async function cronTrafficUsage(cron) {
 
         let config = readConfig(getPaths().configPath);
         let clients = config?.inbounds?.flatMap(x => x.settings?.clients) ?? [];
+        
         /** @type {{ [user: string]: string }} */
         let billingDates = {};
+
         /** @type {{ [user: string]: number }} */
-        let trafficSum = {};
+        let sumTrafficAfterBilling = {};
+        
+        /** @type {{ [user: string]: number }} */
+        let sumTraffic = {};
         
         // User billing dates
         clients.forEach(x => {
@@ -116,28 +122,48 @@ async function cronTrafficUsage(cron) {
                 billingDates[x?.email] = x?.billingStartDate;
         });
 
+        // 30 Days ago
+        let oneMonthsAgo = new Date();
+        oneMonthsAgo.setDate(oneMonthsAgo.getDate() - 30);
+
         // Update user traffic usage from billing date
         for (let date in trafficUsages) {
             let usages = trafficUsages[date];
+            let dtTrafficUsage = new Date(date);
+            let dtToday = new Date();
+
             // Iterate over day usages
             for (let usage of usages) {
                 // Only users
                 if (usage.type != 'user') continue;
+
+                // Total user traffic (Monthly)
+                if (intlYear.format(dtTrafficUsage) == intlYear.format(dtToday) && intlMonth.format(dtTrafficUsage) == intlMonth.format(dtToday)) {
+                    sumTraffic[usage.name] = (sumTraffic[usage.name] ?? 0) + usage.traffic;
+                }
+
                 let billingDate = billingDates[usage.name];
-                // User not found
-                if (!billingDate) continue;
 
-                // Ignore prev days before billing date
-                if (new Date(billingDate) > new Date(date)) continue;
-
-                // Sum traffic usage
-                trafficSum[usage.name] = (trafficSum[usage.name] ?? 0) + usage.traffic;
+                // Usage after billing date
+                if (billingDate && dtTrafficUsage > oneMonthsAgo && dtTrafficUsage > new Date(billingDate)) {
+                    // Sum traffic usage (Max 30 Days)
+                    sumTrafficAfterBilling[usage.name] = (sumTrafficAfterBilling[usage.name] ?? 0) + usage.traffic;
+                }
             }
         }
 
         // Traffic usages after billing date
-        for (let user in trafficSum) {
-            userUsage[user].quotaUsageAfterBilling = trafficSum[user];
+        for (let user in sumTrafficAfterBilling) {
+            if (!userUsage[user])
+                userUsage[user] = {};
+            userUsage[user].quotaUsageAfterBilling = sumTrafficAfterBilling[user];
+        }
+
+        // Traffic usages after billing date
+        for (let user in sumTraffic) {
+            if (!userUsage[user])
+                userUsage[user] = {};
+            userUsage[user].quotaUsage = sumTraffic[user];
         }
 
         await db('traffic-usages', trafficUsages);
