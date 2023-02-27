@@ -136,26 +136,27 @@ async function cronTrafficUsage(cron) {
             for (let usage of usages) {
                 // Only users
                 if (usage.type != 'user') continue;
-
+                
                 // Total user traffic (Monthly)
                 if (intlYear.format(dtTrafficUsage) == intlYear.format(dtToday) && intlMonth.format(dtTrafficUsage) == intlMonth.format(dtToday)) {
                     sumTraffic[usage.name] = (sumTraffic[usage.name] ?? 0) + usage.traffic;
                 }
-
+                
                 let billingDate = billingDates[usage.name];
                 
                 if (billingDate) {
-                    let dtBillingDate = new Date(billingDate);       
+                    let dtBilling = new Date(billingDate);
+                    let dtBillingDate = new Date(dtBilling.toLocaleDateString());
                     let isSameDayAsBillingDate = DateUtil.dateDiff(dtTrafficUsage, dtBillingDate).totalDays == 0;
-
+                    
                     // Renewed
-                    if (isSameDayAsBillingDate && dtTrafficUsage < dtBillingDate && typeof usage['traffic_before_' + dtBillingDate.getTime()] == 'undefined') {
-                        usage['traffic_before_' + dtBillingDate.getTime()] = usage.traffic;
+                    if (isSameDayAsBillingDate && dtTrafficUsage <= dtBillingDate && typeof usage['traffic_before_' + dtBilling.getTime()] == 'undefined') {
+                        usage['traffic_before_' + dtBilling.getTime()] = usage.traffic;
                         usage.traffic = 0;
                     }
-
+                    
                     // Usage after billing date
-                    if (billingDate && dtTrafficUsage > oneMonthsAgo && (dtTrafficUsage > dtBillingDate || (isSameDayAsBillingDate && typeof usage['traffic_before_' + dtBillingDate.getTime()] != 'undefined'))) {
+                    if (billingDate && dtTrafficUsage >= oneMonthsAgo && (dtTrafficUsage >= dtBillingDate || (isSameDayAsBillingDate && typeof usage['traffic_before_' + dtBillingDate.getTime()] != 'undefined'))) {
                         // Sum traffic usage (Max 30 Days)
                         sumTrafficAfterBilling[usage.name] = (sumTrafficAfterBilling[usage.name] ?? 0) + usage.traffic;
                     }
@@ -163,18 +164,16 @@ async function cronTrafficUsage(cron) {
             }
         }
 
-        // Traffic usages after billing date
-        for (let user in sumTrafficAfterBilling) {
+        for (let user in billingDates) {
+            // Create user usage node
             if (!userUsage[user])
                 userUsage[user] = {};
-            userUsage[user].quotaUsageAfterBilling = sumTrafficAfterBilling[user];
-        }
 
-        // Traffic usages after billing date
-        for (let user in sumTraffic) {
-            if (!userUsage[user])
-                userUsage[user] = {};
-            userUsage[user].quotaUsage = sumTraffic[user];
+            // Traffic usages after billing date
+            userUsage[user].quotaUsageAfterBilling = sumTrafficAfterBilling[user] ?? 0;
+
+            // Traffic usages after billing date
+            userUsage[user].quotaUsage = sumTraffic[user] ?? 0;
         }
 
         await db('traffic-usages', trafficUsages);
