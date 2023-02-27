@@ -1,7 +1,7 @@
 // @ts-check
 
 const { env } = require("process");
-const { getPaths, readLogFile, DateUtil, setUserActive, createLogger, readConfig, writeConfig } = require("../lib/util");
+const { getPaths, readLogFile, DateUtil, setUserActive, createLogger, readConfig, writeConfig, humanizeSize } = require("../lib/util");
 
 /**
  * De-active expired users
@@ -57,7 +57,7 @@ async function cronExpiredUsers(cron, defaultExpireDays) {
             else if (!user.deActiveDate && user.quotaLimit && usage?.quotaUsage && usage?.quotaUsage > user.quotaLimit) {
                 isConfigChanged = true;
                 cron.needRestartService = true;
-                setUserActive(config, inbound.tag ?? null, user?.email, false, `Bandwith used`, env.QUOTA_USER_TAG ?? 'baduser');
+                setUserActive(config, inbound.tag ?? null, user?.email, false, `Bandwith used (${humanizeSize(usage?.quotaUsage)})`, env.QUOTA_USER_TAG ?? 'baduser');
                 showInfo(`De-active user "${user?.email}" due to bandwidth usage`);
             }
         }

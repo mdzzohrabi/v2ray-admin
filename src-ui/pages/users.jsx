@@ -17,10 +17,12 @@ import { useDialog } from "../components/dialog";
 import { Editable } from "../components/editable";
 import { ChangeInboundEditor } from "../components/editor/change-inbound-editor";
 import { CopyUserEditor } from "../components/editor/copy-user";
+import { FieldServerNodes } from "../components/field-server-nodes";
 import { Field, FieldsGroup } from "../components/fields";
 import { Info, Infos } from "../components/info";
 import { Popup } from "../components/popup";
 import { PopupMenu } from "../components/popup-menu";
+import { ServerNode } from "../components/server-node";
 import { Size } from "../components/size";
 import { usePrompt } from "../lib/hooks";
 import { styles } from "../lib/styles";
@@ -66,16 +68,9 @@ export default function UsersPage() {
         }
     }, serverRequest.bind(this, context.server));
 
-    /** @type {import("swr").SWRResponse<ServerNode[]>} */
-    let {data: nodes, mutate: refreshNodes} = useSWR('/nodes', serverRequest.bind(this, context.server));
-
     let inbounds = useMemo(() => inboundsResponse?.filter(x => x.protocol == 'vmess' || x.protocol == 'vless').map(x => {
-        x.settings?.clients?.map(client => {
-            let lastConnectNode = client['lastConnectNode'];
-            client['lastConnectNode'] = nodes?.find(x => x.id == lastConnectNode) ?? lastConnectNode;
-        });
         return x;
-    }) ?? [], [inboundsResponse, nodes]);
+    }) ?? [], [inboundsResponse]);
 
     const showQRCode = useCallback(async (tag, user) => {
         let config = await serverRequest(context.server, '/client_config?tag=' + tag, user).then(data => data.config)
@@ -252,13 +247,7 @@ export default function UsersPage() {
         </Head>
         <AddUser className="py-2" disabled={isLoading} onRefresh={refreshInbounds} inbounds={inbounds ?? []}/>
         <FieldsGroup data={view} dataSetter={setView} title="View" className="border-t-2 py-2" containerClassName="items-center">
-            <Field label="Node" htmlFor="serverNode">
-                <select id="serverNode" className={styles.input}>
-                    <option value="">All</option>
-                    <option value="local">local</option>
-                    {nodes?.map(x => <option value={x.id}>{x.name}</option>)}
-                </select>
-            </Field>
+            <FieldServerNodes/>
             <Field label="Inbounds" htmlFor="inbounds">
                 <div className="flex gap-1 mb-1">
                     {view.inbounds?.map((filter, index) => <span key={index} onClick={() => setView({ ...view, inbounds: view.inbounds.filter(x => x != filter)})} className={classNames("whitespace-nowrap bg-slate-200 px-3 py-1 rounded-3xl cursor-pointer hover:bg-slate-700 hover:text-white")}>{filter}</span> )}
@@ -433,9 +422,7 @@ export default function UsersPage() {
                                             {u['lastConnectIP'] ? <a target={'_blank'} className={classNames(styles.link, 'pl-1')} href={`https://whatismyipaddress.com/ip/${u['lastConnectIP']}`}>(Info)</a> : null}
                                         </Info>
                                         <Info label={'Last Connect Node'}>
-                                            {typeof u['lastConnectNode'] == 'object' ? <Popup popup={u['lastConnectNode'].lastConnectIP}>
-                                                <Copy data={u['lastConnectNode']?.id} copiedText="Node Server ID Copied">{u['lastConnectNode']?.name}</Copy>
-                                            </Popup> : u['lastConnectNode'] ?? '-'}
+                                            <ServerNode serverId={u['lastConnectNode']}/>
                                         </Info>
                                     </Infos>
                                 </td>

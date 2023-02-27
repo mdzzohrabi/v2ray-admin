@@ -11,6 +11,7 @@ import { Field, FieldsGroup } from "../../components/fields";
 import { ServerNode } from "../../components/server-node";
 import { Size } from "../../components/size";
 import { Table } from "../../components/table";
+import { FieldServerNodes } from "../../components/field-server-nodes";
 import { usePrompt, useStoredState } from "../../lib/hooks";
 import { styles } from "../../lib/styles";
 import { arrSort, queryString, serverRequest } from "../../lib/util";
@@ -45,7 +46,8 @@ export default function TrafficUsagePage() {
         dateDay: dateParts(now).day,
         zeroTraffic: false,
         top: 500,
-        footer: true
+        footer: true,
+        serverNode: ''
     });
 
     /**
@@ -73,6 +75,7 @@ export default function TrafficUsagePage() {
             { email ? <Field label="User" className="border-x-[1px] px-3 mr-2">
                 <span className="text-gray-800 py-1 px-2 rounded-lg bg-yellow-100">{email}</span>
             </Field> : null }
+            <FieldServerNodes/>
             <Field label="Year" htmlFor="dateYear">
                 <select id="dateYear" className={styles.input}>
                     <option value="">-</option>
@@ -160,22 +163,24 @@ export default function TrafficUsagePage() {
                 usages[date]
                     .map(x => ({ date, ...x }))
                     .sort(arrSort(view.sortColumn, view.sortAsc))
+                    .filter(x => !!view.serverNode ? x.serverNode == view.serverNode : true)
                     .filter(x => view.filter ? x.name.includes(view.filter) : true)
                     .filter(x => !!view.direction ? x.direction == view.direction : true)
                     .filter(x => !!view.type ? x.type == view.type : true)
                     .filter(x => view.zeroTraffic ? true : x.traffic > 0)
                     .slice(0, view.top)
-                ) ])}
+                ) ])
+            }
             groupBy={x => x.date}
             group={date => <tr className="bg-slate-50">
                 <td></td>
                 <td className="font-bold text-lg py-1 px-2">{intl.format(new Date(date))}</td>
-                <td colSpan={3}></td>
+                <td colSpan={4}></td>
             </tr>}
             groupFooter={(date, items) => 
                 items.length > 1 ? <tr className="bg-slate-50">
                     <td></td>
-                    <td colSpan={3} className='px-3 text-gray-400'>Day Total</td>
+                    <td colSpan={4} className='px-3 text-gray-400'>Day Total</td>
                     <td className="p-2 px-3 font-bold"><Size size={items.reduce((s, r) => s + r.traffic, 0)}/></td>
                 </tr> : null
             }
@@ -184,7 +189,7 @@ export default function TrafficUsagePage() {
             footer={items => {
                 return <tr className="bg-slate-50">
                     <td></td>
-                    <td colSpan={3} className='px-3 text-gray-400 font-bold'>Total</td>
+                    <td colSpan={4} className='px-3 text-gray-400 font-bold'>Total</td>
                     <td className="p-2 px-3 font-bold"><Size size={items.reduce((s, r) => s + r.traffic, 0)}/></td>
                 </tr>
             }}

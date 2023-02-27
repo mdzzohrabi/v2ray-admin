@@ -1,9 +1,10 @@
 // @ts-check
-import React from 'react';
-import { useContext } from 'react';
+import React, { useContext } from 'react';
 import useSWR from 'swr';
-import { DateUtil, serverRequest, store, stored } from "../lib/util";
+import { serverRequest } from "../lib/util";
 import { AppContext } from './app-context';
+import { Copy } from './copy';
+import { Popup } from './popup';
 
 export function ServerNode({ serverId }) {
 
@@ -11,11 +12,16 @@ export function ServerNode({ serverId }) {
     let context = useContext(AppContext);
     
     /** @type {import("swr").SWRResponse<ServerNode[]>} */
-    let {data: nodes, mutate: refreshNodes, isValidating: isLoading} = useSWR('/nodes', serverRequest.bind(this, context.server), {
-        
-    });
+    let {data: nodes, mutate: refreshNodes, isValidating: isLoading} = useSWR('/nodes', serverRequest.bind(this, context.server));
     
-    if (!serverId) return 'local';
-    
-    return <>{isLoading ? 'Loading...' : nodes?.find(x => x.id == serverId)?.name ?? 'Not Found'}</>;
+    if (!serverId) return <>local</>;
+
+    let node = nodes?.find(x => x.id == serverId);
+
+    return <>{
+        isLoading ? 'Loading...' : 
+        <Popup popup={node?.lastConnectIP}>
+            <Copy data={node?.id} copiedText="Node Server ID Copied">{node?.name}</Copy>
+        </Popup> ?? 'Not Found'}
+    </>;
 }

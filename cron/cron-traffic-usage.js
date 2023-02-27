@@ -1,6 +1,6 @@
 // @ts-check
 const { execSync, exec } = require("child_process");
-const { getPaths, createLogger, db, log, readConfig } = require("../lib/util");
+const { getPaths, createLogger, db, log, readConfig, DateUtil } = require("../lib/util");
 
 /**
  * Exec async
@@ -143,9 +143,18 @@ async function cronTrafficUsage(cron) {
                 }
 
                 let billingDate = billingDates[usage.name];
+                let dtBillingDate = new Date(billingDate);
+
+                let isSameDayAsBillingDate = DateUtil.dateDiff(dtToday, dtBillingDate).totalDays == 0;
+
+                // Renewed
+                if (isSameDayAsBillingDate && dtTrafficUsage < dtBillingDate && typeof usage['traffic_before_' + dtBillingDate.getTime()] == 'undefined') {
+                    usage['traffic_before_' + dtBillingDate.getTime()] = usage.traffic;
+                    usage.traffic = 0;
+                }
 
                 // Usage after billing date
-                if (billingDate && dtTrafficUsage > oneMonthsAgo && dtTrafficUsage > new Date(billingDate)) {
+                if (billingDate && dtTrafficUsage > oneMonthsAgo && (dtTrafficUsage > dtBillingDate || (isSameDayAsBillingDate && usage['traffic_before_' + dtBillingDate.getTime()]))) {
                     // Sum traffic usage (Max 30 Days)
                     sumTrafficAfterBilling[usage.name] = (sumTrafficAfterBilling[usage.name] ?? 0) + usage.traffic;
                 }
