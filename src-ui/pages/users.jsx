@@ -291,7 +291,8 @@ export default function UsersPage() {
                     <option value="deActiveReason">De-active Reason</option>
                     <option value="firstConnect">First Connect</option>
                     <option value="lastConnect">Last Connect</option>
-                    <option value="quotaUsage">Bandwidth Usage</option>
+                    <option value="quotaUsage">Bandwidth Usage (Monthly)</option>
+                    <option value="quotaUsageAfterBilling">Bandwidth Usage (After Billing)</option>
                     <option value="quotaLimit">Bandwidth Limit</option>
                 </select>
             </Field>
