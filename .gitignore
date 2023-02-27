@@ -6,3 +6,5 @@ node_modules
 *.sh
 config.bridge.json
 /db/*
+__restored
+__test
