@@ -8,6 +8,7 @@ import useSWR from 'swr';
 import { AppContext } from "../../components/app-context";
 import { Container } from "../../components/container";
 import { Field, FieldsGroup } from "../../components/fields";
+import { ServerNode } from "../../components/server-node";
 import { Size } from "../../components/size";
 import { Table } from "../../components/table";
 import { usePrompt, useStoredState } from "../../lib/hooks";
@@ -179,7 +180,7 @@ export default function TrafficUsagePage() {
                 </tr> : null
             }
             loading={isLoading}
-            columns={[ 'Type', 'Name', 'Direction', 'Traffic' ]}
+            columns={[ 'Type', 'Server', 'Name', 'Direction', 'Traffic' ]}
             footer={items => {
                 return <tr className="bg-slate-50">
                     <td></td>
@@ -190,6 +191,7 @@ export default function TrafficUsagePage() {
             cells={x => [
                 // Date
                 x.type,
+                <ServerNode serverId={x.server}/>,
                 x.name,
                 x.direction,
                 <Size size={x.traffic}/>

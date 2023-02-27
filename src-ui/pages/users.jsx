@@ -417,7 +417,7 @@ export default function UsersPage() {
                                         <Info label={'Expire Days'}>
                                             <Editable editable={showAll} onEdit={value => setExpireDays(i.tag, u, value)} value={u.expireDays}>{u.expireDays}</Editable>
                                         </Info>
-                                        <Info label={'Bandwidth'}>
+                                        <Info label={'Bandwidth (This Month)'}>
                                             <Editable input={{
                                                 type: 'number',
                                                 placeholder: '1'
