@@ -163,7 +163,7 @@ export default function TrafficUsagePage() {
                 usages[date]
                     .map(x => ({ date, ...x }))
                     .sort(arrSort(view.sortColumn, view.sortAsc))
-                    .filter(x => !!view.serverNode ? x.serverNode == view.serverNode : true)
+                    .filter(x => !!view.serverNode ? x.server == view.serverNode : true)
                     .filter(x => view.filter ? view.filter?.startsWith('=') ? x.name == view.filter.substring(1) : x.name.includes(view.filter) : true)
                     .filter(x => !!view.direction ? x.direction == view.direction : true)
                     .filter(x => !!view.type ? x.type == view.type : true)
