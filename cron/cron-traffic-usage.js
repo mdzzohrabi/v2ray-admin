@@ -180,6 +180,9 @@ async function cronTrafficUsage(cron) {
 
             // Traffic usages after billing date
             userUsage[user].quotaUsage = sumTraffic[user] ?? 0;
+
+            // Traffic update date
+            userUsage[user].quotaUsageUpdate = new Date().toLocaleString();
         }
 
         await db('traffic-usages', trafficUsages);
