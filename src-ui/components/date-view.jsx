@@ -15,6 +15,7 @@ import { Popup } from './popup';
  * 		precision?: boolean
  * 		locale?: string
  * 		options?: Intl.DateTimeFormatOptions
+ *      removeFullMonths?: boolean
  * }} DateViewProps
  */
 
@@ -22,7 +23,7 @@ import { Popup } from './popup';
  * Date view
  * @param {DateViewProps} param0
  */
-export function DateView({ date, className = '', containerClassName ='', full = false, precision = false, locale = '', options = undefined }) {
+export function DateView({ date, className = '', containerClassName ='', full = false, precision = false, locale = '', options = undefined, removeFullMonths = false }) {
     let router = useRouter();
     let isEN = (locale ?? router.query.date) == 'en';
     if (!date) return <>-</>;
@@ -32,6 +33,12 @@ export function DateView({ date, className = '', containerClassName ='', full = 
     //     {isEN ? date.toLocaleString() : moment(date).locale('fa').format('YYYY/MM/DD hh:mm:ss a')}
     //     <span className='block text-gray-500 text-rtl'>{moment(date).locale('fa').fromNow()}</span>
     // </>;
+
+    if (removeFullMonths) {
+        let diff = new Date().getTime() - date.getTime();
+        let remain = diff % (30*24*60*60*1000);
+        date = new Date(date.getTime() + (diff - remain));
+    }
 
     let intl = new Intl.DateTimeFormat(isEN ? 'en-US' : 'fa-IR-u-nu-latn', options ?? {
 		timeStyle: 'medium',

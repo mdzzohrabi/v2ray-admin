@@ -14,7 +14,7 @@ export function ServerNode({ serverId }) {
     /** @type {import("swr").SWRResponse<ServerNode[]>} */
     let {data: nodes, mutate: refreshNodes, isValidating: isLoading} = useSWR('/nodes', serverRequest.bind(this, context.server));
     
-    if (!serverId) return <>local</>;
+    if (!serverId || serverId == 'local') return <>local</>;
 
     let node = nodes?.find(x => x.id == serverId);
 

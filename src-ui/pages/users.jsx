@@ -434,7 +434,7 @@ export default function UsersPage() {
                                                 <DateView precision={precision} full={fullTime} date={u.createDate}/>
                                             </Info>
                                             <Info label={'Billing'}>
-                                                <DateView precision={precision} full={fullTime} date={u.billingStartDate}/>
+                                                <DateView precision={precision} full={fullTime} date={u.billingStartDate} removeFullMonths={!u.deActiveDate}/>
                                             </Info>
                                             <Info label={'DeActived'}>
                                                 <DateView precision={precision} full={fullTime} date={u.deActiveDate}/>

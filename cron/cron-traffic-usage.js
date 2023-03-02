@@ -146,6 +146,12 @@ async function cronTrafficUsage(cron) {
                 
                 if (billingDate) {
                     let dtBilling = new Date(billingDate);
+
+                    // Remove full ellapsed months
+                    let diff = new Date().getTime() - dtBilling.getTime();
+                    let remain = diff % (30*24*60*60*1000);
+                    dtBilling = new Date(dtBilling.getTime() + (diff - remain));
+
                     let dtBillingDate = new Date(dtBilling.toLocaleDateString());
                     let isSameDayAsBillingDate = DateUtil.dateDiff(dtTrafficUsage, dtBillingDate).totalDays == 0;
                     
@@ -156,7 +162,7 @@ async function cronTrafficUsage(cron) {
                     }
                     
                     // Usage after billing date
-                    if (billingDate && dtTrafficUsage >= oneMonthsAgo && (dtTrafficUsage >= dtBillingDate || (isSameDayAsBillingDate && typeof usage['traffic_before_' + dtBillingDate.getTime()] != 'undefined'))) {
+                    if (dtTrafficUsage >= oneMonthsAgo && (dtTrafficUsage >= dtBillingDate || (isSameDayAsBillingDate && typeof usage['traffic_before_' + dtBillingDate.getTime()] != 'undefined'))) {
                         // Sum traffic usage (Max 30 Days)
                         sumTrafficAfterBilling[usage.name] = (sumTrafficAfterBilling[usage.name] ?? 0) + usage.traffic;
                     }
@@ -174,6 +180,9 @@ async function cronTrafficUsage(cron) {
 
             // Traffic usages after billing date
             userUsage[user].quotaUsage = sumTraffic[user] ?? 0;
+
+            // Traffic update date
+            userUsage[user].quotaUsageUpdate = new Date().toLocaleString();
         }
 
         await db('traffic-usages', trafficUsages);
