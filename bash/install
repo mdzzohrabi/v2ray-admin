@@ -14,11 +14,19 @@ if [ -z $webToken ]; then
 fi
 
 read -p "Web Port (1254): " webPort
+
+if [ -z $webPort ]; then
+    webPort=1254
+fi
+
 read -p "V2Ray Client Host: " v2rayServer
 read -p "Clone V2Ray Config and Certificates from server (host address): " cloneConfig
 
 if [ ! -z $cloneConfig ]; then
     read -p "Clone V2Ray Config and Certificates from server (user) (ubuntu): " cloneConfigUser
+    if [ -z $cloneConfigUser ]; then
+        cloneConfigUser=ubuntu
+    fi
 fi
 
 read -p "Main Server Address (if this node is client): " serverAddress
