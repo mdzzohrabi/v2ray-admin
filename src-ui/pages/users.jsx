@@ -461,6 +461,9 @@ export default function UsersPage() {
                                 </td>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3">
                                     <PopupMenu>
+                                        <PopupMenu.Item>
+                                            <Copy className="block text-inherit" notifyText={`User "${u.email}" subscription url copied`} data={process.env.NEXT_PUBLIC_CLIENT_URL + `/api/configs/${u.id}`}>Copy Subscription Url</Copy>
+                                        </PopupMenu.Item>
                                         <PopupMenu.Item action={() => clientConfigDialog.show(u, i.tag)}>Client Config</PopupMenu.Item>
                                         <PopupMenu.Item action={() => showQRCode(i.tag, u)}>QR Code</PopupMenu.Item>
                                         <PopupMenu.Item>
