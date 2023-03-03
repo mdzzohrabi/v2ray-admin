@@ -5,18 +5,31 @@ one_mb=1048576
 low_speed=$(expr 5 \* $one_mb)
 limit=$(expr 100 \* $one_mb)
 
-while getopts :m:f:s:p:v:l: args; do
+help() {
+    echo "Options:"
+    echo "  -m        Email to send low speed notify"
+    echo "  -f        File address to download for test"
+    echo "  -s        Server Name"
+    echo "  -v        Verbose"
+    echo "  -l        File size limit"
+    echo "  -o        Proxy"
+    exit 0
+}
+
+while getopts :m:f:s:p:v:l:h: args; do
     case $args in
         m) mail=${OPTARG};;
         f) file=${OPTARG};;
         s) server=${OPTARG};;
         p) proxy=${OPTARG};;
         v) verbose="";;
-        l) limit=$(expr $one_mb \* ${OPTARG})
+        l) limit=$(expr $one_mb \* ${OPTARG});;
+        h) help;;
     esac
 done
 
 echo "Monitor Server Download Speed"
+echo "Date/Time: " $(date)
 
 [ ! -z $proxy ] && echo "Proxy : $proxy"
 
@@ -26,9 +39,9 @@ echo "Download file from : '$file'"
 
 # Only 100Mb
 if [ -z $proxy ]; then
-    download_speed=$(curl $verbose --url $file -o /dev/null -r 0-$limit -w "%{speed_download}")
+    download_speed=$(curl $verbose --url $file -o /dev/null -r 0-$limit -w "%{speed_download}" -m 10)
 else
-    download_speed=$(curl $verbose --url $file -o /dev/null -r 0-$limit -w "%{speed_download}" -x $proxy)
+    download_speed=$(curl $verbose --url $file -o /dev/null -r 0-$limit -w "%{speed_download}" -m 10 -x $proxy)
 fi
 
 fmt_download_speed=$(numfmt --to=iec-i --suffix=B --format="%.3f" $download_speed)
@@ -38,6 +51,7 @@ download_speed=${download_speed%.*}
 if [[ "$download_speed" -le "$low_speed" ]]; then
     echo "Download speed is very low ($fmt_download_speed)"
     if [ ! -z $mail ]; then
+        echo "Send notify email"
         echo "Download speed is very low ($fmt_download_speed) at server '$server'" | mail -s "Download speed of server '$server' is '$fmt_download_speed'" $mail
     fi
 else
