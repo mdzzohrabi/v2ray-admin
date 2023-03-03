@@ -7,6 +7,7 @@ const { createServer } = require('http');
 const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser, restartService, findUser, setUserActive, writeConfig, deleteUser, log, readLines, watchFile, cache, applyChanges, readLogLines, readLogLinesByOffset, DateUtil, arrSync, db } = require('./lib/util');
 const { getTransactions, addTransaction, saveDb, readDb } = require('./lib/db');
 const { encrypt } = require('crypto-js/aes');
+const { router: clientRouter } = require('./api/client');
 
 const encryptData = (data) => {
     return data;
@@ -23,6 +24,8 @@ let socket = new Server(server, {
         allowedHeaders: []
       }
 });
+
+app.use('/client', clientRouter);
 
 /** @type {{ [name: string]: (user: V2RayConfigInboundClient) => boolean }} */
 const statusFilters = {
