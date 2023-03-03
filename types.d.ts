@@ -63,6 +63,7 @@ interface V2RayConfigInboundSettings {
     clients?: V2RayConfigInboundClient[]
     accounts?: {user?: string, pass?: string}[]
     users?: {email?: string, level?: number, secret?: string}[]
+    decryption?: string
 }
 
 interface V2RayConfigInboundStreamSettings {
