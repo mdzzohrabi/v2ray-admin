@@ -269,14 +269,14 @@ app.post('/api/client_config', async (req, res) => {
 });
 
 
-// app.use((req, res, next) => {
-//     if (!req.headers.authorization)
-//         return res.status(401).send('Authentication required');
-//     let token = Buffer.from(req.headers.authorization?.split(' ')[1] ?? '', 'base64').toString('utf-8');
-//     if (token == env.WEB_TOKEN)
-//         next();
-//     else res.status(401).send('Authentication failed');
-// });
+app.use((req, res, next) => {
+    if (!req.headers.authorization)
+        return res.status(401).send('Authentication required');
+    let token = Buffer.from(req.headers.authorization?.split(' ')[1] ?? '', 'base64').toString('utf-8');
+    if (token == env.WEB_TOKEN)
+        next();
+    else res.status(401).send('Authentication failed');
+});
 
 app.get('/config', async (req, res) => {
     let {configPath} = getPaths();
