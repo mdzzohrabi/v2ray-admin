@@ -31,7 +31,7 @@ router.get('/configs/:id', async (req, res) => {
         firstUpdate: new Date().toISOString()
     }
 
-    subscriber.clientIP = req.headers['X-Client-IP'] ?? req.socket.remoteAddress;
+    subscriber.clientIP = req.headers['X-Client-IP'] ?? req.headers['x-client-ip'] ?? req.socket.remoteAddress;
     subscriber.lastUpdate = new Date().toISOString();
 
     await db('subscribers', subscribers);
