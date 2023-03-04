@@ -1,7 +1,7 @@
 // @ts-check
 let express = require('express');
 const { env } = require('process');
-const { readConfig, getPaths, getUserConfig, readLogFile, DateUtil } = require('../lib/util');
+const { readConfig, getPaths, getUserConfig, readLogFile, DateUtil, db } = require('../lib/util');
 let router = express.Router();
 
 router.get('/configs/:id', async (req, res) => {
@@ -25,6 +25,16 @@ router.get('/configs/:id', async (req, res) => {
 
     res.end((await Promise.all(clientConfigs)).join('\n'));
 
+    let subscribers = await db('subscribers') ?? {};
+
+    let subscriber = subscribers[user.email ?? ''] = subscribers[user.email ?? ''] ?? {
+        firstUpdate: new Date().toISOString()
+    }
+
+    subscriber.clientIP = req.headers['X-Client-IP'] ?? req.socket.remoteAddress;
+    subscriber.lastUpdate = new Date().toISOString();
+
+    await db('subscribers', subscribers);
 });
 
 router.get('/info/:id', async (req, res) => {
