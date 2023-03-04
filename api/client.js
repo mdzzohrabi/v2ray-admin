@@ -44,12 +44,12 @@ router.get('/info/:id', async (req, res) => {
     let {configPath, accessLogPath} = getPaths();
     let config = readConfig(configPath);
 
-    let user = config?.inbounds?.flatMap(x => x.settings?.clients ?? [])?.find(x => x.id == id);
+    let user = config?.inbounds?.flatMap(x => x.settings?.clients ?? [])?.find(x => x.id == id || ('#' + x.email == id && !x.free));
 
     if (!user)
         return res.json({ ok: false, error: 'User not found' });
 
-    let inbounds = config?.inbounds?.filter(x => !!x?.settings?.clients?.find(x => x.id == id))?.map(x => x.tag) ?? [];
+    let inbounds = config?.inbounds?.filter(x => !!x?.settings?.clients?.find(x => x.id == user?.id))?.map(x => x.tag) ?? [];
 
     let clientConfigs = inbounds.map(async tag => {
         // @ts-ignore
