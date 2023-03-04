@@ -1,13 +1,11 @@
 // @ts-check
+import classNames from 'classnames';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import classNames from 'classnames';
-import React from 'react';
-import { useContext } from 'react';
+import React, { useContext } from 'react';
 import { AppContext } from './app-context';
-import { x64 } from 'crypto-js';
 
-export function Container({ children }) {
+export function Container({ children, block = true }) {
     const router = useRouter();
     const isFull = router.query.all == '1';
     const { server } = useContext(AppContext);
@@ -16,6 +14,7 @@ export function Container({ children }) {
         <div className="flex flex-row">
             <span className="self-center font-light px-4 text-lg select-none border-r-[1px] border-r-slate-400">Management</span>
             <ul className="px-2 py-3 flex xl:sticky top-0 z-50 bg-slate-100 flex-1 self-center">
+                <MenuLink href={"/home" + (isFull ? '?all=1' : '')} text={"Home"}/>
                 {isFull ? <MenuLink href={"/logs" + (isFull ? '?all=1' : '')} text={"Logs"}/> : null}
                 {isFull ? <MenuLink href={"/nodes" + (isFull ? '?all=1' : '')} text={"Nodes"}/> : null}
                 {isFull ? <MenuLink href={"/usages/traffic" + (isFull ? '?all=1' : '')} text={"Traffic Usages"}/> : null}
@@ -32,9 +31,10 @@ export function Container({ children }) {
                 </div>
             </span>
         </div>
+        {block ?
         <div className="bg-white block shadow-md mt-2 min-w-fit">
             {children}
-        </div>
+        </div> : children}
     </div>
 }
 

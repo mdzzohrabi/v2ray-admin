@@ -13,5 +13,5 @@ export function Size({ size }) {
         index++;
     }
 
-    return <>{Math.round(size)} {postfix[index]}</>;
+    return <>{size.toFixed(2)} {postfix[index]}</>;
 }
