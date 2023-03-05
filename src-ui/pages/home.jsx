@@ -61,7 +61,7 @@ export default function HomePage() {
                     <span className="py-2 text-gray-500 block">Traffic Usage (<Size size={data?.traffics?.totalMonth}/>)</span>
                     <div className="flex flex-row bg-gray-200 h-6 w-full relative rounded-xl overflow-hidden">
                         {!data?.traffics?.totalMonth ? <div className="flex-1 flex items-center justify-center">No Traffic Usage</div> : data?.nodes?.map((node, index) => {
-                            if (node.connectedClients <= 0) return null;
+                            if (node.monthlyTrafficUsage <= 0) return null;
                             let percent = node.monthlyTrafficUsage * 100 / data?.traffics?.totalMonth;
                             return <span key={index} className={classNames(colors[index], "items-center overflow-hidden justify-center flex text-white text-[.6rem]")} style={{ width: `${percent}%` }} title={node.name + ' - ' + percent.toFixed(2) + '%'}>
                                 <Size size={node.monthlyTrafficUsage}/>
