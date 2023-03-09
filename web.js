@@ -8,6 +8,7 @@ const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser,
 const { getTransactions, addTransaction, saveDb, readDb } = require('./lib/db');
 const { encrypt } = require('crypto-js/aes');
 const { router: clientRouter } = require('./api/client');
+const { default: fetch } = require('node-fetch');
 
 const encryptData = (data) => {
     return data;
@@ -80,17 +81,21 @@ app.use(express.json({
     limit: '5mb'
 }));
 
-app.use('/api', async (req, res, next) => {
+/**
+ * Authentication
+ */
+app.use(async (req, res, next) => {
 
-    let { headers: { authorization } } = req;
+    let { headers: { authorization, ui } } = req;
     
     if (!authorization)
         return res.status(401).json({ error: `Api Authentication required` });
 
     let apiKey = Buffer.from(authorization?.split(' ')[1], 'base64').toString('utf-8');
 
-    if (apiKey == env.WEB_TOKEN)
+    if (apiKey == env.WEB_TOKEN) {
         return next();
+    }
 
     res.locals.apiKey = apiKey;
 
@@ -102,16 +107,49 @@ app.use('/api', async (req, res, next) => {
     if (!serverNode)
         return res.status(401).json({ error: 'Api Authentication failed' });
 
-    serverNode.lastConnectDate = new Date().toLocaleString();
-    serverNode.lastConnectIP = req.ip;
-
-    await db('server-nodes', serverNodes);
+    if (ui != 'true') {
+        serverNode.lastConnectDate = new Date().toLocaleString();
+        serverNode.lastConnectIP = req.ip;
+        await db('server-nodes', serverNodes);
+    }
 
     res.locals.serverNode = serverNode;
 
     next();
-
 });
+
+/**
+ * Remote request
+ */
+app.use(async (req, res, next) => {
+    let { headers: { serverNode } } = req;
+    if (serverNode) {
+        /**
+         * @type {ServerNode[]}
+         */
+        let nodes = await db('server-nodes') ?? [];
+
+        let node = nodes.find(x => x.id == serverNode);
+
+        if (!node) {
+            return res.json({ ok: false, message: 'Server node not found' });
+        }
+
+        let path = req.path;
+    } else {
+        next();
+    }
+})
+
+
+// app.use((req, res, next) => {
+//     if (!req.headers.authorization)
+//         return res.status(401).send('Authentication required');
+//     let token = Buffer.from(req.headers.authorization?.split(' ')[1] ?? '', 'base64').toString('utf-8');
+//     if (token == env.WEB_TOKEN)
+//         next();
+//     else res.status(401).send('Authentication failed');
+// });
 
 
 app.post('/api/sync/transactions', async (req, res) => {
@@ -268,15 +306,6 @@ app.post('/api/client_config', async (req, res) => {
     res.json({ config: strClientConfig });
 });
 
-
-app.use((req, res, next) => {
-    if (!req.headers.authorization)
-        return res.status(401).send('Authentication required');
-    let token = Buffer.from(req.headers.authorization?.split(' ')[1] ?? '', 'base64').toString('utf-8');
-    if (token == env.WEB_TOKEN)
-        next();
-    else res.status(401).send('Authentication failed');
-});
 
 app.get('/config', async (req, res) => {
     let {configPath} = getPaths();

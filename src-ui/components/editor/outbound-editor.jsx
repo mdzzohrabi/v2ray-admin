@@ -131,9 +131,9 @@ export function OutboundEditor({ outbound: outboundProp, dissmis, onEdit }) {
                     </Collection>
                 </div>
             </div> : null }
-            {outbound?.protocol == 'vmess' ?
+            {outbound?.protocol == 'vmess' || outbound?.protocol == 'vless' ?
             <div className="flex flex-col">
-                <h3 className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 font-smibold">Settings (VMESS)</h3>
+                <h3 className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 font-smibold">Settings ({outbound?.protocol?.toUpperCase()})</h3>
                 <div className="flex flex-col">
                     {/* <FieldsGroup data={outbound?.settings} dataSetter={settings => setOutbound({ ...outbound, settings })}>
                         <Field label="Proxy Tag" htmlFor="tag" className="flex-1">
@@ -245,6 +245,21 @@ export function OutboundEditor({ outbound: outboundProp, dissmis, onEdit }) {
                             </select>
                         </Field>
                     </div>
+                    {outbound?.streamSettings?.security == 'tls' ? <>
+                        <h3 className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 font-smibold">
+                            TLS settings
+                        </h3>
+                        <FieldObject path={'tlsSettings'}>
+                        <div className="flex flex-row py-2 px-2">
+                            <Field label="Allow Insecure" htmlFor="allowInsecure" horizontal>
+                                <input type={'checkbox'} className={styles.input} id="allowInsecure"/>
+                            </Field>
+                            <Field label="Server Name" htmlFor="serverName" horizontal>
+                                <input type={'text'} className={styles.input} id="serverName"/>
+                            </Field>
+                        </div>
+                        </FieldObject>
+                    </> : null}
                     {outbound?.streamSettings?.network=='tcp'? <div className="flex flex-row">
                         <FieldObject path={'tcpSettings'}>
                             <FieldObject path={'header'}>

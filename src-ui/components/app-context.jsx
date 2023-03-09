@@ -1,21 +1,33 @@
-import { Context, createContext, Dispatch, SetStateAction, useEffect, useState } from "react";
+// @ts-check
+import React, { createContext, useEffect, useState, Dispatch, SetStateAction, Context } from "react";
 import { store, stored } from "../lib/util";
 
 /**
- * @typedef {{ url: string, token: string, name?: string }} ServerContext
+ * @typedef {{
+ *      url: string,
+ *      token: string,
+ *      name?: string,
+ *      node?: string
+ * }} ServerContext
  * 
- * @typedef {{ server: ServerContext, setServer: Dispatch<SetStateAction<ServerContext>> }} AppContext
+ * @typedef {{
+ *      server: ServerContext,
+ *      setServer: Dispatch<SetStateAction<ServerContext>>,
+ * }} AppContext
  */
 
 /** @type {Context<AppContext>} */
-export const AppContext = createContext();
+// @ts-ignore
+export const AppContext = createContext({});
 
 export function AppContextContainer({ children }) {
-    let [server, setServer] = useState(stored('server') ?? { url: '', token: '' });
+    let [server, setServer] = useState(stored('server', { url: '', token: '' }));
 
     useEffect(() => {
         store('server', server);
     }, [server]);
+
+    // useEffect(() => store('server-node', node), [node]);
 
     return <AppContext.Provider value={{ server, setServer }}>
         {children}

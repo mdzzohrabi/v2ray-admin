@@ -29,7 +29,8 @@ export function serverRequest(server, action, body = undefined) {
         body: body ? JSON.stringify(body) : undefined,
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + btoa(server.token)
+            'Authorization': 'Bearer ' + btoa(server.token),
+            'Server-Node': server.node ?? ''
         }
     })
         .then(result => result.json())

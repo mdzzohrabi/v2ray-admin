@@ -141,7 +141,7 @@ interface V2RayConfigMux {
 interface V2RayConfigStream {  
   transport: "tcp" | "udp",
   transportSettings: any,
-  security: "none" | "auto",
+  security: "none" | "auto" | 'tls',
   securitySettings: any
   network?: 'tcp' | 'kcp' | 'ws' | 'http' | 'domainsocket' | 'quic'
   tcpSettings?: HttpHeaderObject

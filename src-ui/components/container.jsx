@@ -3,33 +3,72 @@ import classNames from 'classnames';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import React, { useContext } from 'react';
+import { useCallback } from 'react';
+import { useMemo } from 'react';
+import useSWR from 'swr';
+import { serverRequest } from '../lib/util';
 import { AppContext } from './app-context';
 
 export function Container({ children, block = true }) {
     const router = useRouter();
     const isFull = router.query.all == '1';
-    const { server } = useContext(AppContext);
+    const { server, setServer } = useContext(AppContext);
+
+    /** @type {import("swr").SWRResponse<ServerNode[]>} */
+    let {mutate: refreshNodes, data: nodes, isValidating: isLoading} = useSWR('/nodes', serverRequest.bind(this, server), {
+        revalidateOnFocus: false,
+        revalidateOnMount: true,
+        revalidateOnReconnect: false
+    });
+
+    const menu = useMemo(() => {
+        return [
+            { text: 'Home', link: '/home', admin: false },
+            { text: 'Logs', link: '/logs', admin: true },
+            { text: 'Server Nodes', link: '/nodes', admin: true },
+            { text: 'Traffic Usage', link: '/usages/traffic', admin: true },
+            { text: 'Transactions', link: '/transactions', admin: false },
+            { text: 'Users', link: '/users', admin: false },
+            { text: 'Config', link: '/configuration', admin: true },
+            { text: 'Servers', link: '/server_config', admin: false },
+            { text: 'Logout', link: '/logout', admin: false },
+        ]
+    }, []);
+
+    const onChangeNode = useCallback((/** @type {import('react').ChangeEvent<HTMLSelectElement>} */ e) => {
+        setServer({
+            ...server,
+            node: e.target.value
+        });
+    }, []);
+
+    const onMenuClick = useCallback((/** @type {import('react').ChangeEvent<HTMLSelectElement>} */ e) => {
+        router.push(e.target.value);
+    }, []);
 
     return <div className="flex flex-col h-screen overflow-x-auto w-full text-xs xl:text-sm">
-        <div className="flex flex-row">
-            <span className="self-center font-light px-4 text-lg select-none border-r-[1px] border-r-slate-400">Management</span>
-            <ul className="px-2 py-3 flex xl:sticky top-0 z-50 bg-slate-100 flex-1 self-center">
-                <MenuLink href={"/home" + (isFull ? '?all=1' : '')} text={"Home"}/>
-                {isFull ? <MenuLink href={"/logs" + (isFull ? '?all=1' : '')} text={"Logs"}/> : null}
-                {isFull ? <MenuLink href={"/nodes" + (isFull ? '?all=1' : '')} text={"Nodes"}/> : null}
-                {isFull ? <MenuLink href={"/usages/traffic" + (isFull ? '?all=1' : '')} text={"Traffic Usages"}/> : null}
-                <MenuLink href={"/transactions" + (isFull ? '?all=1' : '')} text={"Transactions"}/>
-                <MenuLink href={"/users" + (isFull ? '?all=1' : '')} text={"Users"}/>
-                {isFull?<MenuLink href={"/configuration" + (isFull ? '?all=1' : '')} text={"Configuration"}/>:null}
-                <MenuLink href={"/server_config" + (isFull ? '?all=1' : '')} text={"Servers"}/>
-                <MenuLink href={"/logout"}>Logout</MenuLink>
+        <div className="flex flex-row items-center">
+            <span className="self-center font-light px-4 text-lg select-none border-r-[1px] border-r-slate-400 hidden md:inline-block">Management</span>
+            <select onChange={onMenuClick} className='flex-1 bg-slate-200 font-bold px-2 py-3 my-2 mx-3 lg:hidden rounded-md' value={router.pathname}>
+                {menu.filter(x => !x.admin || isFull).map(x => <option key={x.link} value={x.link}>{x.text}</option>)}
+            </select>
+            <ul className="px-2 py-3 hidden lg:flex flex-row xl:sticky top-0 z-50 bg-slate-100 flex-1 self-center">
+                {menu.map(x => !x.admin || isFull ? <MenuLink href={x.link + (isFull ? '?all=1' : '')} text={x.text}/> : null)}
             </ul>
-            <span className="self-center px-3 text-gray-400 flex flex-col">
+            <div className="self-center px-3 text-gray-400 flex flex-col">
                 <span className="font-bold">Server</span>
                 <div className="flex flex-row">
                     <span>{server?.url}</span>{server?.name ? <span className="ml-2">({server?.name})</span> : null}
                 </div>
-            </span>
+            </div>
+            {isFull ? 
+            <div className="self-center px-3 py-1 mx-2 my-2 text-gray-400 border-gray-400 flex flex-col rounded-md border-[1px]">
+                <span className="font-bold px-1">Node</span>
+                <select className='bg-transparent' value={server?.node} onChange={onChangeNode}>
+                    <option value="">(main)</option>
+                    {nodes?.map(x => <option value={x.id}>{x.name}</option>)}
+                </select>
+            </div> : null }
         </div>
         {block ?
         <div className="bg-white block shadow-md mt-2 min-w-fit">
