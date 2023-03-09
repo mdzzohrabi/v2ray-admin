@@ -8,7 +8,6 @@ const { getPaths, readConfig, createLogger, readLogFile, getUserConfig, addUser,
 const { getTransactions, addTransaction, saveDb, readDb } = require('./lib/db');
 const { encrypt } = require('crypto-js/aes');
 const { router: clientRouter } = require('./api/client');
-const { default: fetch } = require('node-fetch');
 
 const encryptData = (data) => {
     return data;
