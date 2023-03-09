@@ -118,28 +118,28 @@ app.use(async (req, res, next) => {
     next();
 });
 
-/**
- * Remote request
- */
-app.use(async (req, res, next) => {
-    let { headers: { serverNode } } = req;
-    if (serverNode) {
-        /**
-         * @type {ServerNode[]}
-         */
-        let nodes = await db('server-nodes') ?? [];
+// /**
+//  * Remote request
+//  */
+// app.use(async (req, res, next) => {
+//     let { headers: { serverNode } } = req;
+//     if (serverNode) {
+//         /**
+//          * @type {ServerNode[]}
+//          */
+//         let nodes = await db('server-nodes') ?? [];
 
-        let node = nodes.find(x => x.id == serverNode);
+//         let node = nodes.find(x => x.id == serverNode);
 
-        if (!node) {
-            return res.json({ ok: false, message: 'Server node not found' });
-        }
+//         if (!node) {
+//             return res.json({ ok: false, message: 'Server node not found' });
+//         }
 
-        let path = req.path;
-    } else {
-        next();
-    }
-})
+//         let path = req.path;
+//     } else {
+//         next();
+//     }
+// })
 
 
 // app.use((req, res, next) => {
