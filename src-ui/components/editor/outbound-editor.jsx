@@ -164,6 +164,12 @@ export function OutboundEditor({ outbound: outboundProp, dissmis, onEdit }) {
                                                 <Field htmlFor="id" label="ID">
                                                     <input type="text" className={styles.input} id="id"/>
                                                 </Field>
+                                                <Field htmlFor="flow" label="Flow">
+                                                    <input type="text" className={styles.input} placeholder='' id="flow"/>
+                                                </Field>
+                                                <Field htmlFor="encryption" label="Encryption">
+                                                    <input type="text" className={styles.input} placeholder='none' id="encryption"/>
+                                                </Field>
                                                 <Field htmlFor="alterId" label="Alter ID">
                                                     <input type="number" className={styles.input} id="alterId" placeholder="0"/>
                                                 </Field>
@@ -250,13 +256,30 @@ export function OutboundEditor({ outbound: outboundProp, dissmis, onEdit }) {
                             TLS settings
                         </h3>
                         <FieldObject path={'tlsSettings'}>
-                        <div className="flex flex-row py-2 px-2">
-                            <Field label="Allow Insecure" htmlFor="allowInsecure" horizontal>
-                                <input type={'checkbox'} className={styles.input} id="allowInsecure"/>
-                            </Field>
-                            <Field label="Server Name" htmlFor="serverName" horizontal>
+                        <div className="flex flex-row">
+                            <Field label="Server Name (SNI)" htmlFor="serverName" className="flex-1">
                                 <input type={'text'} className={styles.input} id="serverName"/>
                             </Field>
+                            <Field label="Allow Insecure" htmlFor="allowInsecure" className="py-2 mx-2">
+                                <input type={'checkbox'} className={styles.input} id="allowInsecure"/>
+                            </Field>
+                        </div>
+                        </FieldObject>
+                    </> : null}
+                    {outbound?.streamSettings?.network == 'ws' ? <>
+                        <h3 className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 font-smibold">
+                            WS settings
+                        </h3>
+                        <FieldObject path={'wsSettings'}>
+                        <div className="flex flex-row">
+                            <Field label="Path" htmlFor="path">
+                                <input type={'text'} className={styles.input} id="path"/>
+                            </Field>
+                            <FieldObject path={'headers'}>
+                                <Field label="Host" htmlFor="host" className="flex-1">
+                                    <input type={'text'} className={styles.input} id="host"/>
+                                </Field>
+                            </FieldObject>
                         </div>
                         </FieldObject>
                     </> : null}
