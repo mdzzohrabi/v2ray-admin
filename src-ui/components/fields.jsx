@@ -18,7 +18,7 @@ let FieldContext = createContext({});
 
 /**
  * Fields group
- * @param {React.HTMLAttributes<HTMLDivElement> & { children?: any, title?: string, titleClassName?: string, horizontal?: boolean, data?: any, dataSetter?: (value: any) => any, layoutVertical?: boolean, unsetEmpty?: boolean, containerClassName?: string }} param0 
+ * @param {Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> & { children?: any, title?: any, titleClassName?: string, horizontal?: boolean, data?: any, dataSetter?: (value: any) => any, layoutVertical?: boolean, unsetEmpty?: boolean, containerClassName?: string }} param0 
  * @returns 
  */
 export function FieldsGroup({ title, children, className, titleClassName, horizontal = false, layoutVertical = false, data = undefined, dataSetter = undefined, unsetEmpty = true, containerClassName = '', ...props }) {

@@ -4,7 +4,7 @@ import classNames from "classnames";
 import ExportJsonExcel from 'js-export-excel';
 import Head from "next/head";
 import { useRouter } from "next/router";
-import React, { Fragment, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { Fragment, useCallback, useContext, useMemo, useState } from 'react';
 import toast from "react-hot-toast";
 import { AddUser } from "../components/add-user";
 import { AppContext } from "../components/app-context";
@@ -24,9 +24,9 @@ import { Popup } from "../components/popup";
 import { PopupMenu } from "../components/popup-menu";
 import { ServerNode } from "../components/server-node";
 import { Size } from "../components/size";
-import { useContextSWR, usePrompt } from "../lib/hooks";
+import { useContextSWR, usePrompt, useStoredState } from "../lib/hooks";
 import { styles } from "../lib/styles";
-import { DateUtil, serverRequest, store, stored } from "../lib/util";
+import { DateUtil, serverRequest } from "../lib/util";
 
 export default function UsersPage() {
 
@@ -40,7 +40,7 @@ export default function UsersPage() {
     /** @type {string[]} */
     let initInboundsFilter = [];
 
-    let [view, setView] = useState(stored('users-view', {
+    let [view, setView] = useStoredState('users-view', {
         sortColumn: '',
         sortAsc: true,
         fullTime: false,
@@ -51,11 +51,9 @@ export default function UsersPage() {
         page: 1,
         limit: 20,
         inbounds: initInboundsFilter
-    }));
+    });
 
     let [collapsed, setCollapsed] = useState({});
-
-    useEffect(() => store('users-view', view), [view]);
 
     /**
      * @type {import("swr").SWRResponse<V2RayConfigInbound[]>}

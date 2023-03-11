@@ -1,4 +1,5 @@
 // @ts-check
+import { ArrowPathIcon, HomeIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import Head from "next/head";
 import React from "react";
@@ -25,9 +26,15 @@ export default function HomePage() {
             <title>Home</title>
         </Head>
         <Loading isLoading={isLoading}/>
-        <div className="pb-2 px-4 flex flex-1 items-center">
-            <h1 className="flex-1 text-xl">Dashboard</h1>
-            <button onClick={e => refreshData()} className={styles.button}>Reload</button>
+        <div className="py-4 px-4 flex flex-row items-center">
+            <h1 className="flex-1 text-xl flex flex-row items-center gap-x-2">
+                <HomeIcon className="w-6"/>
+                Dashboard
+            </h1>
+            <button onClick={e => refreshData()} className={styles.button}>
+                <ArrowPathIcon className="w-4"/>
+                Reload
+            </button>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 px-3 gap-3">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-3">

@@ -49,6 +49,12 @@ const statusFilters = {
 router.get('/config', async (req, res) => {
     let {configPath} = getPaths();
     let config = readConfig(configPath);
+    config?.inbounds?.map(x => {
+        if (x.settings) {
+            x.settings['clientsLength'] = x.settings?.clients?.length;
+            x.settings.clients = [];
+        }
+    })
     res.json(config);
 });
 

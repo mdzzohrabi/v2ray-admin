@@ -6,6 +6,7 @@ import React, { useCallback, useContext, useMemo } from 'react';
 import useSWR from 'swr';
 import { serverRequest } from '../lib/util';
 import { AppContext } from './app-context';
+import { HomeIcon, CurrencyDollarIcon, UsersIcon, ServerIcon, ArrowRightOnRectangleIcon, Cog6ToothIcon, ChartPieIcon, CloudIcon, ComputerDesktopIcon } from '@heroicons/react/24/outline';
 
 export function Container({ children, block = true }) {
     const router = useRouter();
@@ -21,15 +22,15 @@ export function Container({ children, block = true }) {
 
     const menu = useMemo(() => {
         return [
-            { text: 'Home', link: '/home', admin: false },
-            { text: 'Logs', link: '/logs', admin: true },
-            { text: 'Server Nodes', link: '/nodes', admin: true },
-            { text: 'Traffic Usage', link: '/usages/traffic', admin: true },
-            { text: 'Transactions', link: '/transactions', admin: false },
-            { text: 'Users', link: '/users', admin: false },
-            { text: 'Config', link: '/configuration', admin: true },
-            { text: 'Servers', link: '/server_config', admin: false },
-            { text: 'Logout', link: '/logout', admin: false },
+            { text: 'Home', link: '/home', admin: false, icon: <HomeIcon className='w-4'/> },
+            { text: 'Logs', link: '/logs', admin: true, icon: <ComputerDesktopIcon className='w-4'/> },
+            { text: 'Server Nodes', link: '/nodes', admin: true, icon: <CloudIcon className='w-4'/> },
+            { text: 'Traffic Usage', link: '/usages/traffic', admin: true, icon: <ChartPieIcon className='w-4'/> },
+            { text: 'Transactions', link: '/transactions', admin: false, icon: <CurrencyDollarIcon className='w-4'/> },
+            { text: 'Users', link: '/users', admin: false, icon: <UsersIcon className='w-4'/> },
+            { text: 'Config', link: '/configuration', admin: true, icon: <Cog6ToothIcon className='w-4'/> },
+            { text: 'Servers', link: '/server_config', admin: false, icon: <ServerIcon className='w-4'/> },
+            { text: 'Logout', link: '/logout', admin: false, icon: <ArrowRightOnRectangleIcon className='w-4'/> },
         ]
     }, []);
 
@@ -51,7 +52,7 @@ export function Container({ children, block = true }) {
                 {menu.filter(x => !x.admin || isFull).map(x => <option key={x.link} value={x.link}>{x.text}</option>)}
             </select>
             <ul className="px-2 py-3 hidden lg:flex flex-row xl:sticky top-0 z-50 bg-slate-100 flex-1 self-center">
-                {menu.map(x => !x.admin || isFull ? <MenuLink href={x.link + (isFull ? '?all=1' : '')} text={x.text}/> : null)}
+                {menu.map(x => !x.admin || isFull ? <MenuLink href={x.link + (isFull ? '?all=1' : '')} icon={x.icon} text={x.text}/> : null)}
             </ul>
             <div className="self-center px-3 text-gray-400 flex flex-col">
                 <span className="font-bold">Server</span>
@@ -77,12 +78,12 @@ export function Container({ children, block = true }) {
 
 /**
  * 
- * @param {{ children?: any, text?: string, href: string }} param0 
+ * @param {{ children?: any, text?: string, icon?: any, href: string }} param0 
  * @returns 
  */
-function MenuLink({ href, text = undefined, children = undefined }) {
+function MenuLink({ href, text = undefined, icon = undefined, children = undefined }) {
     const router = useRouter();
     return <Link href={href}>
-        <li className={classNames('whitespace-nowrap px-3 py-1 cursor-pointer rounded-lg', { 'hover:bg-white': router.asPath != href }, { 'font-bold bg-slate-800 text-white': router.asPath == href })}>{text ?? children}</li>
+        <li className={classNames('flex flex-row gap-x-2 items-center whitespace-nowrap px-3 py-1 cursor-pointer rounded-lg', { 'hover:bg-white': router.asPath != href }, { 'font-bold bg-slate-800 text-white': router.asPath == href })}>{icon}{text ?? children}</li>
     </Link>;
 }

@@ -22,6 +22,7 @@ import { Tabs } from "../components/tabs";
 import { useContextSWR } from "../lib/hooks";
 import { styles } from "../lib/styles";
 import { deepCopy, getChanges, serverRequest, withoutKey } from "../lib/util";
+import {AdjustmentsVerticalIcon, ArrowPathIcon, ClipboardIcon, DocumentDuplicateIcon} from '@heroicons/react/24/outline';
 
 export default function ConfigurationPage() {
 
@@ -31,10 +32,6 @@ export default function ConfigurationPage() {
     let [view, setView] = useState({
         showDetail: true
     });
-
-    let request = useMemo(() => {
-        return serverRequest.bind(this, context.server);
-    }, [context]);
     
     /** @type {import("swr").SWRResponse<V2RayConfig>} */
     let {mutate: refreshConfig, data: originalConfig, isValidating: isLoading} = useContextSWR('/config');
@@ -42,6 +39,34 @@ export default function ConfigurationPage() {
 
     // Update config on server configuration changes
     useEffect(() => setConfig(deepCopy(originalConfig)), [originalConfig]);
+
+    const copyConfig = useCallback(async () => {
+        if (!navigator?.clipboard) {
+            toast.error("Clipboard only works in HTTPS mode");
+            return;
+        }
+        await navigator.clipboard.writeText(JSON.stringify(config));
+        toast.success('Configuration copied successful');
+    }, [originalConfig, config]);
+
+    const pasteConfig = useCallback(async () => {
+        if (!navigator?.clipboard) {
+            toast.error("Clipboard only works in HTTPS mode");
+            return;
+        }
+        let strConfig = await navigator.clipboard.readText();
+        try {
+            let config = JSON.parse(strConfig);
+            if (!('inbounds' in config)) {
+                throw Error(`Invalid v2ray configuration`);
+            }
+            setConfig(config);
+            toast.success('Configuration pasted successful');
+        } catch (err) {
+            toast.error(err?.message);
+        }
+    }, [originalConfig, config]);
+
 
     const saveConfig = useCallback(async () => {
         try {
@@ -130,7 +155,7 @@ export default function ConfigurationPage() {
                     row.port ?? NA,
                     // Settings
                     <Infos>
-                        <Info label={'Clients'}>{row.settings?.clients?.length ?? NA}</Info>
+                        <Info label={'Clients'}>{row.settings ? row.settings['clientsLength'] ?? NA : NA}</Info>
                     </Infos>,
                     // Stream
                     <Infos>
@@ -390,12 +415,31 @@ export default function ConfigurationPage() {
         <Head>
             <title>Configuration</title>
         </Head>
-        <FieldsGroup title="Configuration" className="px-3">
+        <FieldsGroup title={
+            <div className="flex flex-row items-center gap-x-2">
+                <AdjustmentsVerticalIcon className="w-6"/>
+                <span>Configuration</span>
+            </div>
+        } className="px-3">
             <div className="flex-1 flex-row flex items-center">
                 {isLoading? <span className="rounded-lg bg-gray-700 text-white px-3 py-0">Loading</span> :null}
                 {getChanges(originalConfig, config).length > 0 ? <span className="rounded-lg bg-yellow-100 text-yellow-800 text-xs px-3 py-1">Changed</span> :null}
             </div>
-            <button type={"button"} onClick={() => restartService()} className={styles.button}>Restart V2Ray</button>
+            <div className="flex flex-row items-center">
+                <button type={"button"} onClick={() => refreshConfig()} className={classNames(styles.button, 'rounded-tr-none rounded-br-none ml-0')}>
+                    <ArrowPathIcon className="w-4"/>
+                    Reload
+                </button>
+                <button type={"button"} onClick={() => copyConfig()} className={classNames(styles.button, 'rounded-none ml-0 border-l-0')}>
+                    <DocumentDuplicateIcon className="w-4"/>
+                    Copy
+                </button>
+                <button type={"button"} onClick={() => pasteConfig()} className={classNames(styles.button, 'rounded-none ml-0 border-l-0')}>
+                    <ClipboardIcon className="w-4"/>
+                    Paste
+                </button>
+                <button type={"button"} onClick={() => restartService()} className={classNames(styles.button, 'rounded-tl-none rounded-bl-none ml-0 border-l-0')}>Restart V2Ray</button>
+            </div>
             <button type={"button"} onClick={() => saveConfig()} className={styles.buttonPrimary}>Save Configuration</button>
         </FieldsGroup>
         <div className="p-3">
