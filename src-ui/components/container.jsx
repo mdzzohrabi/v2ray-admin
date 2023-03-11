@@ -13,7 +13,7 @@ export function Container({ children, block = true }) {
     const { server, setServer } = useContext(AppContext);
 
     /** @type {import("swr").SWRResponse<ServerNode[]>} */
-    let {mutate: refreshNodes, data: nodes, isValidating: isLoading} = useSWR('/nodes', serverRequest.bind(this, server), {
+    let {mutate: refreshNodes, data: nodes, isValidating: isLoading} = useSWR('/nodes', serverRequest.bind(this, { ...server, node: undefined }), {
         revalidateOnFocus: false,
         revalidateOnMount: true,
         revalidateOnReconnect: false
