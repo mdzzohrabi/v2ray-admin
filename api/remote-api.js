@@ -25,7 +25,7 @@ router.use(async (req, res, next) => {
 
         try {
             let result = await fetch(node.address + path, {
-                body: req.method.toLowerCase() == 'post' ? req.body : undefined,
+                body: req.method.toLowerCase() == 'post' ? JSON.stringify(req.body) : undefined,
                 method: req.method,
                 headers: {
                     Authorization: 'Bearer ' + Buffer.from(node.apiKey).toString('base64'),
@@ -37,7 +37,7 @@ router.use(async (req, res, next) => {
         } catch (err) {
             res.json({
                 ok: false,
-                message: `Cannot connect to node "${node.id}" to fetch "${path}" (${req.method})`,
+                message: `Cannot connect to node "${node.name}" to fetch "${path}" (${req.method})`,
                 error: err?.message
             });
             console.error(err);
