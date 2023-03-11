@@ -15,7 +15,7 @@ import { Field, FieldsGroup } from "../components/fields";
 import { PopupMenu } from "../components/popup-menu";
 import { Price } from "../components/price";
 import { Table } from "../components/table";
-import { usePrompt, useStoredState } from "../lib/hooks";
+import { useContextSWR, usePrompt, useStoredState } from "../lib/hooks";
 import { styles } from "../lib/styles";
 import { arrSort, queryString, serverRequest } from "../lib/util";
 
@@ -82,18 +82,15 @@ export default function TransactionsPage() {
     /**
      * @type {import("swr").SWRResponse<Transaction[]>}
      */
-    let {data: transactions, mutate: refreshList, isValidating: isLoading} = useSWR('/transactions?key=' + btoa(context.server.url), serverRequest.bind(this, context.server));
+    let {data: transactions, mutate: refreshList, isValidating: isLoading} = useContextSWR('/transactions');
 
     /** @type {import("swr").SWRResponse<ServerNode[]>} */
-    let {data: nodes, mutate: refreshNodes} = useSWR('/nodes', serverRequest.bind(this, context.server));
+    let {data: nodes, mutate: refreshNodes} = useContextSWR('/nodes');
 
     /**
      * @type {import("swr").SWRResponse<string[]>}
      */
-     let {data: users, mutate: refreshUsers} = useSWR('/inbounds_clients' + queryString({
-        key: btoa(context.server.url),
-        showAll
-     }), serverRequest.bind(this, context.server));
+     let {data: users, mutate: refreshUsers} = useContextSWR('/inbounds_clients' + queryString({ showAll }));
 
     const addTransaction = useCallback(async (newTransaction) => {
         try {

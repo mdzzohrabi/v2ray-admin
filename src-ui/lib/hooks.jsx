@@ -1,10 +1,10 @@
 // @ts-check
 
-import React from "react";
-import { useState } from "react";
-import { useCallback, useEffect } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { deepCopy, store, stored } from "./util";
+import useSWR from "swr";
+import { AppContext } from "../components/app-context";
+import { deepCopy, serverRequest, store, stored } from "./util";
 
 export function useOutsideAlerter(ref, callback) {
 	useEffect(() => {
@@ -133,4 +133,42 @@ export function useStoredState(key, init) {
 	useEffect(() => store(key, state[0]), [state[0]]);
 	// @ts-ignore
 	return state;
+}
+
+/**
+ * 
+ * @param {any} key Key or Url
+ * @param {any} body Body
+ * @returns 
+ */
+export function useContextSWR(key, body = undefined) {
+	let context = useContext(AppContext);
+	let [cacheKey, setCacheKey] = useState('');
+	
+	let requester = useMemo(() => {
+		setCacheKey(btoa(JSON.stringify(context.server)));
+		return serverRequest.bind(this, context.server);
+	}, [context]);
+
+	if (typeof key == 'string') {
+		if (key.includes('?'))
+			key += '&_c=' + cacheKey;
+		else
+			key += '?_c=' + cacheKey;
+
+
+		if (!!body)
+			key = { url: key, body };
+	}
+	else if (typeof key == 'object' && 'url' in key) {
+		if (key.url.includes('?'))
+			key.url += '&_c=' + cacheKey;
+		else
+			key.url += '?_c=' + cacheKey;
+
+		if (!!body)
+			key.body = body;
+	}
+
+	return useSWR(key, requester);
 }

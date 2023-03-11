@@ -2,9 +2,7 @@
 import classNames from 'classnames';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import React, { useContext } from 'react';
-import { useCallback } from 'react';
-import { useMemo } from 'react';
+import React, { useCallback, useContext, useMemo } from 'react';
 import useSWR from 'swr';
 import { serverRequest } from '../lib/util';
 import { AppContext } from './app-context';
@@ -43,8 +41,8 @@ export function Container({ children, block = true }) {
     }, []);
 
     const onMenuClick = useCallback((/** @type {import('react').ChangeEvent<HTMLSelectElement>} */ e) => {
-        router.push(e.target.value);
-    }, []);
+        router.push(e.target.value + (isFull ? '?all=1' : ''));
+    }, [isFull, router]);
 
     return <div className="flex flex-col h-screen overflow-x-auto w-full text-xs xl:text-sm">
         <div className="flex flex-row items-center">

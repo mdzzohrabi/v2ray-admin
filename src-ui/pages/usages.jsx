@@ -3,21 +3,18 @@
 import classNames from "classnames";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import React, { useContext } from 'react';
-import useSWR from 'swr';
-import { AppContext } from "../components/app-context";
+import React from 'react';
 import { Container } from "../components/container";
 import { DateView } from "../components/date-view";
 import { Field, FieldsGroup } from "../components/fields";
 import { Info, Infos } from "../components/info";
 import { Table } from "../components/table";
-import { usePrompt, useStoredState } from "../lib/hooks";
+import { useContextSWR, usePrompt, useStoredState } from "../lib/hooks";
 import { styles } from "../lib/styles";
-import { serverRequest } from "../lib/util";
+import { queryString } from "../lib/util";
 
 export default function UsagesPage() {
 
-    let context = useContext(AppContext);
     let router = useRouter();
     let showAll = router.query.all == '1';
     let email = router.query.user;
@@ -28,7 +25,7 @@ export default function UsagesPage() {
     /**
      * @type {import("swr").SWRResponse<any[]>}
      */
-    let {data: usages, mutate: refreshUsages, isValidating: isLoading} = useSWR(email ? '/daily_usages?email='+email+'&key=' + btoa(context.server.url) : null, serverRequest.bind(this, context.server));
+    let {data: usages, mutate: refreshUsages, isValidating: isLoading} = useContextSWR('/daily_usages' + queryString({ email }));
     const prompt = usePrompt();
 
     return <Container>

@@ -6,7 +6,6 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import React, { Fragment, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import toast from "react-hot-toast";
-import useSWR from 'swr';
 import { AddUser } from "../components/add-user";
 import { AppContext } from "../components/app-context";
 import { ClientConfig } from "../components/client-config";
@@ -20,11 +19,12 @@ import { CopyUserEditor } from "../components/editor/copy-user";
 import { FieldServerNodes } from "../components/field-server-nodes";
 import { Field, FieldsGroup } from "../components/fields";
 import { Info, Infos } from "../components/info";
+import { Loading } from "../components/loading";
 import { Popup } from "../components/popup";
 import { PopupMenu } from "../components/popup-menu";
 import { ServerNode } from "../components/server-node";
 import { Size } from "../components/size";
-import { usePrompt } from "../lib/hooks";
+import { useContextSWR, usePrompt } from "../lib/hooks";
 import { styles } from "../lib/styles";
 import { DateUtil, serverRequest, store, stored } from "../lib/util";
 
@@ -60,13 +60,11 @@ export default function UsersPage() {
     /**
      * @type {import("swr").SWRResponse<V2RayConfigInbound[]>}
      */
-    let {data: inboundsResponse, mutate: refreshInbounds, isValidating: isLoading} = useSWR({
-        url: '/inbounds?key=' + btoa(context.server.url),
-        body: {
-            private: showAll,
-            view
-        }
-    }, serverRequest.bind(this, context.server));
+    let {data: inboundsResponse, mutate: refreshInbounds, isValidating: isLoading} = useContextSWR('/inbounds',
+    {
+        private: showAll,
+        view
+    });
 
     let inbounds = useMemo(() => inboundsResponse?.filter(x => x.protocol == 'vmess' || x.protocol == 'vless').map(x => {
         return x;
@@ -172,7 +170,7 @@ export default function UsersPage() {
     /**
      * @type {import("swr").SWRResponse<string[]>}
      */
-    const {data: statusFilters} = useSWR('/status_filters', serverRequest.bind(this, context.server));
+    const {data: statusFilters} = useContextSWR('/status_filters');
 
     const prompt = usePrompt();
 
@@ -328,9 +326,7 @@ export default function UsersPage() {
                 <button className={styles.button} onClick={exportExcel}>Export Excel</button>
             </div>
         </FieldsGroup>
-        {isLoading ? <div className="fixed z-50 bg-slate-900 text-white rounded-lg px-3 py-1 bottom-3 left-3">
-            Loading ...
-        </div> : null }
+        <Loading isLoading={isLoading}/>
         <div className="">
         <table className="w-full border-separate border-spacing-0">
             <thead className="sticky top-0 xl:top-0 bg-white shadow-md z-40">

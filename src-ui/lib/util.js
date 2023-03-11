@@ -36,10 +36,7 @@ export function serverRequest(server, action, body = undefined) {
         .then(result => result.json())
         .then(result => {
             if (result.encoded) {
-                console.log('Encode data');
-                let data = JSON.parse(decrypt(result.encoded, 'masoud').toString(encodeUtf8));
-                console.log(data);
-                return data;
+                return JSON.parse(decrypt(result.encoded, 'masoud').toString(encodeUtf8));
             }
             return result;
         })

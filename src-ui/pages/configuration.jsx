@@ -3,14 +3,12 @@
 import classNames from "classnames";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import React, { useContext, useEffect, useState } from 'react';
-import { useMemo } from "react";
-import { useCallback } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import toast from "react-hot-toast";
-import useSWR from 'swr';
 import { AppContext } from "../components/app-context";
 import { Container } from "../components/container";
-import { Dialog, useDialog } from "../components/dialog";
+import { useDialog } from "../components/dialog";
+import { Editable } from "../components/editable";
 import { InboundEditor } from "../components/editor/inbound-editor";
 import { OutboundEditor } from "../components/editor/outbound-editor";
 import { RoutingBalancerEditor } from "../components/editor/routing-balancer-editor";
@@ -21,9 +19,9 @@ import { JsonView } from "../components/json";
 import { PopupMenu } from "../components/popup-menu";
 import { Table } from "../components/table";
 import { Tabs } from "../components/tabs";
+import { useContextSWR } from "../lib/hooks";
 import { styles } from "../lib/styles";
 import { deepCopy, getChanges, serverRequest, withoutKey } from "../lib/util";
-import { Editable } from "../components/editable";
 
 export default function ConfigurationPage() {
 
@@ -39,11 +37,7 @@ export default function ConfigurationPage() {
     }, [context]);
     
     /** @type {import("swr").SWRResponse<V2RayConfig>} */
-    let {mutate: refreshConfig, data: originalConfig, isValidating: isLoading} = useSWR('/config', request, {
-        revalidateOnFocus: false,
-        revalidateOnMount: true,
-        revalidateOnReconnect: false
-    });
+    let {mutate: refreshConfig, data: originalConfig, isValidating: isLoading} = useContextSWR('/config');
     let [config, setConfig] = useState(deepCopy(originalConfig));
 
     // Update config on server configuration changes

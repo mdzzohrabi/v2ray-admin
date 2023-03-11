@@ -12,7 +12,7 @@ import { ServerNode } from "../../components/server-node";
 import { Size } from "../../components/size";
 import { Table } from "../../components/table";
 import { FieldServerNodes } from "../../components/field-server-nodes";
-import { usePrompt, useStoredState } from "../../lib/hooks";
+import { useContextSWR, usePrompt, useStoredState } from "../../lib/hooks";
 import { styles } from "../../lib/styles";
 import { arrSort, queryString, serverRequest } from "../../lib/util";
 
@@ -53,7 +53,7 @@ export default function TrafficUsagePage() {
     /**
      * @type {import("swr").SWRResponse<any>}
      */
-    let {data: usages, mutate: refreshUsages, isValidating: isLoading} = useSWR('/traffic' + queryString({ email, key: btoa(context.server.url) }), serverRequest.bind(this, context.server));
+    let {data: usages, mutate: refreshUsages, isValidating: isLoading} = useContextSWR('/traffic' + queryString({ email }));
     const prompt = usePrompt();
 
     let dates = useMemo(() => Object.keys(usages ?? {}).map(x => new Date(x)), [usages]);

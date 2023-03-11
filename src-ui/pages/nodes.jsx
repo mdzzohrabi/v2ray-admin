@@ -15,7 +15,7 @@ import { Field, FieldsGroup } from "../components/fields";
 import { Info, Infos } from "../components/info";
 import { PopupMenu } from "../components/popup-menu";
 import { Table } from "../components/table";
-import { usePrompt } from "../lib/hooks";
+import { useContextSWR, usePrompt } from "../lib/hooks";
 import { styles } from "../lib/styles";
 import { serverRequest } from "../lib/util";
 
@@ -85,17 +85,9 @@ export default function NodesPage() {
     let [view, setView] = useState({
         showDetail: true
     });
-
-    let request = useMemo(() => {
-        return serverRequest.bind(this, context.server);
-    }, [context]);
     
     /** @type {import("swr").SWRResponse<ServerNode[]>} */
-    let {mutate: refreshNodes, data: nodes, isValidating: isLoading} = useSWR('/nodes', request, {
-        revalidateOnFocus: false,
-        revalidateOnMount: true,
-        revalidateOnReconnect: false
-    });
+    let {mutate: refreshNodes, data: nodes, isValidating: isLoading} = useContextSWR('/nodes');
 
     let addNode = useCallback(async node => {
         try {
