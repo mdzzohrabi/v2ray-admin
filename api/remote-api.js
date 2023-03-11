@@ -28,7 +28,7 @@ router.use(async (req, res, next) => {
                 body: req.method.toLowerCase() == 'post' ? req.body : undefined,
                 method: req.method,
                 headers: {
-                    Authorization: 'Bearer ' + node.apiKey,
+                    Authorization: 'Bearer ' + Buffer.from(node.apiKey).toString('base64'),
                     'Content-Type': 'application/json'
                 }
             });
