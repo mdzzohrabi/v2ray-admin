@@ -60,7 +60,7 @@ export function AddTransactionDialog({ onSubmit, users, dismiss }) {
 
 export default function TransactionsPage() {
 
-    let context = useContext(AppContext);
+    let {server} = useContext(AppContext);
     let router = useRouter();
     let showAll = router.query.all == '1';
     // /** @type {[Partial<Transaction>, React.Dispatch<React.SetStateAction<Partial<Transaction>>>]} */
@@ -94,7 +94,7 @@ export default function TransactionsPage() {
 
     const addTransaction = useCallback(async (newTransaction) => {
         try {
-            let result = serverRequest(context.server, `/transactions`, {
+            let result = serverRequest(server, `/transactions`, {
                 ...newTransaction
             });
 
@@ -104,21 +104,21 @@ export default function TransactionsPage() {
         catch (err) {
             toast.error(err.message);
         }
-    }, [refreshList, context?.server]);
+    }, [refreshList, server]);
 
     const removeTransaction = useCallback(async (/** @type {Transaction} */ t) => {
-        await serverRequest(context.server, `/remove_transaction`, { id: t.id })
+        await serverRequest(server, `/remove_transaction`, { id: t.id })
             .then(result => toast.success(`Transaction removed successful`))
             .then(() => refreshList())
             .catch(err => toast.error(err));
-    }, []);
+    }, [server]);
 
     const editTransaction = useCallback(async (/** @type {Transaction} */ t, field, value) => {
-        await serverRequest(context.server, `/edit_transaction`, { id: t.id, field, value })
+        await serverRequest(server, `/edit_transaction`, { id: t.id, field, value })
             .then(result => toast.success(`Transaction edited successful`))
             .then(() => refreshList())
             .catch(err => toast.error(err));
-    }, []);
+    }, [server]);
 
     const transactionDialog = useDialog((users, onSubmit, dismiss) => <AddTransactionDialog users={users} onSubmit={onSubmit} dismiss={dismiss}/>);
 

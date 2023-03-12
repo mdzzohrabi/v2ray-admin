@@ -78,7 +78,7 @@ function ServerNodeDialog({ onEdit, onClose, node: nodeProp }) {
 
 export default function NodesPage() {
 
-    let context = useContext(AppContext);
+    let {server} = useContext(AppContext);
     let router = useRouter();
 
     let showAll = router.query.all == '1';
@@ -91,7 +91,7 @@ export default function NodesPage() {
 
     let addNode = useCallback(async node => {
         try {
-            let result = await serverRequest(context.server, 'post:/nodes', node);
+            let result = await serverRequest(server, 'post:/nodes', node);
             if (result?.ok) {
                 toast.success(result?.message);
                 refreshNodes();
@@ -99,11 +99,11 @@ export default function NodesPage() {
         } catch (e) {
             toast.error(e?.message);
         }
-    }, []);
+    }, [server]);
 
     let editNode = useCallback(async node => {
         try {
-            let result = await serverRequest(context.server, 'put:/nodes', node);
+            let result = await serverRequest(server, 'put:/nodes', node);
             if (result?.ok) {
                 toast.success(result?.message);
                 refreshNodes();
@@ -111,11 +111,11 @@ export default function NodesPage() {
         } catch (e) {
             toast.error(e?.message);
         }
-    }, []);
+    }, [server]);
 
     let deleteNode = useCallback(async node => {
         try {
-            let result = await serverRequest(context.server, 'delete:/nodes', node);
+            let result = await serverRequest(server, 'delete:/nodes', node);
             if (result?.ok) {
                 toast.success(result?.message);
                 refreshNodes();
@@ -123,7 +123,7 @@ export default function NodesPage() {
         } catch (e) {
             toast.error(e?.message);
         }
-    }, []);
+    }, [server]);
 
     let serverNodeDialog = useDialog((node, onEdit, onClose) => <ServerNodeDialog
         onClose={onClose}

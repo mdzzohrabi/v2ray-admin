@@ -26,7 +26,7 @@ import {AdjustmentsVerticalIcon, ArrowPathIcon, ClipboardIcon, DocumentDuplicate
 
 export default function ConfigurationPage() {
 
-    let context = useContext(AppContext);
+    let {server} = useContext(AppContext);
     let router = useRouter();
     let showAll = router.query.all == '1';
     let [view, setView] = useState({
@@ -71,7 +71,7 @@ export default function ConfigurationPage() {
     const saveConfig = useCallback(async () => {
         try {
             let changes = getChanges(originalConfig, config);
-            let result = await serverRequest(context.server, '/config', {
+            let result = await serverRequest(server, '/config', {
                 changes
             });
             if (result?.ok) {
@@ -83,16 +83,16 @@ export default function ConfigurationPage() {
         } catch (err) {
             toast.error(err?.message ?? 'Error');   
         }
-    }, [context, config, originalConfig, refreshConfig]);
+    }, [server, config, originalConfig, refreshConfig]);
 
     const restartService = useCallback(async () => {
         try {
-            let result = await serverRequest(context.server, '/restart', {});
+            let result = await serverRequest(server, '/restart', {});
             toast.success(result?.result || 'Service restarted');
         } catch (err) {
             toast.error(err?.message ?? 'Error');   
         }
-    }, [context]);
+    }, [server]);
 
     // Not-Available value element
     let NA = <span className="text-gray-400 text-xs">-</span>;
