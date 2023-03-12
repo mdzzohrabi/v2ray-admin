@@ -38,7 +38,7 @@ export default function ConfigurationPage() {
     let [config, setConfig] = useState(deepCopy(originalConfig));
 
     // Update config on server configuration changes
-    useEffect(() => setConfig(deepCopy(originalConfig)), [originalConfig]);
+    useEffect(() => setConfig(deepCopy(originalConfig)), [isLoading]);
 
     const copyConfig = useCallback(async () => {
         if (!navigator?.clipboard) {

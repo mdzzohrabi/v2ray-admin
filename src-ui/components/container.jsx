@@ -1,4 +1,5 @@
 // @ts-check
+import { ArrowRightOnRectangleIcon, ChartPieIcon, CloudIcon, Cog6ToothIcon, ComputerDesktopIcon, CurrencyDollarIcon, HomeIcon, ServerIcon, UsersIcon } from '@heroicons/react/24/outline';
 import classNames from 'classnames';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -6,7 +7,6 @@ import React, { useCallback, useContext, useMemo } from 'react';
 import useSWR from 'swr';
 import { serverRequest } from '../lib/util';
 import { AppContext } from './app-context';
-import { HomeIcon, CurrencyDollarIcon, UsersIcon, ServerIcon, ArrowRightOnRectangleIcon, Cog6ToothIcon, ChartPieIcon, CloudIcon, ComputerDesktopIcon } from '@heroicons/react/24/outline';
 
 export function Container({ children, block = true }) {
     const router = useRouter();
