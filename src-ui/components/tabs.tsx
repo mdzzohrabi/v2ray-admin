@@ -1,30 +1,25 @@
 // @ts-check
 
 import classNames from "classnames";
-import React, { createElement, Fragment } from "react";
+import React, { createElement, Fragment, ReactElement } from "react";
 import { useState } from "react";
 
-/**
- * @typedef {{
- *      children?: any,
- *      title?: string,
- *      isSelected?: boolean,
- *      className?: string
- * }} TabProps
- */
+interface TabProps {
+    children?: any,
+    title?: string,
+    isSelected?: boolean,
+    className?: string
+}
 
-/**
- * Tabs
- * @param {{
- *      children: import("react").ReactElement<TabProps, typeof Tab>[]
- * }} param0 Parameters
- */
-export function Tabs({ children }) {
+export function Tabs({ children }: { children: ReactElement<TabProps, typeof Tab>[] | ReactElement<TabProps, typeof Tab> }) {
     let [selectedTab, setSelectedTab] = useState('');
 
     if (selectedTab == '') {
         selectedTab = children[0]?.props?.title ?? '';
     }
+
+    if (!Array.isArray(children))
+        children = [children];
 
     return <div className="tabs flex flex-col">
         <div className="flex flex-row flex-nowrap mb-2 rounded-3xl bg-slate-100 w-fit">
@@ -42,9 +37,8 @@ export function Tabs({ children }) {
 
 /**
  * Tab
- * @param {TabProps} param0 Parameters
  */
-function Tab({ children, title, isSelected, className = '' }) {
+function Tab({ children, title, isSelected, className = '' }: TabProps) {
     return <div className={classNames({ 'hidden': !isSelected }, className)}>
         {children}
     </div>

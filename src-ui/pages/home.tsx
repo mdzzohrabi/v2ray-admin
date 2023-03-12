@@ -1,4 +1,3 @@
-// @ts-check
 import { ArrowPathIcon, HomeIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import Head from "next/head";
@@ -8,6 +7,7 @@ import { DateView } from "../components/date-view";
 import { Info, Infos } from "../components/info";
 import { Loading } from "../components/loading";
 import { Price } from "../components/price";
+import { Progress } from "../components/progress";
 import { Size } from "../components/size";
 import { useContextSWR, useStoredState } from "../lib/hooks";
 import { styles } from '../lib/styles';
@@ -41,17 +41,20 @@ export default function HomePage() {
                 <div className="bg-white shadow-md rounded-md px-4 py-3">
                     <h1 className="text-lg mb-2 pb-2 border-b-2">Users</h1>
                     <div className="pb-4 pt-2 px-0">
-                        <span className="pb-2 text-gray-500 block">Connected Clients ({data?.users?.Active} active users)</span>
-                        <div className="flex flex-row bg-gray-200 h-6 w-full relative rounded-xl overflow-hidden">
-                            {!data?.users?.Active ? <div className="flex-1 flex items-center justify-center">No Active Users</div> : <>
-                                <span className={"bg-emerald-700 overflow-hidden items-center justify-center flex text-white text-[.6rem]"} style={{ width: `${data?.users?.Connected_1_Hour * 100 / data?.users?.Active}%` }} title={'Connected'}>
-                                    {data?.users?.Connected_1_Hour}
-                                </span>
-                                <span className={"bg-pink-700 overflow-hidden items-center justify-center flex text-white text-[.6rem]"} style={{ width: `${100 - (data?.users?.Connected_1_Hour * 100 / data?.users?.Active)}%` }} title={'Disconnected'}>
-                                    {data?.users?.Active - data?.users?.Connected_1_Hour}
-                                </span>
-                            </>}
-                        </div>
+                        <Progress
+                            title={`Connected Clients (${data?.users?.Active} active users)`}
+                            total={data?.users?.Active}
+                            bars={[
+                                {
+                                    title: 'Connected',
+                                    value: data?.users?.Connected_1_Hour
+                                },
+                                {
+                                    title: 'Disconnected',
+                                    value: data?.users?.Active - data?.users?.Connected_1_Hour
+                                }
+                            ]}
+                        />
                     </div>
                     <Infos className="grid grid-cols-1 lg:grid-cols-2 gap-x-4">
                         <Info className={'py-2'} label={"Total Users"}>{data?.users?.Total}</Info>

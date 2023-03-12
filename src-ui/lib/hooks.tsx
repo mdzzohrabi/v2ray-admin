@@ -135,13 +135,7 @@ export function useStoredState(key, init) {
 	return state;
 }
 
-/**
- * 
- * @param {any} key Key or Url
- * @param {any} body Body
- * @returns 
- */
-export function useContextSWR(key, body = undefined) {
+export function useContextSWR<T = any>(key: any, body: any = undefined) {
 	let context = useContext(AppContext);
 	let [cacheKey, setCacheKey] = useState('');
 	
@@ -170,5 +164,5 @@ export function useContextSWR(key, body = undefined) {
 			key.body = body;
 	}
 
-	return useSWR(key, requester);
+	return useSWR<T>(key, requester);
 }

@@ -301,11 +301,8 @@ export function getChanges(base, modified, path = []) {
 
 /**
  * Deep copy of a value
- * @template T
- * @param {T} value Value
- * @returns {T}
  */
-export function deepCopy(value) {
+export function deepCopy<T>(value: T): T {
     if (typeof value != 'object') return value;
     return JSON.parse(JSON.stringify(value));
 }

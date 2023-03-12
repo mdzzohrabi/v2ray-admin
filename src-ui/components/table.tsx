@@ -4,32 +4,22 @@ import classNames from "classnames";
 import React, { Fragment } from "react";
 import { styles } from "../lib/styles";
 
-/**
- * @template T
- * @template G
- * @typedef {{
- *      columns?: string[],
- *      rows: T[],
- *      cells?: (row: T, index: number) => any[],
- *      loading?: boolean,
- *      rowContainer?: (row: T, children: any, group?: G) => any
- *      index?: (row: T, index: number) => any
- *      groupBy?: (row: T, index: number) => G
- *      group?: (group: G) => any
- *      groupFooter?: (group: G, items: T[]) => any
- *      footer?: (items: T[]) => any
- *      className?: string
- * }} TableProps
- */
+export interface TableProps<T, G> {
+    columns?: string[],
+    rows: T[],
+    cells?: (row: T, index: number) => any[],
+    loading?: boolean,
+    rowContainer?: (row: T, children: any, group?: G) => any
+    index?: (row: T, index: number) => any
+    groupBy?: (row: T, index: number) => G
+    group?: (group: G) => any
+    groupFooter?: (group: G, items: T[]) => any
+    footer?: (items: T[]) => any
+    className?: string
+}
 
 
-/**
- * Table
- * @template T
- * @template G
- * @param {TableProps<T, G>} param0 
- */
-export function Table({ columns, rows, cells, loading, rowContainer, index: indexGetter, groupBy, group, groupFooter, footer, className }) {
+export function Table<T, G>({ columns, rows, cells, loading, rowContainer, index: indexGetter, groupBy, group, groupFooter, footer, className }: TableProps<T, G>) {
 
     let prevGroup = null;
     let groupItems = [];

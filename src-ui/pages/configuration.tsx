@@ -1,9 +1,8 @@
-// @ts-check
-/// <reference types="../../types"/>
+import { AdjustmentsVerticalIcon, ArrowPathIcon, ClipboardIcon, DocumentDuplicateIcon } from '@heroicons/react/24/outline';
 import classNames from "classnames";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import toast from "react-hot-toast";
 import { AppContext } from "../components/app-context";
 import { Container } from "../components/container";
@@ -22,7 +21,6 @@ import { Tabs } from "../components/tabs";
 import { useContextSWR } from "../lib/hooks";
 import { styles } from "../lib/styles";
 import { deepCopy, getChanges, serverRequest, withoutKey } from "../lib/util";
-import {AdjustmentsVerticalIcon, ArrowPathIcon, ClipboardIcon, DocumentDuplicateIcon} from '@heroicons/react/24/outline';
 
 export default function ConfigurationPage() {
 
@@ -33,8 +31,7 @@ export default function ConfigurationPage() {
         showDetail: true
     });
     
-    /** @type {import("swr").SWRResponse<V2RayConfig>} */
-    let {mutate: refreshConfig, data: originalConfig, isValidating: isLoading} = useContextSWR('/config');
+    let {mutate: refreshConfig, data: originalConfig, isValidating: isLoading} = useContextSWR<V2RayConfig>('/config');
     let [config, setConfig] = useState(deepCopy(originalConfig));
 
     // Update config on server configuration changes

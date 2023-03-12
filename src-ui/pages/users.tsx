@@ -1,10 +1,8 @@
-// @ts-check
-/// <reference types="../../types"/>
 import classNames from "classnames";
 import ExportJsonExcel from 'js-export-excel';
 import Head from "next/head";
 import { useRouter } from "next/router";
-import React, { Fragment, useCallback, useContext, useMemo, useState } from 'react';
+import { Fragment, useCallback, useContext, useMemo, useState } from 'react';
 import toast from "react-hot-toast";
 import { AddUser } from "../components/add-user";
 import { AppContext } from "../components/app-context";
@@ -33,12 +31,8 @@ export default function UsersPage() {
     let context = useContext(AppContext);
     let router = useRouter();
     let showAll = router.query.all == '1';
-
-    /** @type {string[]} */
-    let initStatusFilter = [];
-
-    /** @type {string[]} */
-    let initInboundsFilter = [];
+    let initStatusFilter: string[] = [];
+    let initInboundsFilter: string[] = [];
 
     let [view, setView] = useStoredState('users-view', {
         sortColumn: '',
@@ -55,10 +49,7 @@ export default function UsersPage() {
 
     let [collapsed, setCollapsed] = useState({});
 
-    /**
-     * @type {import("swr").SWRResponse<V2RayConfigInbound[]>}
-     */
-    let {data: inboundsResponse, mutate: refreshInbounds, isValidating: isLoading} = useContextSWR('/inbounds',
+    let {data: inboundsResponse, mutate: refreshInbounds, isValidating: isLoading} = useContextSWR<V2RayConfigInbound[]>('/inbounds',
     {
         private: showAll,
         view
@@ -165,10 +156,7 @@ export default function UsersPage() {
     <button className="rounded-lg duration-150 hover:shadow-md bg-blue-400 px-2 py-1 ml-1 hover:bg-blue-600">OK</button>
     </div>
 
-    /**
-     * @type {import("swr").SWRResponse<string[]>}
-     */
-    const {data: statusFilters} = useContextSWR('/status_filters');
+    const {data: statusFilters} = useContextSWR<string[]>('/status_filters');
 
     const prompt = usePrompt();
 

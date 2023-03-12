@@ -1,24 +1,20 @@
 import classNames from "classnames";
-import { useCallback, useEffect, useState } from "react";
+import { HTMLProps, useCallback, useEffect, useState } from "react";
 
-/**
- * @typedef {{
- *      value?: any
- *      children?: any
- *      onEdit?: Function
- *      className?: any
- *      editable?: boolean
- *      input?: import("react").HTMLProps<HTMLInputElement>
- *      postfix?: any
- * }} EditableProps
- */
+interface EditableProps {
+    value?: any
+    children?: any
+    onEdit?: Function
+    className?: any
+    editable?: boolean
+    input?: HTMLProps<HTMLInputElement>
+    postfix?: any
+}
 
 /**
  * Editable
- * @param {EditableProps} param0 
- * @returns 
  */
-export function Editable({ value, children, onEdit, className = '', editable = true, input, postfix }) {
+export function Editable({ value, children, onEdit, className = '', editable = true, input, postfix }: EditableProps) {
     let [isEdit, setEdit] = useState(false);
     let [valueState, setValueState] = useState(value);
 

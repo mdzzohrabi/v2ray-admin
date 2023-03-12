@@ -1,27 +1,34 @@
-// @ts-check
-
 import classNames from "classnames";
 import React, { createContext, createElement, useCallback, useContext } from "react";
 import { useArrayDelete, useArrayInsert, useArrayUpdate, useObjectCRUD } from "../lib/hooks";
 import { styles } from "../lib/styles";
 
-/**
- * @template T
- * @type {import("react").Context<{
- * 		horizontal?: boolean,
- * 		data?: T,
- * 		dataSetter?: (value: T) => any,
- * 		unsetEmpty?: boolean
- * }>}
- */
-let FieldContext = createContext({});
+export interface FieldContext<T> {
+	horizontal?: boolean,
+	data?: T,
+	dataSetter?: (value: T) => any,
+	unsetEmpty?: boolean
+}
+
+export interface FieldsGroupProps
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
+	children?: any;
+	title?: any;
+	titleClassName?: string;
+	horizontal?: boolean;
+	data?: any;
+	dataSetter?: (value: any) => any;
+	layoutVertical?: boolean;
+	unsetEmpty?: boolean;
+	containerClassName?: string;
+}
+
+let FieldContext = createContext<FieldContext<any>>({});
 
 /**
  * Fields group
- * @param {Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> & { children?: any, title?: any, titleClassName?: string, horizontal?: boolean, data?: any, dataSetter?: (value: any) => any, layoutVertical?: boolean, unsetEmpty?: boolean, containerClassName?: string }} param0 
- * @returns 
  */
-export function FieldsGroup({ title, children, className, titleClassName, horizontal = false, layoutVertical = false, data = undefined, dataSetter = undefined, unsetEmpty = true, containerClassName = '', ...props }) {
+export function FieldsGroup({ title, children, className, titleClassName, horizontal = false, layoutVertical = false, data = undefined, dataSetter = undefined, unsetEmpty = true, containerClassName = '', ...props }: FieldsGroupProps) {
 
 	let provider = <FieldContext.Provider value={{ horizontal, data, dataSetter, unsetEmpty }}>
 		{children}
@@ -54,7 +61,6 @@ export function FieldObject({ children, path }) {
 				obj[path] = data;
 			}
 			console.log(obj);
-			// @ts-ignore
 			context.dataSetter(obj);
 		}
 	}, [context.data, context.dataSetter]);
@@ -64,12 +70,18 @@ export function FieldObject({ children, path }) {
 	return <FieldContext.Provider value={{ ...context, dataSetter: setData, data }}>{children}</FieldContext.Provider>;
 }
 
-/**
- * 
- * @param {{ label?: string, children?: any, className?: string, horizontal?: boolean, htmlFor?: string, data?: any, dataSetter?: Function, unsetEmpty?: boolean }} param0 
- * @returns 
- */
-export function Field({ label, children, className = '', horizontal = undefined, htmlFor = '', data = undefined, dataSetter = undefined, unsetEmpty = undefined }) {
+interface FieldProps {
+	label?: string;
+	children?: any;
+	className?: string;
+	horizontal?: boolean;
+	htmlFor?: string;
+	data?: any;
+	dataSetter?: Function;
+	unsetEmpty?: boolean;
+}
+
+export function Field({ label, children, className = '', horizontal = undefined, htmlFor = '', data = undefined, dataSetter = undefined, unsetEmpty = undefined }: FieldProps) {
 	let context = useContext(FieldContext);
 	let childs = Array.isArray(children) ? children : [children];
 
@@ -82,12 +94,10 @@ export function Field({ label, children, className = '', horizontal = undefined,
 		let target = e.currentTarget;
 		let value = target.value;
 		if (target.type == 'checkbox') {
-			// @ts-ignore
 			value = target.checked;
 		}
 
 		if (target.type == 'number') {
-			// @ts-ignore
 			value = value ? Number(value) : value;
 		}
 
@@ -122,22 +132,22 @@ export function Field({ label, children, className = '', horizontal = undefined,
 	</div>;
 }
 
+interface CollectionProps<T> {
+	data: T[],
+	dataSetter: (value: T[]) => any,
+	children: (props: {
+		items: T[],
+		addItem: (_: any, item: T) => any,
+		deleteItem: (deletedItem: T) => any,
+		updateItem: (item: T, edited: T) => any
+		dataSetter?: (value: T[]) => any
+	}) => any	
+}
+
 /**
  * Field Collection
- * @template T
- * @param {{
- * 		data: T[],
- * 		dataSetter: (value: T[]) => any,
- * 		children: (props: {
- * 			items: T[],
- * 			addItem: (_: any, item: T) => any,
- * 			deleteItem: (deletedItem: T) => any,
- * 			updateItem: (item: T, edited: T) => any
- * 			dataSetter?: (value: T[]) => any
- * 		}) => any
- * }} param0
  */
-export function Collection({ data, dataSetter, children }) {
+export function Collection<T>({ data, dataSetter, children }: CollectionProps<T>) {
 	let addItem = useArrayInsert(data, dataSetter);
 	let deleteItem = useArrayDelete(data, dataSetter);
 	let updateItem = useArrayUpdate(data, dataSetter);
@@ -145,27 +155,25 @@ export function Collection({ data, dataSetter, children }) {
 	return children({ items: data, addItem, deleteItem, updateItem, dataSetter });
 }
 
+interface ObjectCollectionProps<T> {
+	path?: string
+	data?: T,
+	dataSetter?: (value: T) => any,
+	children: (props: {
+		value: T | null,
+		deleteKey: (key: any) => any,
+		setKey: (key: any, value: any) => any,
+		renameKey: (key: any, newKey: any) => any,
+	}) => any
+}
 
 /**
  * Field Collection
- * @template T
- * @param {{
- * 		path?: string
- * 		data?: T,
- * 		dataSetter?: (value: T) => any,
- * 		children: (props: {
- * 			value: T | null,
- * 			deleteKey: (key: any) => any,
- * 			setKey: (key: any, value: any) => any,
- * 			renameKey: (key: any, newKey: any) => any,
- * 		}) => any
- * }} param0
  */
-export function ObjectCollection({ data, dataSetter, children, path }) {
+export function ObjectCollection<T>({ data, dataSetter, children, path }: ObjectCollectionProps<T>) {
 	let context = useContext(FieldContext);
 
 	if (path) {
-		// @ts-ignore
 		if (!data) data = context.data ?? {};
 	}
 

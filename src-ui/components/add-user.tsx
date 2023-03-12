@@ -1,36 +1,37 @@
-// @ts-check
-
 import { useRouter } from "next/router";
-import React, { useCallback, useContext, useState } from "react";
+import { useCallback, useContext, useState } from "react";
 import toast from "react-hot-toast";
 import { styles } from "../lib/styles";
 import { serverRequest } from "../lib/util";
 import { AppContext } from "./app-context";
 import { Field, FieldsGroup } from "./fields";
 
-/**
- * 
- * @param {{
- *      onRefresh?: Function,
- *      setLoading?: Function,
- *      inbounds?: V2RayConfigInbound[],
- *      disabled?: boolean,
- *      className?: string
- * }} param0 Parameters
- */
-export function AddUser({ disabled = false, onRefresh, setLoading, inbounds, className = '' }) {
+export interface AddUserProps {
+    onRefresh?: Function,
+    setLoading?: Function,
+    inbounds?: V2RayConfigInbound[],
+    disabled?: boolean,
+    className?: string
+}
+
+interface UserState {
+    email?: string;
+    fullName?: string;
+    mobile?: string;
+    emailAddress?: string;
+    protocol?: string;
+    free?: boolean;
+    private?: boolean;
+    quotaLimit?: number;
+}
+
+export function AddUser({ disabled = false, onRefresh, setLoading, inbounds, className = '' }: AddUserProps) {
 
     const context = useContext(AppContext);
     const router = useRouter();
     let showAll = router.query.all == '1';
 
-    /**
-     * @type {[
-     *      {email?: string, fullName?: string, mobile?: string, emailAddress?: string, protocol?: string, free?: boolean, private?: boolean, quotaLimit?: number},
-     *      React.Dispatch<React.SetStateAction<any>>
-     * ]}
-     */
-    let [user, setUser] = useState({});
+    let [user, setUser] = useState<UserState>({});
 
     const addUser = useCallback(async (e) => {
         e?.preventDefault();

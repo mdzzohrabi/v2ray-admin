@@ -1,11 +1,8 @@
-// @ts-check
-/// <reference types="../../types"/>
 import classNames from "classnames";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import React, { useCallback, useContext, useMemo, useState } from 'react';
+import { useCallback, useContext, useState } from 'react';
 import toast from "react-hot-toast";
-import useSWR from 'swr';
 import { AppContext } from "../components/app-context";
 import { Container } from "../components/container";
 import { DateView } from "../components/date-view";
@@ -63,8 +60,7 @@ export default function TransactionsPage() {
     let {server} = useContext(AppContext);
     let router = useRouter();
     let showAll = router.query.all == '1';
-    // /** @type {[Partial<Transaction>, React.Dispatch<React.SetStateAction<Partial<Transaction>>>]} */
-    // let [newTransaction, setNewTransaction] = useState({});
+
     let [view, setView] = useStoredState('transactions-view', {
         fullTime: true,
         user: router.query.user,
@@ -73,24 +69,13 @@ export default function TransactionsPage() {
         group: true
     });
     
-    let [expanded, setExpanded] = useStoredState('expanded-transactions', {
-
-    });
+    let [expanded, setExpanded] = useStoredState('expanded-transactions', { });
 
     const prompt = usePrompt();
 
-    /**
-     * @type {import("swr").SWRResponse<Transaction[]>}
-     */
-    let {data: transactions, mutate: refreshList, isValidating: isLoading} = useContextSWR('/transactions');
-
-    /** @type {import("swr").SWRResponse<ServerNode[]>} */
-    let {data: nodes, mutate: refreshNodes} = useContextSWR('/nodes');
-
-    /**
-     * @type {import("swr").SWRResponse<string[]>}
-     */
-     let {data: users, mutate: refreshUsers} = useContextSWR('/inbounds_clients' + queryString({ showAll }));
+    let {data: transactions, mutate: refreshList, isValidating: isLoading} = useContextSWR<Transaction[]>('/transactions');
+    let {data: nodes, mutate: refreshNodes} = useContextSWR<ServerNode[]>('/nodes');
+    let {data: users, mutate: refreshUsers} = useContextSWR<string[]>('/inbounds_clients' + queryString({ showAll }));
 
     const addTransaction = useCallback(async (newTransaction) => {
         try {
@@ -106,14 +91,14 @@ export default function TransactionsPage() {
         }
     }, [refreshList, server]);
 
-    const removeTransaction = useCallback(async (/** @type {Transaction} */ t) => {
+    const removeTransaction = useCallback(async (t: Transaction) => {
         await serverRequest(server, `/remove_transaction`, { id: t.id })
             .then(result => toast.success(`Transaction removed successful`))
             .then(() => refreshList())
             .catch(err => toast.error(err));
     }, [server]);
 
-    const editTransaction = useCallback(async (/** @type {Transaction} */ t, field, value) => {
+    const editTransaction = useCallback(async (t: Transaction, field: string, value: any) => {
         await serverRequest(server, `/edit_transaction`, { id: t.id, field, value })
             .then(result => toast.success(`Transaction edited successful`))
             .then(() => refreshList())
@@ -204,7 +189,7 @@ export default function TransactionsPage() {
                     return 'Bad Group';
                 }
             }}
-            group={monthName => <tr>
+            group={(monthName: string) => <tr>
                 <td onClick={() => setExpanded({ ...expanded, [monthName]: !expanded[monthName] })} className="cursor-pointer py-2 px-6 text-lg font-bold sticky z-10 bg-zinc-50 top-[1.8rem] xl:top-[1.8rem] border-b-2 border-t-2 border-t-gray-400" colSpan={9}>
                     <span className="font-bold w-7 text-center py-0 mr-4 inline-block rounded-full bg-gray-200 text-lg select-none text-gray-500">{expanded[monthName] ? '-' : '+'}</span>
                     {monthName}

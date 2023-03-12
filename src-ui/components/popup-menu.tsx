@@ -1,28 +1,26 @@
 import classNames from "classnames";
-import React, { useEffect } from "react";
+import React, { ComponentElement, ReactElement, useEffect } from "react";
 import { useRef } from "react";
 import { useState } from "react"
 import { useOutsideAlerter } from "../lib/hooks";
 import { styles } from "../lib/styles";
 
+interface PopupMenuItemProps {
+    children: any
+    action?: (setVisible: React.Dispatch<React.SetStateAction<boolean>>) => any
+}
 
-/**
- * 
- * @param {{ children: any, action?: (setVisible: React.Dispatch<React.SetStateAction<boolean>>) => any }} param0 
- */
-function PopupMenuItem({ children, action }) {
+function PopupMenuItem({ children, action }: PopupMenuItemProps) {
     return <div></div>;
 }
 
-/**
- * 
- * @param {{
- *      visible?: boolean,
- *      text?: string,
- *      children?: (React.ComponentElement<typeof PopupMenuItem> | null)[] | React.ComponentElement<typeof PopupMenuItem> | null
- * }} params0 Parameters
- */
-export function PopupMenu({ visible = false, text = 'Actions', children = [] }) {
+interface PopupMenuProps {
+    visible?: boolean,
+    text?: string,
+    children?: ReactElement<PopupMenuItemProps, typeof PopupMenuItem>[] | ReactElement<PopupMenuItemProps, typeof PopupMenuItem>
+} 
+
+export function PopupMenu({ visible = false, text = 'Actions', children = [] }: PopupMenuProps) {
     let [isVisible, setVisible] = useState(visible);
     let refPopup = useRef();
     useOutsideAlerter(refPopup, () => {
