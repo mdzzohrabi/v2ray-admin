@@ -1,9 +1,10 @@
 // @ts-check
 /// <reference types="../../types"/>
+import { ArrowPathIcon, BoltIcon, CloudIcon, PlusIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import React, { useContext, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { useCallback } from "react";
 import { toast } from "react-hot-toast";
 import useSWR from 'swr';
@@ -14,6 +15,7 @@ import { Dialog, useDialog } from "../components/dialog";
 import { Field, FieldsGroup } from "../components/fields";
 import { Info, Infos } from "../components/info";
 import { PopupMenu } from "../components/popup-menu";
+import { ServerNode } from "../components/server-node";
 import { Table } from "../components/table";
 import { useContextSWR, usePrompt } from "../lib/hooks";
 import { styles } from "../lib/styles";
@@ -85,13 +87,24 @@ export default function NodesPage() {
     let [view, setView] = useState({
         showDetail: true
     });
+
+    let [isPinging, setIsPinging] = useState(false);
     
-    /** @type {import("swr").SWRResponse<ServerNode[]>} */
-    let {mutate: refreshNodes, data: nodes, isValidating: isLoading} = useContextSWR('/nodes');
+    let [nodes, setNodes] = useState<(ServerNode & { ping?: number | string })[]>([]);
+    let {mutate: refreshNodes, data: nodesResponse, isValidating: isLoading} = useContextSWR<ServerNode[]>('/nodes');
+    
+    useEffect(() => setNodes(nodesResponse), [nodesResponse]);
+
+    const pingNodes = useCallback(async () => {
+        setIsPinging(true);
+        let result = await serverRequest<ServerNode[]>(server, '/ping-nodes');
+        setNodes(result);        
+        setIsPinging(false);
+    }, [server]);
 
     let addNode = useCallback(async node => {
         try {
-            let result = await serverRequest(server, 'post:/nodes', node);
+            let result = await serverRequest(server, 'POST:/nodes', node);
             if (result?.ok) {
                 toast.success(result?.message);
                 refreshNodes();
@@ -103,7 +116,7 @@ export default function NodesPage() {
 
     let editNode = useCallback(async node => {
         try {
-            let result = await serverRequest(server, 'put:/nodes', node);
+            let result = await serverRequest(server, 'PUT:/nodes', node);
             if (result?.ok) {
                 toast.success(result?.message);
                 refreshNodes();
@@ -115,7 +128,7 @@ export default function NodesPage() {
 
     let deleteNode = useCallback(async node => {
         try {
-            let result = await serverRequest(server, 'delete:/nodes', node);
+            let result = await serverRequest(server, 'DELETE:/nodes', node);
             if (result?.ok) {
                 toast.success(result?.message);
                 refreshNodes();
@@ -140,26 +153,38 @@ export default function NodesPage() {
         <Head>
             <title>Server Nodes</title>
         </Head>
-        <FieldsGroup title="Server Nodes" className="px-3">
+        <FieldsGroup title={<span className="flex items-center gap-x-2"><CloudIcon className="w-6"/> Server Nodes</span>} className="px-3">
             <div className="flex-1 flex-row flex items-center">
                 {isLoading? <span className="rounded-lg bg-gray-700 text-white px-3 py-0">Loading</span> :null}
+                {isPinging? <span className="rounded-lg bg-rose-200 text-rose-900 px-3 py-0">Pinging</span> :null}
             </div>
-            <div className="flex flex-row space-x-2">
-                <button onClick={e => refreshNodes()} className={classNames(styles.button)}>Refresh</button>
-                <button onClick={e => serverNodeDialog.show({}, addNode)} className={classNames(styles.addButton)}>+ Add Node</button>
+            <div className="flex flex-row">
+                <button type={"button"} onClick={() => pingNodes()} className={classNames(styles.buttonItem)}>
+                    <BoltIcon className="w-4"/>
+                    Ping Servers
+                </button>
+                <button type={"button"} onClick={() => refreshNodes()} className={classNames(styles.buttonItem)}>
+                    <ArrowPathIcon className="w-4"/>
+                    Reload
+                </button>
+                <button onClick={e => serverNodeDialog.show({}, addNode)} className={classNames(styles.buttonItem)}>
+                    <PlusIcon className="w-4"/>
+                    Add Node
+                </button>
             </div>
         </FieldsGroup>
         <div className="p-3">
             <div className="rounded-lg flex flex-col flex-1 border-2">
                 <Table
                     rows={nodes ?? []}
-                    columns={[ 'ID', 'Type', 'Name', 'Address', 'Api Key', 'Last Connect', 'Actions' ]}
+                    columns={[ 'ID', 'Type', 'Name', 'Address', 'Api Key', 'Ping (ms)', 'Last Connect', 'Actions' ]}
                     cells={row => [
                         row.id,
                         row.type,
                         row.name,
                         row.address ?? NA,
                         row.apiKey ?? NA,
+                        typeof row.ping == 'number' ? row.ping + ' ms' : row.ping ?? NA,
                         <Infos>
                             <Info label={'IP'}>{row.lastConnectIP ?? '-'}</Info>
                             <Info label={'Date'}><DateView locale="en" date={row.lastConnectDate}/></Info>

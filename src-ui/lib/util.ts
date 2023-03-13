@@ -1,14 +1,9 @@
 // @ts-check
 import {decrypt} from 'crypto-js/aes';
 import encodeUtf8 from 'crypto-js/enc-utf8';
+import { ServerContext } from '../components/app-context';
 
-/**
- * @param {import("../components/app-context").ServerContext} server
- * @param {string} action Action
- * @param {any} body 
- * @returns 
- */
-export function serverRequest(server, action, body = undefined) {
+export function serverRequest<T=any>(server: ServerContext, action: string | { body: any, url: string }, body: any = undefined): Promise<T> {
 
     if (typeof action == 'object') {
         body = action['body'];
@@ -17,11 +12,10 @@ export function serverRequest(server, action, body = undefined) {
 
     let method = body ? 'post' : 'get';
 
-    if (action.match(/^(post|get|delete|put)\:/i)) {
+    if (action.toLowerCase().match(/^(post|get|delete|put)\:/i)) {
         let [m, ...u] = action.split(':');
         method = m;
         action = u.join(':');
-        console.log(action);
     }
     
     return fetch(server.url + action, {

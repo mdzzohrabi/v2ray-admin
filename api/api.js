@@ -2,7 +2,7 @@
 const { randomUUID } = require('crypto');
 const { env } = require('process');
 const { addTransaction, getTransactions, readDb, saveDb } = require('../lib/db');
-const { getPaths, readConfig, applyChanges, writeConfig, readLogFile, getUserConfig, restartService, setUserActive, findUser, log, deleteUser, DateUtil, addUser, db, readLogLinesByOffset, createLogger } = require('../lib/util');
+const { getPaths, readConfig, applyChanges, writeConfig, readLogFile, getUserConfig, restartService, setUserActive, findUser, log, deleteUser, DateUtil, addUser, db, readLogLinesByOffset, createLogger, ping } = require('../lib/util');
 
 let {showInfo, showError} = createLogger();
 
@@ -697,6 +697,7 @@ router.get('/summary', async (req, res) => {
             userCounts[filter.replace(/\W+/g, '_').replace(/_$/, '').replace(/^_/, '')] = users.filter(statusFilters[filter]).length;
 
         let transactionsThisMonth = transactions.filter(x => x.createDate && DateUtil.isSameJMonth(DateUtil.toDate(x.createDate), new Date()));
+        let unPaidFromPast = transactions.filter(x => x.createDate && !DateUtil.isSameJMonth(DateUtil.toDate(x.createDate), new Date())).reduce((s, t) => s + (Number(t.amount) || 0), 0);
         let trafficMonth = Object.keys(traffics).filter(x => DateUtil.isSameJMonth(DateUtil.toDate(x), new Date())).flatMap(x => traffics[x]);
         let usersMap = users.reduce((m, x) => { m[x.email ?? ''] = true; return m; }, {});
 
@@ -706,6 +707,7 @@ router.get('/summary', async (req, res) => {
                 ...userCounts
             },
             transactions: {
+                unPaidFromPast,
                 totalRemainMonth: transactionsThisMonth.reduce((s, t) => s + (Number(t.amount) || 0), 0),
                 totalBillMonth: transactionsThisMonth.filter(x => (Number(x.amount) || 0) > 0).reduce((s, t) => s + (Number(t.amount) || 0), 0),
                 totalSellMonth: transactionsThisMonth.filter(x => !!x.user && (Number(x.amount) || 0) > 0).reduce((s, t) => s + (Number(t.amount) || 0), 0),
@@ -745,6 +747,29 @@ router.get('/summary', async (req, res) => {
         res.json({ ok: false, error: err?.message ?? 'Error' });
     }
 
+});
+
+
+router.get('/ping-nodes', async (req, res) => {
+    try {
+        /** @type {ServerNode[]} */
+        let nodes = await db('server-nodes') ?? [];
+
+        let result = await Promise.all(nodes.map(async x => {
+            if (!x.address) return x;
+            try {
+                x['ping'] = await ping(x.address);
+            } catch (err) {
+                x['ping'] = err?.message ?? 'Error';
+            }
+            return x;
+        }));
+
+        res.json(result);
+    }
+    catch (err) {
+        res.json({ ok: false, error: err?.message ?? 'Error' });
+    }
 });
 
 module.exports = { router };

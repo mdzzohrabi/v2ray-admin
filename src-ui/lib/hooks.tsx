@@ -2,7 +2,7 @@
 
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import useSWR from "swr";
+import useSWR, { Fetcher, SWRConfiguration } from "swr";
 import { AppContext } from "../components/app-context";
 import { deepCopy, serverRequest, store, stored } from "./util";
 
@@ -135,7 +135,7 @@ export function useStoredState(key, init) {
 	return state;
 }
 
-export function useContextSWR<T = any>(key: any, body: any = undefined) {
+export function useContextSWR<T = any>(key: any, body: any = undefined, config: SWRConfiguration<T, any, Fetcher<T, any>> = undefined) {
 	let context = useContext(AppContext);
 	let [cacheKey, setCacheKey] = useState('');
 	
@@ -164,5 +164,5 @@ export function useContextSWR<T = any>(key: any, body: any = undefined) {
 			key.body = body;
 	}
 
-	return useSWR<T>(key, requester);
+	return useSWR<T>(key, requester, config);
 }

@@ -306,7 +306,7 @@ export default function ConfigurationPage() {
                 </Infos>,
                 <Infos>
                     <Info label={'Security'}>{x.streamSettings?.security ?? NA}</Info>
-                    <Info label={'Transport'}>{x.streamSettings?.transport ?? NA}</Info>
+                    <Info label={'Network'}>{x.streamSettings?.network ?? NA}</Info>
                 </Infos>,
                 <PopupMenu>
                     <PopupMenu.Item action={() => outboundDialog.show(x, outbounds.updateItem)}>Edit</PopupMenu.Item>
@@ -423,19 +423,19 @@ export default function ConfigurationPage() {
                 {getChanges(originalConfig, config).length > 0 ? <span className="rounded-lg bg-yellow-100 text-yellow-800 text-xs px-3 py-1">Changed</span> :null}
             </div>
             <div className="flex flex-row items-center">
-                <button type={"button"} onClick={() => refreshConfig()} className={classNames(styles.button, 'rounded-tr-none rounded-br-none ml-0')}>
+                <button type={"button"} onClick={() => refreshConfig()} className={classNames(styles.buttonItem)}>
                     <ArrowPathIcon className="w-4"/>
                     Reload
                 </button>
-                <button type={"button"} onClick={() => copyConfig()} className={classNames(styles.button, 'rounded-none ml-0 border-l-0')}>
+                <button type={"button"} onClick={() => copyConfig()} className={classNames(styles.buttonItem)}>
                     <DocumentDuplicateIcon className="w-4"/>
                     Copy
                 </button>
-                <button type={"button"} onClick={() => pasteConfig()} className={classNames(styles.button, 'rounded-none ml-0 border-l-0')}>
+                <button type={"button"} onClick={() => pasteConfig()} className={classNames(styles.buttonItem)}>
                     <ClipboardIcon className="w-4"/>
                     Paste
                 </button>
-                <button type={"button"} onClick={() => restartService()} className={classNames(styles.button, 'rounded-tl-none rounded-bl-none ml-0 border-l-0')}>Restart V2Ray</button>
+                <button type={"button"} onClick={() => restartService()} className={classNames(styles.buttonItem)}>Restart V2Ray</button>
             </div>
             <button type={"button"} onClick={() => saveConfig()} className={styles.buttonPrimary}>Save Configuration</button>
         </FieldsGroup>
