@@ -32,10 +32,7 @@ export default function UsageLogsPage() {
         setSearch(view.search);
     }, [view]);
 
-    /**
-     * @type {import("swr").SWRResponse<any[]>}
-     */
-    let {data: logs, mutate: refreshData, isValidating: isLoading} = useSWR(email ? '/daily_usage_logs' + queryString({
+    let {data: logs, mutate: refreshData, isValidating: isLoading} = useSWR<any[]>(email ? '/daily_usage_logs' + queryString({
         email,
         page: view.page,
         q: search,

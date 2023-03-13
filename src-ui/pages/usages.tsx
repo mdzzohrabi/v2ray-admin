@@ -22,10 +22,7 @@ export default function UsagesPage() {
         showDetail: showAll ? true : false
     });
 
-    /**
-     * @type {import("swr").SWRResponse<any[]>}
-     */
-    let {data: usages, mutate: refreshUsages, isValidating: isLoading} = useContextSWR('/daily_usages' + queryString({ email }));
+    let {data: usages, mutate: refreshUsages, isValidating: isLoading} = useContextSWR<any[]>('/daily_usages' + queryString({ email }));
     const prompt = usePrompt();
 
     return <Container>
@@ -44,7 +41,7 @@ export default function UsagesPage() {
             rows={usages ?? []}
             loading={isLoading}
             groupBy={x => new Intl.DateTimeFormat('fa-IR', { month: 'long', year: 'numeric'}).format(new Date(x.date))}
-            group={monthName => <tr className="sticky top-[31px] z-50 bg-white shadow-sm">
+            group={(monthName: string) => <tr className="sticky top-[31px] z-50 bg-white shadow-sm">
                 <td colSpan={5} className={'px-10 py-2 text-base font-bold'}>{monthName}</td>
             </tr>}
             columns={[ 'Date', 'First connect', 'Last connect', 'Requests' ]}

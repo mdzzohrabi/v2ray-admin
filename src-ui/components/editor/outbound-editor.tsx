@@ -1,10 +1,8 @@
-// @ts-check
-
 import classNames from "classnames";
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import { styles } from "../../lib/styles";
 import { Dialog } from "../dialog";
-import { Collection, Field, FieldObject, FieldsGroup, ObjectCollection } from "../fields";
+import { Collection, Field, FieldObject, FieldsGroup } from "../fields";
 import { PopupMenu } from "../popup-menu";
 import { Table } from "../table";
 
@@ -14,7 +12,8 @@ import { Table } from "../table";
  * @returns 
  */
 export function OutboundEditor({ outbound: outboundProp, dissmis, onEdit }) {
-    let [outbound, setOutbound] = useState({ protocol: 'http', ...outboundProp });
+    let [outbound, setOutbound] = useState<V2RayConfigOutbound>({ protocol: 'http', ...outboundProp });
+
     let ok = useCallback((/** @type {import("react").FormEvent} */ e) => {
         e?.preventDefault();
         onEdit(outboundProp, outbound);
