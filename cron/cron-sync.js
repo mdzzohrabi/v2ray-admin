@@ -124,21 +124,24 @@ async function cronSync(cron) {
                     }
                 }
 
+                let hasRemovedUser = false;
+
                 // Remove removed or de-activated clients
                 localClients = localClients.filter(client => {
-                    if (client.serverNode != serverNode?.id) return true;
-                    return clients.some(x => x.email == client.email && !x.deActiveDate)
+                    let isOK = (client.serverNode != serverNode?.id) || clients.some(x => x.email == client.email && !x.deActiveDate);
+                    if (!isOK)
+                        hasRemovedUser = true;
+                    return isOK;
                 });
+                    
+                if (!hasRemovedUser) {
+                    showInfo(`Request restart service due to some clients removed`);
+                    cron.needRestartService = true;                        
+                }
 
                 if (!inbound.settings) inbound.settings = {};
 
                 inbound.settings.clients = localClients;
-
-                // Restart Service if Client count changed
-                if (inbound?.settings?.clients?.length ?? 0 != localCount) {
-                    showInfo(`Request restart service due to client count change`)
-                    cron.needRestartService = true;
-                }
 
             } catch (e) {
                 showError(e?.message);
