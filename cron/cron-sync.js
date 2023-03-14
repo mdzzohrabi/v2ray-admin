@@ -105,6 +105,7 @@ async function cronSync(cron) {
                         localClients.push(client);
                         // Restart service
                         cron.needRestartService = true;
+                        showInfo(`Request restart service due to new client`);
                     }
                     // Update client
                     else if (localClient.serverNode == inbound.usersServerNode && localClient.serverNodeInbound == inbound.mirrorInbound) {
@@ -117,6 +118,7 @@ async function cronSync(cron) {
                             // Restart service only if user-id was changed
                             if (localClient?.id != client?.id) {
                                 cron.needRestartService = true;
+                                showInfo(`Request restart service due to client id change`)
                             }
                         }
                     }
@@ -134,6 +136,7 @@ async function cronSync(cron) {
 
                 // Restart Service if Client count changed
                 if (inbound?.settings?.clients?.length ?? 0 != localCount) {
+                    showInfo(`Request restart service due to client count change`)
                     cron.needRestartService = true;
                 }
 

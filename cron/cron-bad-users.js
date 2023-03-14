@@ -91,6 +91,7 @@ async function cronBadUsers(cron, range = 1, reActiveUsers = true) {
             setUserActive(config, /** All inbounds */ null, user.user, false, `Used by ${user.ips.length} ips in ${range} mins ago (${user.ips.join(', ')})`, env.BAD_USER_TAG ?? 'baduser');
             isConfigChanged = true;
             cron.needRestartService = true;
+            showInfo(`Request restart service due to de-activated users`);
         }
     }
     
@@ -104,6 +105,7 @@ async function cronBadUsers(cron, range = 1, reActiveUsers = true) {
                     usersToActive.push(user.email);
                     isConfigChanged = true;
                     cron.needRestartService = true;
+                    showInfo(`Request restart service due to activated users`);
                     setUserActive(config, inbound.tag ?? null, user.email, true, undefined, env.BAD_USER_TAG ?? 'baduser');
                 }
             }
