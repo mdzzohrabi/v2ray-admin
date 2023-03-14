@@ -136,7 +136,7 @@ async function cronSync(cron) {
                     return isOK;
                 });
                     
-                if (!hasRemovedUser) {
+                if (hasRemovedUser) {
                     showInfo(`Request restart service due to some clients removed`);
                     cron.needRestartService = true;                        
                 }
