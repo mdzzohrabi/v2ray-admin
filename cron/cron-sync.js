@@ -129,8 +129,10 @@ async function cronSync(cron) {
                 // Remove removed or de-activated clients
                 localClients = localClients.filter(client => {
                     let isOK = (client.serverNode != serverNode?.id) || clients.some(x => x.email == client.email && !x.deActiveDate);
-                    if (!isOK)
+                    if (!isOK) {
+                        showInfo(`User "${client.email}" removed from remote`);
                         hasRemovedUser = true;
+                    }
                     return isOK;
                 });
                     
