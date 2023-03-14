@@ -1,13 +1,8 @@
-// @ts-check
-/// <reference types="../../types"/>
-import { ArrowPathIcon, BoltIcon, CloudIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, BoltIcon, CloudIcon, ComputerDesktopIcon, PencilIcon, PlusIcon, ServerIcon, TrashIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import Head from "next/head";
-import { useRouter } from "next/router";
-import React, { useContext, useEffect, useMemo, useState } from 'react';
-import { useCallback } from "react";
+import { FormEvent, useCallback, useContext, useEffect, useState } from 'react';
 import { toast } from "react-hot-toast";
-import useSWR from 'swr';
 import { AppContext } from "../components/app-context";
 import { Container } from "../components/container";
 import { DateView } from "../components/date-view";
@@ -15,26 +10,22 @@ import { Dialog, useDialog } from "../components/dialog";
 import { Field, FieldsGroup } from "../components/fields";
 import { Info, Infos } from "../components/info";
 import { PopupMenu } from "../components/popup-menu";
-import { ServerNode } from "../components/server-node";
 import { Table } from "../components/table";
 import { useContextSWR, usePrompt } from "../lib/hooks";
 import { styles } from "../lib/styles";
 import { serverRequest } from "../lib/util";
 
-/**
- * 
- * @param {{
- *      onEdit: (node?: Partial<ServerNode>) => any
- *      onClose: Function
- *      node: Partial<ServerNode>
- * }} param0 Parameters
- * @returns 
- */
-function ServerNodeDialog({ onEdit, onClose, node: nodeProp }) {
+interface ServerNodeDialogProps {
+    onEdit: (node?: Partial<ServerNode>) => any
+    onClose: Function
+    node: Partial<ServerNode>
+}
+
+function ServerNodeDialog({ onEdit, onClose, node: nodeProp }: ServerNodeDialogProps) {
 
     let [serverNode, setServerNode] = useState(nodeProp ?? {});
 
-    let onSubmit = useCallback(e => {
+    let onSubmit = useCallback((e: FormEvent) => {
         e?.preventDefault();
         onEdit(serverNode);
         onClose();
@@ -70,28 +61,24 @@ function ServerNodeDialog({ onEdit, onClose, node: nodeProp }) {
                 <Info label={'Last Connect Date'}>{serverNode?.lastConnectDate ?? '-'}</Info>
                 <Info label={'Last Sync Date'}>{serverNode?.lastSyncDate ?? '-'}</Info>
             </Infos>
-        </FieldsGroup>
-        <div className="flex flex-row justify-end border-t-[1px] pt-2 mt-2">
-            <button type="button" onClick={e => onClose()} className={styles.button}>Cancel</button>
+        <div className="flex flex-row border-t-[1px] pt-2 mt-2">
+            <Field htmlFor="disabled" label="Disabled" horizontal>
+                <input type={'checkbox'} id="disabled"/>
+            </Field>
+            <button type="button" onClick={e => onClose()} className={classNames(styles.button, 'ml-auto')}>Cancel</button>
             <button type="submit" className={styles.buttonPrimary}>Save Server Node</button>
         </div>
+        </FieldsGroup>
     </Dialog>
 }
 
 export default function NodesPage() {
 
     let {server} = useContext(AppContext);
-    let router = useRouter();
-
-    let showAll = router.query.all == '1';
-    let [view, setView] = useState({
-        showDetail: true
-    });
-
     let [isPinging, setIsPinging] = useState(false);
     
     let [nodes, setNodes] = useState<(ServerNode & { ping?: number | string })[]>([]);
-    let {mutate: refreshNodes, data: nodesResponse, isValidating: isLoading} = useContextSWR<ServerNode[]>('/nodes');
+    let {mutate: refreshNodes, data: nodesResponse, isValidating: isLoading} = useContextSWR<ServerNode[]>('/nodes?all=1');
     
     useEffect(() => setNodes(nodesResponse), [nodesResponse]);
 
@@ -102,7 +89,7 @@ export default function NodesPage() {
         setIsPinging(false);
     }, [server]);
 
-    let addNode = useCallback(async node => {
+    let addNode = useCallback(async (node: ServerNode) => {
         try {
             let result = await serverRequest(server, 'POST:/nodes', node);
             if (result?.ok) {
@@ -114,7 +101,7 @@ export default function NodesPage() {
         }
     }, [server]);
 
-    let editNode = useCallback(async node => {
+    let editNode = useCallback(async (node: ServerNode) => {
         try {
             let result = await serverRequest(server, 'PUT:/nodes', node);
             if (result?.ok) {
@@ -126,7 +113,7 @@ export default function NodesPage() {
         }
     }, [server]);
 
-    let deleteNode = useCallback(async node => {
+    let deleteNode = useCallback(async (node: ServerNode) => {
         try {
             let result = await serverRequest(server, 'DELETE:/nodes', node);
             if (result?.ok) {
@@ -138,7 +125,7 @@ export default function NodesPage() {
         }
     }, [server]);
 
-    let serverNodeDialog = useDialog((node, onEdit, onClose) => <ServerNodeDialog
+    let serverNodeDialog = useDialog((node: ServerNode, onEdit: ((node: Partial<ServerNode>) => any), onClose: Function) => <ServerNodeDialog
         onClose={onClose}
         node={node}
         onEdit={onEdit}
@@ -180,8 +167,14 @@ export default function NodesPage() {
                     columns={[ 'ID', 'Type', 'Name', 'Address', 'Api Key', 'Ping (ms)', 'Last Connect', 'Actions' ]}
                     cells={row => [
                         row.id,
-                        row.type,
-                        row.name,
+                        <div className="flex flex-row space-x-2">
+                            {row.type == 'server' ? <ServerIcon className="w-4"/> : <ComputerDesktopIcon className="w-4"/>}
+                            <span>{row.type}</span>
+                        </div>,
+                        <div className="flex flex-row items-center space-x-2">
+                            <span className={classNames("aspect-square w-2 h-2 inline-block rounded-full", {'bg-rose-500': row.disabled, 'bg-teal-700': !row.disabled })}></span>
+                            <span>{row.name}</span>
+                        </div>,
                         row.address ?? NA,
                         row.apiKey ?? NA,
                         typeof row.ping == 'number' ? row.ping + ' ms' : row.ping ?? NA,
@@ -190,10 +183,10 @@ export default function NodesPage() {
                             <Info label={'Date'}><DateView locale="en" date={row.lastConnectDate}/></Info>
                         </Infos>,
                         <PopupMenu>
-                            <PopupMenu.Item action={() => serverNodeDialog.show(row, editNode)}>
+                            <PopupMenu.Item icon={<PencilIcon className='w-4'/>} action={() => serverNodeDialog.show(row, editNode)}>
                                 Edit Node
                             </PopupMenu.Item>
-                            <PopupMenu.Item action={() => prompt(`Delete selected node "${row.name}" ?`, 'Delete Node', () => deleteNode(row))}>
+                            <PopupMenu.Item icon={<TrashIcon className="w-4"/>} action={() => prompt(`Delete selected node "${row.name}" ?`, 'Delete Node', () => deleteNode(row))}>
                                 Delete
                             </PopupMenu.Item>
                         </PopupMenu>

@@ -26,7 +26,7 @@ router.use(async (req, res, next) => {
     /** @type {ServerNode[]} */
     let serverNodes = await db('server-nodes') ?? [];
 
-    let serverNode = serverNodes.find(x => x.apiKey == apiKey);
+    let serverNode = serverNodes.find(x => x.apiKey == apiKey && !x.disabled);
 
     if (!serverNode)
         return res.status(401).json({ error: 'Api Authentication failed' });

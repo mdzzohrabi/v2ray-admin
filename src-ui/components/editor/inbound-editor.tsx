@@ -1,38 +1,28 @@
-// @ts-check
-
 import classNames from "classnames";
-import React, { useCallback, useState } from "react";
-import { useContext } from "react";
-import useSWR from "swr";
+import { FormEvent, useCallback, useState } from "react";
+import { useContextSWR } from "../../lib/hooks";
 import { styles } from "../../lib/styles";
-import { serverRequest } from "../../lib/util";
-import { AppContext } from "../app-context";
 import { Dialog } from "../dialog";
 import { Collection, Field, FieldObject, FieldsGroup } from "../fields";
 import { PopupMenu } from "../popup-menu";
 import { Table } from "../table";
 
-/**
- * 
- * @param {{ inbound: V2RayConfigInbound, dissmis: any, onEdit: Function }} param0 
- * @returns 
- */
-export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }) {
-    let [inbound, setInbound] = useState({...inboundProp});
-    let context = useContext(AppContext);
+interface InboundEditorProps {
+    inbound: V2RayConfigInbound;
+    dissmis: any;
+    onEdit: Function;
+}
 
-    let ok = useCallback((/** @type {import("react").FormEvent} */ e) => {
+export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }: InboundEditorProps) {
+    let [inbound, setInbound] = useState({...inboundProp});
+
+    let ok = useCallback((e: FormEvent) => {
         e?.preventDefault();
         onEdit(inboundProp, inbound);
         dissmis();
     }, [onEdit, inbound, dissmis, inboundProp]);
 
-    /**
-     * @type {import("swr").SWRResponse<ServerNode[]>}
-     */
-    let {data: nodes} = useSWR('/nodes', serverRequest.bind(this, context?.server));
-
-    console.log(nodes, context);
+    let {data: nodes} = useContextSWR<ServerNode[]>('/nodes');
 
     return <Dialog onClose={dissmis} onSubmit={ok} title="Inbound">
         <FieldsGroup data={inbound} dataSetter={setInbound}>

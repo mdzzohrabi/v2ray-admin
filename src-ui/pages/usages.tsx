@@ -1,5 +1,6 @@
 // @ts-check
 /// <reference types="../../types"/>
+import { CalendarIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import Head from "next/head";
 import { useRouter } from "next/router";
@@ -27,11 +28,14 @@ export default function UsagesPage() {
 
     return <Container>
         <Head>
-            <title>Usages</title>
+            <title>Daily Usages</title>
         </Head>
-        <FieldsGroup title={"Daily Usages"} data={view} dataSetter={setView} horizontal>
-            <Field label="User" className="border-x-[1px] px-3 mr-2">
-                <span className="text-gray-800 py-1 px-2 rounded-lg bg-yellow-100">{email}</span>
+        <FieldsGroup title={<div className="flex flex-row gap-x-2 items-center">
+            <CalendarIcon className="w-6"/>
+            <span>Daily Usages</span>
+        </div>} data={view} dataSetter={setView} horizontal>
+            <Field label="User" className="border-x-[1px] px-4 m-2">
+                <span className="text-gray-800 py-1 px-2 rounded-lg border-[1px]">{email}</span>
             </Field>
             {showAll?<Field label="Show Detail" htmlFor="showDetail">
                 <input type="checkbox" id="showDetail" />

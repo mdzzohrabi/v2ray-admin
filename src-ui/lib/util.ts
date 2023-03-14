@@ -138,12 +138,7 @@ export const DateUtil = {
 
 }
 
-/**
- * 
- * @param {any} a 
- * @param {any} b 
- */
-export function equals(a, b) {
+export function equals(a: any, b: any) {
     if (a===b) return true;
     if (typeof a != typeof b) return false;
     return JSON.stringify(a) == JSON.stringify(b);
@@ -151,10 +146,10 @@ export function equals(a, b) {
 
 /**
  * Get two object difference
- * @param {any} base Base object
- * @param {any} modified Modified object
+ * @param base Base object
+ * @param modified Modified object
  */
-export function objectDiff(base, modified) {
+export function objectDiff(base: any, modified: any) {
     let diffs = {};
     let bKeys = Object.keys(base ?? {});
     let mKeys = Object.keys(modified ?? {});
@@ -171,14 +166,13 @@ export function objectDiff(base, modified) {
     return diffs
 }
 
-/**
- * @typedef {{
- *      action: 'set' | 'delete' | 'add',
- *      value?: any,
- *      path?: string[],
- *      prevValue?: any
- * }} Change
- */
+interface Change {
+    action: 'set' | 'delete' | 'add',
+    value?: any,
+    path?: string[],
+    prevValue?: any
+}
+
 
 /**
  * Get changes actions
@@ -186,7 +180,7 @@ export function objectDiff(base, modified) {
  * @param {any} modified Modified value
  * @returns
  */
-export function getChanges(base, modified, path = []) {
+export function getChanges(base: any, modified: any, path = []) {
     /** @type {Change[]} */
     let changes = [];
     let typeA = typeof base;
@@ -239,12 +233,7 @@ export function getChanges(base, modified, path = []) {
     return changes;
 }
 
-/**
- * 
- * @param {any} value Value
- * @param {Change[]} changes Changes
- */
- function applyChanges(value, changes) {
+ function applyChanges(value: any, changes: Change[]) {
     let result = deepCopy(value);
     changes?.forEach(change => {
         let path = change.path?.map(x => typeof x == 'string' ? `"${x}"` : x).join('][');
@@ -303,29 +292,26 @@ export function deepCopy<T>(value: T): T {
 
 /**
  * Copy object without keys
- * @template T
- * @param {T} obj Object
- * @param  {...(keyof T)} keys Keys to remove
  */
-export function withoutKey(obj, ...keys) {
+export function withoutKey<T, K extends keyof T>(obj: T, ...keys: K[]): Omit<T, K> {
     let clone = { ...obj };
     keys.forEach(k => delete clone[k]);
-    return clone;
+    return clone as any;
 }
 
 /**
  * Create query string from object
- * @param {{ [key: string]: any }} values Values
+ * @param values Values
  */
-export function queryString(values) {
+export function queryString(values: { [key: string]: any }) {
     let qs = Object.keys(values).map(key => {
         let value = values[key];
-        if (value == undefined) value = '';
+        if (value == undefined) return '';
         if (Array.isArray(value)) {
             return value.map(v => `${key}[]=${v}`).join('&');
         }
         return `${key}=${value}`;
-    }).join('&');
+    }).filter(x => !!x).join('&');
 
     if (qs) return '?' + qs;
     return '';

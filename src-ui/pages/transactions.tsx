@@ -1,7 +1,8 @@
+import { ArrowPathIcon, ArrowRightCircleIcon, ArrowUpOnSquareIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useCallback, useContext, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import toast from "react-hot-toast";
 import { AppContext } from "../components/app-context";
 import { Container } from "../components/container";
@@ -9,6 +10,7 @@ import { DateView } from "../components/date-view";
 import { Dialog, useDialog } from "../components/dialog";
 import { Editable } from "../components/editable";
 import { Field, FieldsGroup } from "../components/fields";
+import { Loading } from "../components/loading";
 import { PopupMenu } from "../components/popup-menu";
 import { Price } from "../components/price";
 import { Table } from "../components/table";
@@ -49,7 +51,10 @@ export function AddTransactionDialog({ onSubmit, users, dismiss }) {
                 <input className={styles.input} id="amount" type={"text"}/>
             </Field>
             <Field className="pr-4 pt-4" horizontal={false}>
-                <button type={"submit"} className={styles.button}>Add Transaction</button>
+                <button type={"submit"} className={styles.button}>
+                    <PlusIcon className="w-4"/>
+                    Add Transaction
+                </button>
             </Field>
         </FieldsGroup>
     </Dialog>
@@ -68,6 +73,14 @@ export default function TransactionsPage() {
         sortOrder: 'asc',
         group: true
     });
+
+    useEffect(() => {
+        setView({ ...view, user: router.query.user });
+    }, [router.query.user]);
+
+    // useEffect(() => {
+    //     router.push(router.route + queryString({ user: view.user, all: showAll == true ? '1' : undefined }));
+    // }, [view.user]);
     
     let [expanded, setExpanded] = useStoredState('expanded-transactions', { });
 
@@ -129,19 +142,27 @@ export default function TransactionsPage() {
         </Head>
         <div className="flex flex-col lg:flex-col">
             <FieldsGroup title="Billing" horizontal className="border-b-[1px] lg:border-b-0">
-                <Field label="UnPaid" className="rounded-lg bg-red-100 px-4 items-center align-middle whitespace-nowrap">
+                <Field label="UnPaid" className="rounded-lg bg-red-100 px-6 items-center align-middle whitespace-nowrap">
                     <Price value={transactions?.filter(x => (Number(x.amount) ?? 0) > 0).reduce((result, t) => result + (Number(t.amount) || 0), 0) ?? 0}/>
                 </Field>
                 <span className="text-lg font-bold px-2">-</span>
-                <Field label="Paid" className="rounded-lg bg-green-100 px-4 items-center align-middle whitespace-nowrap">
+                <Field label="Paid" className="rounded-lg bg-green-100 px-6 items-center align-middle whitespace-nowrap">
                     <Price value={transactions?.filter(x => (Number(x.amount) ?? 0) < 0).reduce((result, t) => result + (Math.abs(Number(t.amount)) || 0), 0) ?? 0}/>
                 </Field>
                 <span className="text-lg font-bold px-2">=</span>
-                <Field label="Remain" className="rounded-lg bg-slate-100 px-4 items-center align-middle whitespace-nowrap">
+                <Field label="Remain" className="rounded-lg bg-slate-100 px-6 items-center align-middle whitespace-nowrap">
                     <Price value={transactions?.reduce((result, t) => result + (Number(t.amount) || 0), 0) ?? 0}/>
                 </Field>
-                {showAll ? <button className={styles.button} onClick={() => transactionDialog.show(users, addTransaction)}>Add Transaction</button> : null}
-                <button className={styles.button} onClick={() => refreshList()}>Refresh</button>
+                <div className="ml-auto mr-2 flex flex-row">
+                    {showAll ? <button className={styles.buttonItem} onClick={() => transactionDialog.show(users, addTransaction)}>
+                        <PlusIcon className="w-4"/>
+                        Add Transaction
+                    </button> : null}
+                    <button className={styles.buttonItem} onClick={() => refreshList()}>
+                        <ArrowPathIcon className="w-4"/>
+                        Refresh
+                    </button>
+                </div>
             </FieldsGroup>
             <FieldsGroup className="my-2" data={view} dataSetter={setView} title="View" horizontal>
                 <Field htmlFor="fullTime" label="Full Time">
@@ -174,9 +195,7 @@ export default function TransactionsPage() {
                 </Field>
             </FieldsGroup>
         </div>
-        {isLoading ? <div className="fixed bg-slate-900 text-white z-50 rounded-lg px-3 py-1 bottom-3 left-3">
-            Loading ...
-        </div> : null }
+        <Loading isLoading={isLoading}/>
         <Table
             className="border-separate border-spacing-0"
             rows={transactions ?? []}
@@ -197,12 +216,20 @@ export default function TransactionsPage() {
             </tr>}
             groupFooter={(group, items) => 
                 <tr className="bg-slate-50">
-                    <td className="py-2 px-6 text-md font-bold" colSpan={4}></td>
-                    <td className="py-2 px-6 text-md font-bold">
+                    <td className="py-2 px-6 text-md" colSpan={3}></td>
+                    <td className="py-2 px-6 text-md">
                         <Price value={items.filter(t => Number(t.amount) > 0).reduce((r, t) => r + (Number(t.amount) || 0), 0)}/>
                     </td>
-                    <td className="py-2 px-6 text-md font-bold">
+                    <td className="py-2 px-6 text-md">
+                        <span className="px-2">-</span>
                         <Price value={items.filter(t => Number(t.amount) < 0).reduce((r, t) => r + (Math.abs(Number(t.amount)) || 0), 0)}/>
+                    </td>
+                    <td className="font-bold">
+                        <span className="px-2">=</span>
+                        <Price value={
+                            items.filter(t => Number(t.amount) > 0).reduce((r, t) => r + (Number(t.amount) || 0), 0) -
+                            items.filter(t => Number(t.amount) < 0).reduce((r, t) => r + (Math.abs(Number(t.amount)) || 0), 0)
+                        }/>
                     </td>
                     <td className="py-2 px-6 text-md font-bold" colSpan={3}></td>
                 </tr>
@@ -239,7 +266,9 @@ export default function TransactionsPage() {
                 <DateView containerClassName="text-center" precision={true} full={view.fullTime} date={t.createDate?.replace(' ', ' ')}/>,
                 // Action
                 <PopupMenu text="Actions">
-                    {showAll?<PopupMenu.Item action={() => prompt(`Do you want to remove transaction "${t.remark}" ?`, `Remove`, () => removeTransaction(t))}>Delete</PopupMenu.Item>:null}
+                    <PopupMenu.Item icon={<TrashIcon className="w-4"/>} visible={showAll} action={() => prompt(`Do you want to remove transaction "${t.remark}" ?`, `Remove`, () => removeTransaction(t))}>
+                        Delete
+                    </PopupMenu.Item>
                 </PopupMenu>
             ]}
         />

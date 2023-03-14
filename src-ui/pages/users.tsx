@@ -1,3 +1,4 @@
+import { ArrowPathIcon, ArrowsUpDownIcon, ArrowUpTrayIcon, BanknotesIcon, BoltIcon, BoltSlashIcon, CalendarDaysIcon, ClockIcon, CurrencyDollarIcon, DevicePhoneMobileIcon, DocumentDuplicateIcon, DocumentPlusIcon, DocumentTextIcon, EyeIcon, EyeSlashIcon, FireIcon, FolderMinusIcon, FolderPlusIcon, PlusIcon, QrCodeIcon, RssIcon, TrashIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import ExportJsonExcel from 'js-export-excel';
 import Head from "next/head";
@@ -10,7 +11,7 @@ import { ClientConfig } from "../components/client-config";
 import { Container } from "../components/container";
 import { Copy } from "../components/copy";
 import { DateView } from "../components/date-view";
-import { useDialog } from "../components/dialog";
+import { Dialog, useDialog } from "../components/dialog";
 import { Editable } from "../components/editable";
 import { ChangeInboundEditor } from "../components/editor/change-inbound-editor";
 import { CopyUserEditor } from "../components/editor/copy-user";
@@ -225,91 +226,97 @@ export default function UsersPage() {
     let maxUsers = inbounds?.map(x => x.settings ? x.settings['totalClients'] : 0).reduce((a, b) => a > b ? a : b, 0) ?? 0;
     let totalPages = Number( Math.ceil( maxUsers / view.limit ) ) || 1;
 
+    let addUserDialog = useDialog((onClose: Function) => <AddUser horizontal={false} onClose={onClose} onRefresh={refreshInbounds} disabled={isLoading} inbounds={inbounds ?? []}/>);
+
     return <Container>
         <Head>
             <title>Users</title>
         </Head>
-        <AddUser className="py-2" disabled={isLoading} onRefresh={refreshInbounds} inbounds={inbounds ?? []}/>
-        <FieldsGroup data={view} dataSetter={setView} title="View" className="border-t-2 py-2" containerClassName="items-center">
-            <FieldServerNodes/>
-            <Field label="Inbounds" htmlFor="inbounds">
-                <div className="flex gap-1 mb-1">
-                    {view.inbounds?.map((filter, index) => <span key={index} onClick={() => setView({ ...view, inbounds: view.inbounds.filter(x => x != filter)})} className={classNames("whitespace-nowrap bg-slate-200 px-3 py-1 rounded-3xl cursor-pointer hover:bg-slate-700 hover:text-white")}>{filter}</span> )}
-                </div>
-                <select value={"-"} onChange={e => setView({ ...view, inbounds: [...(view.inbounds ?? []), e.currentTarget.value]})} id="inbounds" className="bg-slate-100 rounded-lg px-2 py-1">
-                    <option value="-">-</option>
-                    {(inbounds ?? []).map((x, index) => <option key={index} value={x.tag}>{x.tag} ({x.protocol})</option>)}
-                </select>
-            </Field>
-            <Field label="Page" htmlFor="page">
-                <select id="page" className={styles.input}>
-                    {[...new Array(totalPages)].map((x, i) => <option key={i+1} value={i+1}>{i+1}</option>)}
-                </select>
-            </Field>
-            <Field label="Limit" htmlFor="limit">
-                <select id="limit" className={styles.input}>
-                    <option value={10}>10</option>
-                    <option value={20}>20</option>
-                    <option value={50}>50</option>
-                    <option value={100}>100</option>
-                    <option value={200}>200</option>
-                    <option value={300}>300</option>
-                    <option value={400}>400</option>
-                    <option value={500}>500</option>
-                </select>
-            </Field>
-            <Field label="Sort" htmlFor="sortColumn">
-                <select id="sortColumn" className={styles.input}>
-                    <option value="-">-</option>
-                    <option value="id">ID</option>
-                    <option value="email">Username</option>
-                    <option value="fullName">FullName</option>
-                    <option value="mobile">Mobile</option>
-                    <option value="emailAddress">Email</option>
-                    <option value="maxConnections">Max Connections</option>
-                    <option value="expireDays">Expire Days</option>
-                    <option value="expireDate">Expire Date</option>
-                    <option value="billingStartDate">Billing Start Date</option>
-                    <option value="createDate">Create Date</option>
-                    <option value="deActiveDate">De-active Date</option>
-                    <option value="deActiveReason">De-active Reason</option>
-                    <option value="firstConnect">First Connect</option>
-                    <option value="lastConnect">Last Connect</option>
-                    <option value="quotaUsage">Bandwidth Usage (Monthly)</option>
-                    <option value="quotaUsageAfterBilling">Bandwidth Usage (After Billing)</option>
-                    <option value="quotaLimit">Bandwidth Limit</option>
-                </select>
-            </Field>
-            <Field label="Order" htmlFor="sort-order">
-                <select value={view?.sortAsc ? "asc" : "desc"} id="sort-order" className={styles.input} onChange={e => setView({ ...view, sortAsc: e.currentTarget.value == "asc" })}>
-                    <option value={"asc"}>ASC</option>
-                    <option value={"desc"}>DESC</option>
-                </select>
-            </Field>
-            <Field label="Filter" htmlFor="filter">
-                <input type={"text"} id="filter" className={styles.input}/>
-            </Field>
-            <Field label="Status" htmlFor="status">
-                <div className="flex gap-1 mb-1">
-                    {view.statusFilter?.map((filter, index) => <span key={index} onClick={() => setView({ ...view, statusFilter: view.statusFilter.filter(x => x != filter)})} className={classNames("whitespace-nowrap bg-slate-200 px-3 py-1 rounded-3xl cursor-pointer hover:bg-slate-700 hover:text-white")}>{filter}</span> )}
-                </div>
-                <select value={"-"} onChange={e => setView({ ...view, statusFilter: [...view.statusFilter, e.currentTarget.value]})} id="statusFilter" className="bg-slate-100 rounded-lg px-2 py-1">
-                    <option value="-">-</option>
-                    {(statusFilters ?? []).map((x, index) => <option key={index} value={x}>{x}</option>)}
-                </select>
-            </Field>
-            <Field htmlFor="fullTime" label="Full Time">
-                <input type={"checkbox"} id="fullTime"/>
-            </Field>
-            <Field label="Show ID" htmlFor="showId">
-                <input type={"checkbox"} id="showId"/>
-            </Field>
-            <Field label="Precision Date" htmlFor="precision">
-                <input type="checkbox" id="precision"/>
-            </Field>
+        <FieldsGroup data={view} horizontal dataSetter={setView} className="py-2 px-2" containerClassName="flex-col gap-y-2">
             <div className="flex flex-row">
-                <button className={styles.button} onClick={() => refreshInbounds()}>Reload</button>
-                <button className={styles.button} onClick={exportExcel}>Export Excel</button>
+                <FieldServerNodes/>
+                <Field label="Inbounds" htmlFor="inbounds">
+                    <div className="flex gap-1 mb-1">
+                        {view.inbounds?.map((filter, index) => <span key={index} onClick={() => setView({ ...view, inbounds: view.inbounds.filter(x => x != filter)})} className={classNames("whitespace-nowrap bg-slate-200 px-3 py-1 rounded-3xl cursor-pointer hover:bg-slate-700 hover:text-white")}>{filter}</span> )}
+                    </div>
+                    <select value={"-"} onChange={e => setView({ ...view, inbounds: [...(view.inbounds ?? []), e.currentTarget.value]})} id="inbounds" className={styles.input}>
+                        <option value="-">-</option>
+                        {(inbounds ?? []).map((x, index) => <option key={index} value={x.tag}>{x.tag} ({x.protocol})</option>)}
+                    </select>
+                </Field>
+                <Field label="Status" htmlFor="status">
+                    <div className="flex gap-1 mb-1">
+                        {view.statusFilter?.map((filter, index) => <span key={index} onClick={() => setView({ ...view, statusFilter: view.statusFilter.filter(x => x != filter)})} className={classNames("whitespace-nowrap bg-slate-200 px-3 py-1 rounded-3xl cursor-pointer hover:bg-slate-700 hover:text-white")}>{filter}</span> )}
+                    </div>
+                    <select value={"-"} onChange={e => setView({ ...view, statusFilter: [...view.statusFilter, e.currentTarget.value]})} id="statusFilter" className={styles.input}>
+                        <option value="-">-</option>
+                        {(statusFilters ?? []).map((x, index) => <option key={index} value={x}>{x}</option>)}
+                    </select>
+                </Field>
+                <Field label="Filter" htmlFor="filter">
+                    <input type={"text"} id="filter" className={styles.input}/>
+                </Field>
+                <div className="flex flex-row flex-1 place-content-end">
+                    <button className={styles.buttonItem} onClick={() => addUserDialog.show()}><PlusIcon className="w-4"/> Add User</button>
+                    <button className={styles.buttonItem} onClick={() => refreshInbounds()}><ArrowPathIcon className="w-4"/> Reload</button>
+                    <button className={styles.buttonItem} onClick={exportExcel}><ArrowUpTrayIcon className="w-4"/> Export Excel</button>
+                </div>
+            </div>
+            <div className="flex flex-row">
+                <Field label="Page" htmlFor="page">
+                    <select id="page" className={styles.input}>
+                        {[...new Array(totalPages)].map((x, i) => <option key={i+1} value={i+1}>{i+1}</option>)}
+                    </select>
+                </Field>
+                <Field label="Limit" htmlFor="limit">
+                    <select id="limit" className={styles.input}>
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                        <option value={50}>50</option>
+                        <option value={100}>100</option>
+                        <option value={200}>200</option>
+                        <option value={300}>300</option>
+                        <option value={400}>400</option>
+                        <option value={500}>500</option>
+                    </select>
+                </Field>
+                <Field label="Sort" htmlFor="sortColumn">
+                    <select id="sortColumn" className={styles.input}>
+                        <option value="-">-</option>
+                        <option value="id">ID</option>
+                        <option value="email">Username</option>
+                        <option value="fullName">FullName</option>
+                        <option value="mobile">Mobile</option>
+                        <option value="emailAddress">Email</option>
+                        <option value="maxConnections">Max Connections</option>
+                        <option value="expireDays">Expire Days</option>
+                        <option value="expireDate">Expire Date</option>
+                        <option value="billingStartDate">Billing Start Date</option>
+                        <option value="createDate">Create Date</option>
+                        <option value="deActiveDate">De-active Date</option>
+                        <option value="deActiveReason">De-active Reason</option>
+                        <option value="firstConnect">First Connect</option>
+                        <option value="lastConnect">Last Connect</option>
+                        <option value="quotaUsage">Bandwidth Usage (Monthly)</option>
+                        <option value="quotaUsageAfterBilling">Bandwidth Usage (After Billing)</option>
+                        <option value="quotaLimit">Bandwidth Limit</option>
+                    </select>
+                </Field>
+                <Field label="Order" htmlFor="sort-order">
+                    <select value={view?.sortAsc ? "asc" : "desc"} id="sort-order" className={styles.input} onChange={e => setView({ ...view, sortAsc: e.currentTarget.value == "asc" })}>
+                        <option value={"asc"}>ASC</option>
+                        <option value={"desc"}>DESC</option>
+                    </select>
+                </Field>
+                <Field htmlFor="fullTime" label="Full Time">
+                    <input type={"checkbox"} id="fullTime"/>
+                </Field>
+                <Field label="Show ID" htmlFor="showId">
+                    <input type={"checkbox"} id="showId"/>
+                </Field>
+                <Field label="Precision Date" htmlFor="precision">
+                    <input type="checkbox" id="precision"/>
+                </Field>
             </div>
         </FieldsGroup>
         <Loading isLoading={isLoading}/>
@@ -333,16 +340,18 @@ export default function UsersPage() {
                     let to = i.settings ? i.settings['to'] ?? 0 : 0;
                     let {showId, fullTime, precision} = view;
                     let isCollapsed = !!collapsed[i.tag ?? ''];
+                    if (totalFiltered == 0) return null;
                     return <Fragment key={"inbound-" + i.protocol + '-' + i.tag}>
                         <tr>
-                            <td colSpan={5} className="uppercase bg-slate-100 px-4 py-3 cursor-pointer sticky top-[2.4rem] z-10 border-b-2" onClick={() => setCollapsed({ ...collapsed, [i.tag ?? '']: !isCollapsed })}>
+                            <td colSpan={5} className="uppercase group bg-slate-100 px-4 py-3 cursor-pointer sticky top-[2.4rem] z-10 border-b-[1px]" onClick={() => setCollapsed({ ...collapsed, [i.tag ?? '']: !isCollapsed })}>
                                 <div className="flex flex-row items-center">
-                                    <span className="font-bold w-6 text-center py-0 mr-2 inline-block rounded-full bg-gray-300 text-lg select-none">{isCollapsed ? '+' : '-'}</span>
+                                    <span className={classNames("font-bold group-hover:text-gray-600 duration-200 ease-in-out w-6 text-center py-0 mr-2 inline-block rounded-full text-md select-none", {
+                                        'text-gray-300': isCollapsed,
+                                        'text-gray-600': !isCollapsed
+                                    })}>{isCollapsed ? <FolderPlusIcon className="w-6"/> : <FolderMinusIcon className="w-6"/>}</span>
                                     <span className="font-bold">{i.tag}</span>
                                     <span className="text-slate-500 pl-2">({i.protocol} - {i.streamSettings?.network}) ( {from}-{to} / {totalFiltered} users ) - <span className="font-bold">Total = {totalUsers} users</span></span>
-                                    <span className="ml-2 inline-block px-1 bg-slate-600 text-white">Max Client Number : {i.settings?.
-// @ts-ignore
-                                    maxClientNumber}</span>
+                                    <span className="opacity-0 group-hover:opacity-100 ease-in-out duration-200 text-xs ml-2 inline-block px-2 rounded-lg bg-slate-600 text-white">Max Client Number : {i.settings['maxClientNumber']}</span>
                                 </div>
                             </td>
                         </tr>
@@ -443,48 +452,63 @@ export default function UsersPage() {
                                 </td>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3">
                                     <PopupMenu>
-                                        <PopupMenu.Item>
-                                            <Copy className="block text-inherit" notifyText={`User "${u.email}" subscription url copied`} data={process.env.NEXT_PUBLIC_CLIENT_URL + `/api/configs/${u.id}`}>Copy Subscription Url</Copy>
+                                        <PopupMenu.Item icon={<RssIcon className="w-4"/>}>
+                                            <Copy className="block text-inherit" notifyText={`User "${u.email}" subscription url copied`} data={process.env.NEXT_PUBLIC_CLIENT_URL + `/api/configs/${u.id}`}>
+                                                Copy Subscription Url
+                                            </Copy>
                                         </PopupMenu.Item>
-                                        <PopupMenu.Item action={() => clientConfigDialog.show(u, i.tag)}>Client Config</PopupMenu.Item>
-                                        <PopupMenu.Item action={() => showQRCode(i.tag, u)}>QR Code</PopupMenu.Item>
-                                        <PopupMenu.Item>
-                                            <Copy className="block text-inherit" notifyText={`User "${u.email}" ID copied`} data={u.id}>Copy User ID</Copy>
+                                        <PopupMenu.Item icon={<DevicePhoneMobileIcon className="w-4"/>} action={() => clientConfigDialog.show(u, i.tag)}>
+                                            Client Config
                                         </PopupMenu.Item>
-                                        <PopupMenu.Item>
-                                            <Copy className="block text-inherit" notifyText={`User "${u.email}" client config copied`} data={() => serverRequest(context.server, '/client_config?tag=' + i.tag, u).then(data => data.config)}>Copy Config</Copy>
+                                        <PopupMenu.Item icon={<QrCodeIcon className="w-4"/>} action={() => showQRCode(i.tag, u)}>
+                                            QR Code
                                         </PopupMenu.Item>
-                                        {showAll || !u.deActiveReason?.includes('Expired') ? <PopupMenu.Item action={() => prompt(`Change user ${u.email} ${u.deActiveDate?'active':'de-active'} ?`, u.deActiveDate?'Active':'De-active', () => setActive(i.tag, u, u.deActiveDate ? true : false))}>{u.deActiveDate?'Active User':'De-Active User'}</PopupMenu.Item>:null}
-                                        {(showAll || !u.firstConnect) ? <PopupMenu.Item action={() => prompt(`Delete user ${u.email} ?`, `Delete`,() => removeUser(i.protocol, i.tag, u))}>
+                                        <PopupMenu.Item icon={<DocumentDuplicateIcon className="w-4"/>}>
+                                            <Copy className="block text-inherit" notifyText={`User "${u.email}" ID copied`} data={u.id}>
+                                                Copy User ID
+                                            </Copy>
+                                        </PopupMenu.Item>
+                                        <PopupMenu.Item icon={<DocumentDuplicateIcon className="w-4"/>}>
+                                            <Copy className="block text-inherit" notifyText={`User "${u.email}" client config copied`} data={() => serverRequest(context.server, '/client_config?tag=' + i.tag, u).then(data => data.config)}>
+                                                Copy Config
+                                            </Copy>
+                                        </PopupMenu.Item>
+                                        <PopupMenu.Item icon={u.deActiveDate?<BoltIcon className="w-4"/>:<BoltSlashIcon className="w-4"/>} visible={showAll || !u.deActiveReason?.includes('Expired')} action={() => prompt(`Change user ${u.email} ${u.deActiveDate?'active':'de-active'} ?`, u.deActiveDate?'Active':'De-active', () => setActive(i.tag, u, u.deActiveDate ? true : false))}>
+                                            {u.deActiveDate? 'Active User' : 'De-Active User'}
+                                        </PopupMenu.Item>
+                                        <PopupMenu.Item icon={<TrashIcon className="w-4"/>} visible={(showAll || !u.firstConnect)} action={() => prompt(`Delete user ${u.email} ?`, `Delete`,() => removeUser(i.protocol, i.tag, u))}>
                                             Remove User
-                                        </PopupMenu.Item> : null }
-                                        <PopupMenu.Item action={() => prompt(`Generate ID for ${u.email} ?`, `Generate`, () => reGenerateId(i.tag, u))}>
+                                        </PopupMenu.Item>
+                                        <PopupMenu.Item icon={<FireIcon className="w-4"/>} action={() => prompt(`Generate ID for ${u.email} ?`, `Generate`, () => reGenerateId(i.tag, u))}>
                                             ReGenerate ID
                                         </PopupMenu.Item>
-                                        <PopupMenu.Item action={() => prompt(`Add 1 Months to Expire Days for user "${u.email}" ?`, `Add Expire Days`, () => addDays(i.tag, u, 30))}>
+                                        <PopupMenu.Item icon={<PlusIcon className="w-4"/>} action={() => prompt(`Add 1 Months to Expire Days for user "${u.email}" ?`, `Add Expire Days`, () => addDays(i.tag, u, 30))}>
                                             +1 Months
                                         </PopupMenu.Item>
-                                        <PopupMenu.Item action={() => router.push(`/transactions?user=${u.email}` + (showAll ? `&all=1` : ''))}>
+                                        <PopupMenu.Item icon={<BanknotesIcon className="w-4"/>} action={() => router.push(`/transactions?user=${u.email}` + (showAll ? `&all=1` : ''))}>
                                             Transactions
                                         </PopupMenu.Item>
-                                        <PopupMenu.Item action={() => router.push(`/usages?user=${u.email}` + (showAll ? `&all=1` : ''))}>
+                                        <PopupMenu.Item icon={<CalendarDaysIcon className="w-4"/>} action={() => router.push(`/usages?user=${u.email}` + (showAll ? `&all=1` : ''))}>
                                             Daily Usages
                                         </PopupMenu.Item>
-                                        {showAll?
-                                        <PopupMenu.Item action={() => router.push(`/logs?all=1&filter=`+u.email)}>
+                                        <PopupMenu.Item icon={<DocumentTextIcon className="w-4"/>} visible={showAll} action={() => router.push(`/logs?all=1&filter=`+u.email)}>
                                             Logs
-                                        </PopupMenu.Item>: null}
-                                        {!u.createDate || showAll ? <PopupMenu.Item action={() => prompt(`Set first connect date as create date for user "${u.email}" ?`, `Set Create Date`, () => setInfo(i.tag, u, 'createDate', u.firstConnect))}>Set First Connect as Create Date</PopupMenu.Item> : null}
-                                        {showAll ? <PopupMenu.Item action={() => prompt(`Set user "${u.email}" ${u.private?"public":"private"}?`, `Change Private`, () => setInfo(i.tag, u, 'private', !u.private))}>Set {u.private?'Public':'Private'}</PopupMenu.Item> : null}
-                                        {showAll ? <PopupMenu.Item action={() => prompt(`Set user "${u.email}" as ${u.free?"Non-free":"Free"}?`, `Free/Paid`, () => setInfo(i.tag, u, 'free', !u.free))}>Set {u.free?'Non-Free':'Free'}</PopupMenu.Item> : null}
-
-                                        <PopupMenu.Item action={() => changeInboundDialog.show(context, inbounds, i.tag, u.email, () => refreshInbounds())}>
+                                        </PopupMenu.Item>
+                                        <PopupMenu.Item icon={<ClockIcon className="w-4"/>} visible={!u.createDate || showAll} action={() => prompt(`Set first connect date as create date for user "${u.email}" ?`, `Set Create Date`, () => setInfo(i.tag, u, 'createDate', u.firstConnect))}>
+                                            Set First Connect as Create Date
+                                        </PopupMenu.Item>
+                                        <PopupMenu.Item icon={u.private?<EyeIcon className="w-4"/>:<EyeSlashIcon className="w-4"/>} visible={showAll} action={() => prompt(`Set user "${u.email}" ${u.private?"public":"private"}?`, `Change Private`, () => setInfo(i.tag, u, 'private', !u.private))}>
+                                            Set {u.private?'Public':'Private'}
+                                        </PopupMenu.Item>
+                                        <PopupMenu.Item icon={<CurrencyDollarIcon className="w-4"/>} visible={showAll} action={() => prompt(`Set user "${u.email}" as ${u.free?"Non-free":"Free"}?`, `Free/Paid`, () => setInfo(i.tag, u, 'free', !u.free))}>
+                                            Set {u.free?'Non-Free':'Free'}
+                                        </PopupMenu.Item>
+                                        <PopupMenu.Item icon={<ArrowsUpDownIcon className="w-4"/>} action={() => changeInboundDialog.show(context, inbounds, i.tag, u.email, () => refreshInbounds())}>
                                             Change Inbound
                                         </PopupMenu.Item>
-
-                                        {showAll ? <PopupMenu.Item action={() => copyUserDialog.show(context, inbounds, i.tag, u.email, () => refreshInbounds())}>
+                                        <PopupMenu.Item icon={<DocumentPlusIcon className="w-4"/>} visible={showAll} action={() => copyUserDialog.show(context, inbounds, i.tag, u.email, () => refreshInbounds())}>
                                             Copy User
-                                        </PopupMenu.Item> : null}
+                                        </PopupMenu.Item>
                                     </PopupMenu>
                                 </td>
                             </tr>

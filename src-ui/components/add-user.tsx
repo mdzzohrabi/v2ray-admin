@@ -1,9 +1,12 @@
+import { UserPlusIcon } from "@heroicons/react/24/outline";
+import classNames from "classnames";
 import { useRouter } from "next/router";
-import { useCallback, useContext, useState } from "react";
+import { FormEvent, useCallback, useContext, useState } from "react";
 import toast from "react-hot-toast";
 import { styles } from "../lib/styles";
 import { serverRequest } from "../lib/util";
 import { AppContext } from "./app-context";
+import { Dialog } from "./dialog";
 import { Field, FieldsGroup } from "./fields";
 
 export interface AddUserProps {
@@ -12,6 +15,8 @@ export interface AddUserProps {
     inbounds?: V2RayConfigInbound[],
     disabled?: boolean,
     className?: string
+    horizontal?: boolean
+    onClose?: Function
 }
 
 interface UserState {
@@ -25,7 +30,7 @@ interface UserState {
     quotaLimit?: number;
 }
 
-export function AddUser({ disabled = false, onRefresh, setLoading, inbounds, className = '' }: AddUserProps) {
+export function AddUser({ disabled = false, onRefresh, setLoading, inbounds, className = '', horizontal = true, onClose }: AddUserProps) {
 
     const context = useContext(AppContext);
     const router = useRouter();
@@ -33,7 +38,7 @@ export function AddUser({ disabled = false, onRefresh, setLoading, inbounds, cla
 
     let [user, setUser] = useState<UserState>({});
 
-    const addUser = useCallback(async (e) => {
+    const addUser = useCallback(async (e: FormEvent) => {
         e?.preventDefault();
         try {
             setLoading?.call(this, true);
@@ -48,6 +53,7 @@ export function AddUser({ disabled = false, onRefresh, setLoading, inbounds, cla
                 setUser({});
                 onRefresh?.call(this);
                 toast.success("User added successful");
+                onClose?.call(this);
             }
         }
         catch (err) {
@@ -58,38 +64,54 @@ export function AddUser({ disabled = false, onRefresh, setLoading, inbounds, cla
 
     }, [user, onRefresh]);
 
-    return <form onSubmit={addUser}>
-        <FieldsGroup className={className} title="Add User" containerClassName="items-center" data={user} dataSetter={setUser}>
-            <Field label={"Username"} htmlFor="email">
-                <input placeholder="user" pattern={showAll ? undefined : '^user[a-z0-9_-]+'} disabled={disabled} className={styles.input} type="text" id="email"/>
-            </Field>
-            <Field label={"FullName"} htmlFor="fullName">
-                <input placeholder="Full Name" disabled={disabled} className={styles.input} type="text" id="fullName"/>
-            </Field>
+    let lastUserNumber = inbounds?.flatMap(x => x.settings['maxClientNumber']).reduce((a, b) => a > b ? a : b);
+
+    return <Dialog onClose={onClose} title='Add User' onSubmit={addUser}>
+        <FieldsGroup horizontal={false} className={className} containerClassName="items-center" data={user} dataSetter={setUser}>
+            <div className="flex flex-row">
+                <Field label={"Username"} htmlFor="email">
+                    <input placeholder="user" pattern={showAll ? undefined : '^user[a-z0-9_-]+'} disabled={disabled} className={styles.input} type="text" id="email"/>
+                    <span className="text-xs">
+                        Last User Number : <b>{lastUserNumber}</b>
+                    </span>
+                </Field>
+                <Field label={"FullName"} className={'flex-1'} htmlFor="fullName">
+                    <input placeholder="Full Name" disabled={disabled} className={styles.input} type="text" id="fullName"/>
+                </Field>
+            </div>
+            <div className="flex flex-row">
+                <Field label={"Inbound"} htmlFor="tag" className="flex-1">
+                    <select disabled={disabled} id="tag" className={styles.input}>
+                        <option key={"no-protocol"} value={undefined}>-</option>
+                        {inbounds?.filter(x => (x.protocol == 'vmess' || x.protocol == 'vless') && !!x.tag).map(p => <option key={`inbound-${p.tag}-${p.protocol}`} value={p.tag}>{p.tag} ({p.protocol})</option>)}
+                    </select>
+                </Field>
+                <Field label={"Bandwidth"} htmlFor="quotaLimit">
+                    <input placeholder="5 GB" inputMode={"numeric"} disabled={disabled} className={styles.input} type="number" id="quotaLimit"/>
+                </Field>
+            </div>
             <Field label={"Mobile"} htmlFor="mobile">
                 <input placeholder="09" inputMode={"tel"} disabled={disabled} className={styles.input} type="text" id="mobile"/>
             </Field>
             <Field label={"Email"} htmlFor="emailAddress">
                 <input placeholder="Email" inputMode={"email"} disabled={disabled} className={styles.input} type="text" id="emailAddress"/>
             </Field>
-            <Field label={"Bandwidth"} htmlFor="quotaLimit">
-                <input placeholder="5 GB" inputMode={"numeric"} disabled={disabled} className={styles.input} type="number" id="quotaLimit"/>
-            </Field>
-            <Field label={"Inbound"} htmlFor="tag">
-                <select disabled={disabled} id="tag" className={styles.input}>
-                    <option key={"no-protocol"} value={undefined}>-</option>
-                    {inbounds?.filter(x => (x.protocol == 'vmess' || x.protocol == 'vless') && !!x.tag).map(p => <option key={`inbound-${p.tag}-${p.protocol}`} value={p.tag}>{p.tag} ({p.protocol})</option>)}
-                </select>
-            </Field>
-            {showAll?
-            <Field htmlFor="private" label="Private">
-                <input type="checkbox" id="private"/>
-            </Field>:null}
-            {showAll?
-            <Field htmlFor="free" label="Free">
-                <input type="checkbox" id="free"/>
-            </Field>:null}
-            <button disabled={disabled} type="submit" className={styles.button}>Add User</button>
+            <div className="flex flex-row gap-x-4">
+                {showAll?
+                <Field htmlFor="private" horizontal label="Private">
+                    <input type="checkbox" id="private"/>
+                </Field>:null}
+                {showAll?
+                <Field htmlFor="free" horizontal label="Free">
+                    <input type="checkbox" id="free"/>
+                </Field>:null}
+            </div>
+            <div className="pt-2 flex">
+                <button disabled={disabled} type="submit" className={styles.buttonItem}>
+                    <UserPlusIcon className="w-4"/>
+                    Add User
+                </button>
+            </div>
         </FieldsGroup>
-    </form>;
+    </Dialog>;
 }

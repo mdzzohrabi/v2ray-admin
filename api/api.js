@@ -569,7 +569,9 @@ router.get('/nodes', async (req, res) => {
         /** @type {ServerNode[]} */
         let nodes = await db('server-nodes') ?? [];
 
-        res.json(nodes);
+        let {all} = req.query;
+
+        res.json(nodes.filter(x => !all ? !x.disabled : true));
     }
     catch (err) {
         res.json({ error: err.message });
@@ -580,7 +582,7 @@ router.get('/nodes', async (req, res) => {
 router.post('/nodes', async (req, res) => {
     try {
         /** @type {Partial<ServerNode>} */
-        let { address, type = 'client', sync = false, apiKey, name } = req.body;
+        let { address, type = 'client', sync = false, apiKey, name, disabled } = req.body;
 
         /** @type {ServerNode[]} */
         let nodes = await db('server-nodes') ?? [];
@@ -596,7 +598,8 @@ router.post('/nodes', async (req, res) => {
             apiKey: type == 'client' ? randomUUID() : apiKey ?? '',
             address,
             type,
-            sync
+            sync,
+            disabled
         });
 
         await db('server-nodes', nodes);
@@ -612,7 +615,7 @@ router.post('/nodes', async (req, res) => {
 router.put('/nodes', async (req, res) => {
     try {
         /** @type {Partial<ServerNode>} */
-        let { id, type, address, sync, name, apiKey } = req.body;
+        let { id, type, address, sync, name, apiKey, disabled } = req.body;
 
         /** @type {ServerNode[]} */
         let nodes = await db('server-nodes') ?? [];
@@ -630,6 +633,7 @@ router.put('/nodes', async (req, res) => {
         node.address = address;
         node.type = type;
         node.sync = sync;
+        node.disabled = disabled;
 
         await db('server-nodes', nodes);
 
@@ -735,7 +739,7 @@ router.get('/summary', async (req, res) => {
                 .sort((a, b) => a.traffic > b.traffic ? -1 : 1)
                 .slice(0, 10)
             },
-            nodes: nodes.map(x => {
+            nodes: nodes.filter(x => !x.disabled).map(x => {
                 x['connectedClients'] = users.filter(u => statusFilters['Connected (1 Hour)'](u) && u['lastConnectNode'] == x.id).length;
                 x['monthlyTrafficUsage'] = trafficMonth.filter(t => t.server == x.id && t.type == 'outbound').reduce((s, t) => s + t.traffic, 0);
                 return x;

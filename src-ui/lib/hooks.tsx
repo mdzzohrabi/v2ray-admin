@@ -122,16 +122,9 @@ export function useObjectCRUD(initValue = null, setter = null) {
 }
 
 
-/**
- * @template T
- * @param {string} key Storage key
- * @param {T} init Value
- * @returns {[ T, React.Dispatch<React.SetStateAction<T>> ]}
- */
-export function useStoredState(key, init) {
-	let state = useState(stored(key) ?? init);
+export function useStoredState<T>(key: string, init: T) {
+	let state = useState<T>(stored(key) ?? init);
 	useEffect(() => store(key, state[0]), [state[0]]);
-	// @ts-ignore
 	return state;
 }
 

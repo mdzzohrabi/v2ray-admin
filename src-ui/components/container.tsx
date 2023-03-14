@@ -1,5 +1,5 @@
 // @ts-check
-import { ArrowRightOnRectangleIcon, ChartPieIcon, CloudIcon, Cog6ToothIcon, ComputerDesktopIcon, CurrencyDollarIcon, HomeIcon, ServerIcon, UsersIcon } from '@heroicons/react/24/outline';
+import { ArrowRightOnRectangleIcon, BriefcaseIcon, ChartPieIcon, CloudIcon, Cog6ToothIcon, ComputerDesktopIcon, CurrencyDollarIcon, HomeIcon, ServerIcon, UsersIcon } from '@heroicons/react/24/outline';
 import classNames from 'classnames';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -47,7 +47,10 @@ export function Container({ children, block = true }) {
 
     return <div className="flex flex-col h-screen overflow-x-auto w-full text-xs xl:text-sm">
         <div className="flex flex-row items-center">
-            <span className="self-center font-light px-4 text-lg select-none border-r-[1px] border-r-slate-400 hidden md:inline-block">Management</span>
+            <div className="flex flex-row items-center space-x-2 px-4 border-r-[1px] border-r-slate-400">
+                <BriefcaseIcon className='w-8 text-amber-500 bg-white rounded-full p-1'/>
+                <span className="self-center font-light text-lg select-none hidden md:inline-block">Management</span>
+            </div>
             <select onChange={onMenuClick} className='flex-1 bg-slate-200 font-bold px-2 py-3 my-2 mx-3 lg:hidden rounded-md' value={router.pathname}>
                 {menu.filter(x => !x.admin || isFull).map(x => <option key={x.link} value={x.link}>{x.text}</option>)}
             </select>
@@ -55,7 +58,10 @@ export function Container({ children, block = true }) {
                 {menu.map(x => !x.admin || isFull ? <MenuLink href={x.link + (isFull ? '?all=1' : '')} icon={x.icon} text={x.text}/> : null)}
             </ul>
             <div className="self-center px-3 text-gray-400 flex flex-col">
-                <span className="font-bold">Server</span>
+                <div className="flex flex-row gap-x-2">
+                    <ServerIcon className='w-4'/>
+                    <span className="font-bold">Server</span>
+                </div>
                 <div className="flex flex-row">
                     <span>{server?.url}</span>{server?.name ? <span className="ml-2">({server?.name})</span> : null}
                 </div>

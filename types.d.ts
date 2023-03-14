@@ -279,4 +279,5 @@ interface ServerNode {
     lastConnectIP?: string
     lastSyncDate?: string
     sync?: boolean
+    disabled?: boolean
 }

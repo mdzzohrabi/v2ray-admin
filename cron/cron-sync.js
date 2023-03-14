@@ -48,6 +48,8 @@ async function cronSync(cron) {
     /** @type {ServerNode[]} */
     let serverNodes = await db('server-nodes') ?? [];
 
+    serverNodes = serverNodes.filter(x => !x.disabled);
+
     if (!serverNodes) {
         showInfo(`No server nodes defined`);
         return;
@@ -60,7 +62,7 @@ async function cronSync(cron) {
         showInfo(`No inbound to sync`);
 
     for (let inbound of inbounds) {
-        let serverNode = serverNodes.find(x => x.id == inbound.usersServerNode);
+        let serverNode = serverNodes.find(x => x.id == inbound.usersServerNode && x.sync && x.type == 'server');
         let mirrorInbound = inbound.mirrorInbound;
         showInfo(`Sync clients for inbound ${inbound.tag} [${inbound.protocol}] from ${serverNode?.name ?? '[n/A]'}`);
         if (serverNode) {
