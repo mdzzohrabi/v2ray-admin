@@ -1,20 +1,19 @@
-// @ts-check
-import { ArrowRightOnRectangleIcon, BriefcaseIcon, ChartPieIcon, CloudIcon, Cog6ToothIcon, ComputerDesktopIcon, CurrencyDollarIcon, HomeIcon, ServerIcon, UsersIcon } from '@heroicons/react/24/outline';
+import { ArrowRightOnRectangleIcon, ArrowsRightLeftIcon, BriefcaseIcon, ChartPieIcon, CircleStackIcon, CloudIcon, Cog6ToothIcon, ComputerDesktopIcon, CurrencyDollarIcon, HomeIcon, ServerIcon, UsersIcon } from '@heroicons/react/24/outline';
 import classNames from 'classnames';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import React, { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo } from 'react';
 import useSWR from 'swr';
-import { serverRequest } from '../lib/util';
+import { queryString, serverRequest } from '../lib/util';
 import { AppContext } from './app-context';
+import { Popup } from './popup';
 
 export function Container({ children, block = true }) {
     const router = useRouter();
     const isFull = router.query.all == '1';
     const { server, setServer } = useContext(AppContext);
 
-    /** @type {import("swr").SWRResponse<ServerNode[]>} */
-    let {mutate: refreshNodes, data: nodes, isValidating: isLoading} = useSWR('/nodes?_main=1', serverRequest.bind(this, { ...server, node: undefined }), {
+    let {mutate: refreshNodes, data: nodes, isValidating: isLoading} = useSWR<ServerNode[]>('/nodes?_main=1', serverRequest.bind(this, { ...server, node: undefined }), {
         revalidateOnFocus: false,
         revalidateOnMount: true,
         revalidateOnReconnect: false
@@ -29,7 +28,7 @@ export function Container({ children, block = true }) {
             { text: 'Transactions', link: '/transactions', admin: false, icon: <CurrencyDollarIcon className='w-4'/> },
             { text: 'Users', link: '/users', admin: false, icon: <UsersIcon className='w-4'/> },
             { text: 'Config', link: '/configuration', admin: true, icon: <Cog6ToothIcon className='w-4'/> },
-            { text: 'Servers', link: '/server_config', admin: false, icon: <ServerIcon className='w-4'/> },
+            // { text: 'Servers', link: '/server_config', admin: false, icon: <ServerIcon className='w-4'/> },
             { text: 'Logout', link: '/logout', admin: false, icon: <ArrowRightOnRectangleIcon className='w-4'/> },
         ]
     }, []);
@@ -57,23 +56,34 @@ export function Container({ children, block = true }) {
             <ul className="px-2 py-3 hidden lg:flex flex-row xl:sticky top-0 z-50 bg-slate-100 flex-1 self-center">
                 {menu.map(x => !x.admin || isFull ? <MenuLink href={x.link + (isFull ? '?all=1' : '')} icon={x.icon} text={x.text}/> : null)}
             </ul>
-            <div className="self-center px-3 text-gray-400 flex flex-col">
-                <div className="flex flex-row gap-x-2">
-                    <ServerIcon className='w-4'/>
-                    <span className="font-bold">Server</span>
+            <div className='flex select-none flex-row border-[1px] rounded-md border-slate-300 m-2 text-gray-400'>
+                <div className="self-center px-3 py-1 flex flex-col">
+                    <div className="flex flex-row gap-x-2 items-center">
+                        <ServerIcon className='w-4'/>
+                        <span className="font-bold">Server</span>
+                        <button onClick={() => router.push('/server_config' + queryString({ all: isFull ? '1' : undefined }))} className={'text-xs flex flex-row gap-x-2 hover:border-slate-600 duration-200 hover:text-slate-600 ease-in-out border-[1px] px-2 rounded-xl items-center'}>
+                            <ArrowsRightLeftIcon className='w-3'/>
+                            Change
+                        </button>
+                    </div>
+                    <div className="flex flex-row">
+                        <Popup popup={server?.url}>
+                            {server?.name ?? server?.url}
+                        </Popup>
+                    </div>
                 </div>
-                <div className="flex flex-row">
-                    <span>{server?.url}</span>{server?.name ? <span className="ml-2">({server?.name})</span> : null}
-                </div>
+                {isFull ? 
+                <div className="self-center px-3 py-1 flex flex-col border-l-[1px] border-l-slate-300">
+                    <div className="flex flex-row gap-x-2">
+                        <CircleStackIcon className='w-4'/>
+                        <span className="font-bold">Node</span>
+                    </div>
+                    <select className={'bg-transparent'} value={server?.node} onChange={onChangeNode}>
+                        <option value="">(main)</option>
+                        {nodes?.map(x => <option value={x.id}>{x.name}</option>)}
+                    </select>
+                </div> : null }
             </div>
-            {isFull ? 
-            <div className="self-center px-3 py-1 mx-2 my-2 text-gray-400 border-gray-400 flex flex-col rounded-md border-[1px]">
-                <span className="font-bold px-1">Node</span>
-                <select className='bg-transparent' value={server?.node} onChange={onChangeNode}>
-                    <option value="">(main)</option>
-                    {nodes?.map(x => <option value={x.id}>{x.name}</option>)}
-                </select>
-            </div> : null }
         </div>
         {block ?
         <div className="bg-white block shadow-md mt-2 min-w-fit">
@@ -82,12 +92,11 @@ export function Container({ children, block = true }) {
     </div>
 }
 
-/**
- * 
- * @param {{ children?: any, text?: string, icon?: any, href: string }} param0 
- * @returns 
- */
-function MenuLink({ href, text = undefined, icon = undefined, children = undefined }) {
+interface MenuLinkProps {
+    children?: any, text?: string, icon?: any, href: string
+}
+
+function MenuLink({ href, text = undefined, icon = undefined, children = undefined }: MenuLinkProps) {
     const router = useRouter();
     return <Link href={href}>
         <li className={classNames('flex flex-row gap-x-2 items-center whitespace-nowrap px-3 py-1 cursor-pointer rounded-lg', { 'hover:bg-white': router.asPath != href }, { 'font-bold bg-slate-800 text-white': router.asPath == href })}>{icon}{text ?? children}</li>

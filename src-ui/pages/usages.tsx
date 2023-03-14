@@ -1,10 +1,7 @@
-// @ts-check
-/// <reference types="../../types"/>
 import { CalendarIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import React from 'react';
 import { Container } from "../components/container";
 import { DateView } from "../components/date-view";
 import { Field, FieldsGroup } from "../components/fields";

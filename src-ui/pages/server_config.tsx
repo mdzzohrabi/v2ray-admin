@@ -1,12 +1,9 @@
-// @ts-check
 import { useRouter } from "next/router";
-import React from "react";
-import { useEffect } from "react";
-import { useCallback, useContext, useState } from "react"
+import { FormEvent, useCallback, useContext, useState } from "react";
 import toast from "react-hot-toast";
-import { AppContext } from "../components/app-context"
+import { AppContext, ServerContext } from "../components/app-context";
 import { Field, FieldsGroup } from "../components/fields";
-import { store, stored } from "../lib/util";
+import { useStoredState } from "../lib/hooks";
 
 export default function ServerConfig() {
     let context = useContext(AppContext);
@@ -17,16 +14,9 @@ export default function ServerConfig() {
         url: context?.server?.url, token: context?.server?.token, name: context?.server?.name
     })
 
-    /**
-     * @type {[import("../components/app-context").ServerContext[], import("react").Dispatch<import("react").SetStateAction<import("../components/app-context").ServerContext[]>>]}
-     */
-    let [servers, setServers] = useState(stored('servers') ?? []);
-
-    useEffect(() => {
-        store('servers', servers);
-    }, [servers]);
+    let [servers, setServers] = useStoredState<ServerContext[]>('servers', []);
     
-    let connect = useCallback((e, /** @type {import("../components/app-context").ServerContext} */ server) => {
+    let connect = useCallback((e: FormEvent, server: ServerContext) => {
         e?.preventDefault();
         let {url, token} = server;
         if (!!url && !!token) {
@@ -48,11 +38,11 @@ export default function ServerConfig() {
         }
     }, [context, servers]);
 
-    const removeServer = useCallback((/** @type {string} */ url) => {
+    const removeServer = useCallback((url: string) => {
         setServers([ ...servers.filter(x => x.url != url) ]);
     }, [servers, setServers]);
 
-    const connectTo = useCallback(/** @type {import("../components/app-context").ServerContext} */ server => {
+    const connectTo = useCallback((server: ServerContext) => {
         connect(null, server);
     }, [server, connect]);
 
@@ -60,7 +50,7 @@ export default function ServerConfig() {
         <form onSubmit={e => connect(e, server)}>
         <h1 className="font-light text-2xl mb-4">Server Config</h1>
         <div className="bg-white rounded-lg shadow-md px-3 py-3 flex flex-col min-w-[20rem]">
-            <FieldsGroup data={server} dataSetter={server => setServer(server)}>
+            <FieldsGroup data={server} dataSetter={setServer}>
                 <Field label="Server URL" htmlFor="url">
                     <input type="text" placeholder="http://" className="w-full px-2 py-1 ring-1 ring-slate-600 rounded-md" id="url"/>
                 </Field>

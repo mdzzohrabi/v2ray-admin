@@ -1,5 +1,3 @@
-// @ts-check
-/// <reference types="../../../types"/>
 import Head from "next/head";
 import { useRouter } from "next/router";
 import React, { useCallback, useContext, useMemo, useState } from 'react';

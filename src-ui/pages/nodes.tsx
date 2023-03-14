@@ -47,13 +47,18 @@ function ServerNodeDialog({ onEdit, onClose, node: nodeProp }: ServerNodeDialogP
             <Field className={'flex-1'} label="Address" htmlFor="address">
                 <input type="text" id="address" className={styles.input} placeholder={'0.0.0.0'}/>
             </Field>
-            {serverNode?.type == 'server' ?
-            <Field label="Sync Database" htmlFor="sync" horizontal>
-                <input type="checkbox" id="sync" className={styles.input}/>
-            </Field> : null }
             {serverNode?.type == 'server' ? <Field label="Api Key" htmlFor="apiKey">
                 <input type="text" id="apiKey" className={styles.input} readOnly={serverNode?.type != 'server'}/>
             </Field> : null }
+            {serverNode?.type == 'server' ? <div className="flex flex-row gap-3 py-2/">
+                <Field label="Sync Database" htmlFor="sync" horizontal hint={'Sync database with the server'}>
+                    <input type="checkbox" id="sync" className={styles.input}/>
+                </Field>
+                <Field label="Sync V2Ray Config" htmlFor="syncConfig" horizontal hint={'Copy V2Ray config from server only if its defined also in the server'}>
+                    <input type="checkbox" id="syncConfig" className={styles.input}/>
+                </Field>
+            </div>
+            : null }
             <Infos className={'p-2 leading-8'}>
                 <Info label={'ID'}>{serverNode?.id ?? '-'}</Info>
                 {serverNode?.type == 'client' ? <Info label={'Api Key'}>{serverNode?.apiKey ?? '-'}</Info> : null }
@@ -61,13 +66,13 @@ function ServerNodeDialog({ onEdit, onClose, node: nodeProp }: ServerNodeDialogP
                 <Info label={'Last Connect Date'}>{serverNode?.lastConnectDate ?? '-'}</Info>
                 <Info label={'Last Sync Date'}>{serverNode?.lastSyncDate ?? '-'}</Info>
             </Infos>
-        <div className="flex flex-row border-t-[1px] pt-2 mt-2">
-            <Field htmlFor="disabled" label="Disabled" horizontal>
-                <input type={'checkbox'} id="disabled"/>
-            </Field>
-            <button type="button" onClick={e => onClose()} className={classNames(styles.button, 'ml-auto')}>Cancel</button>
-            <button type="submit" className={styles.buttonPrimary}>Save Server Node</button>
-        </div>
+            <div className="flex flex-row border-t-[1px] pt-2 mt-2">
+                <Field htmlFor="disabled" label="Disabled" horizontal>
+                    <input type={'checkbox'} id="disabled"/>
+                </Field>
+                <button type="button" onClick={e => onClose()} className={classNames(styles.button, 'ml-auto')}>Cancel</button>
+                <button type="submit" className={styles.buttonPrimary}>Save Server Node</button>
+            </div>
         </FieldsGroup>
     </Dialog>
 }

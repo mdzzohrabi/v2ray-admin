@@ -1,7 +1,9 @@
+import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import React, { createContext, createElement, useCallback, useContext } from "react";
 import { useArrayDelete, useArrayInsert, useArrayUpdate, useObjectCRUD } from "../lib/hooks";
 import { styles } from "../lib/styles";
+import { Popup } from "./popup";
 
 export interface FieldContext<T> {
 	horizontal?: boolean,
@@ -79,9 +81,10 @@ interface FieldProps {
 	data?: any;
 	dataSetter?: Function;
 	unsetEmpty?: boolean;
+	hint?: any
 }
 
-export function Field({ label, children, className = '', horizontal = undefined, htmlFor = '', data = undefined, dataSetter = undefined, unsetEmpty = undefined }: FieldProps) {
+export function Field({ label, children, className = '', horizontal = undefined, htmlFor = '', data = undefined, dataSetter = undefined, unsetEmpty = undefined, hint }: FieldProps) {
 	let context = useContext(FieldContext);
 	let childs = Array.isArray(children) ? children : [children];
 
@@ -126,9 +129,12 @@ export function Field({ label, children, className = '', horizontal = undefined,
 		return child;
 	})
 
-	return <div className={classNames("flex px-1", { 'flex-col': !horizontal, 'flex-row self-center': horizontal }, className)}>
-		{label ? <label htmlFor={htmlFor} className={classNames(styles.label, { 'pr-3': horizontal }, 'whitespace-nowrap')}>{label}</label> : null}
-		{childs}
+	return <div className={classNames(className ,'px-1')}>
+		<div className={classNames("flex", { 'flex-col': !horizontal, 'flex-row self-center': horizontal })}>
+			{label ? <label htmlFor={htmlFor} className={classNames(styles.label, { 'pr-3': horizontal }, 'whitespace-nowrap')}>{label}</label> : null}
+			{childs}
+		</div>
+		{ hint ? <div className="text-xs text-gray-500 whitespace-pre-wrap">{hint}</div> : null }
 	</div>;
 }
 
