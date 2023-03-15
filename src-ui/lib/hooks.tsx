@@ -26,7 +26,7 @@ export function useOutsideAlerter(ref, callback) {
 }
 
 export function usePrompt() {
-  return useCallback((message, okButton, onClick) => {
+  return useCallback((message: any, okButton: any, onClick: Function) => {
 	  let clicked = false;
 	  toast.custom(t => {
 		  return <div className={"ring-1 ring-black ring-opacity-20 whitespace-nowrap text-sm shadow-lg bg-white flex rounded-lg pointer-events-auto px-3 py-2"}>
@@ -158,4 +158,137 @@ export function useContextSWR<T = any>(key: any, body: any = undefined, config: 
 	}
 
 	return useSWR<T>(key, requester, config);
+}
+
+interface CRUDOptions<T> {
+	onDone?: (item: T, action: 'add' | 'edit' | 'delete') => any
+	onError?: (item: T, action: 'add' | 'edit' | 'delete') => any
+	insertMessage?: string
+	removeMessage?: string
+	editMessage?: string
+	insertUrl?: string
+	removeUrl?: string
+	editUrl?: string
+	listUrl?: string
+}
+
+export function useCRUD<T>(url: string, { onDone, insertMessage, removeMessage, editMessage, removeUrl, editUrl, insertUrl, onError, listUrl }: CRUDOptions<T>) {
+	const {server} = useContext(AppContext);
+	const [isLoading, setLoading] = useState(false);
+	const {data: items, isValidating: isItemsLoading, mutate: refreshItems, error: itemsError} = useContextSWR<T[]>(listUrl ?? url, null, {});
+
+	const insert = useCallback(async (item : T) => {
+        try {
+			setLoading(true);
+            let result = await serverRequest(server, insertUrl ?? ('POST:' + url), {
+                ...item
+            });
+
+			if (result?.ok) {
+				toast.success(result?.message ?? insertMessage ?? `Item added successfull`);
+				onDone?.call(this, item, 'add');
+				refreshItems();
+				return true;
+			}
+			else {
+				onError?.call(this, item, 'add');
+				toast.error(result?.error ?? 'Error');
+				return false;
+			}
+        }
+        catch (err) {
+			onError?.call(this, item, 'add');
+            toast.error(err?.message);
+			return false;
+        }
+		finally {
+			setLoading(false);
+		}
+    }, [onDone, server, insertMessage, insertUrl, refreshItems, onError]);
+
+    const remove = useCallback(async (item: T) => {
+		try {
+			setLoading(true);
+			let result = await serverRequest(server, removeUrl ?? ('DELETE:' + url), item);
+			if (result?.ok) {
+				toast.success(result?.message ?? removeMessage ?? `Item removed successful`)
+				onDone?.call(this, item, 'remove');
+				refreshItems();
+				return true;
+			} else {
+				onError?.call(this, item, 'remove');
+				toast.error(result?.error ?? 'Error');
+				return false;
+			}
+		}
+		catch (err) {
+			onError?.call(this, item, 'remove');
+			toast.error(err?.message);
+			return false;
+		}
+		finally {
+			setLoading(false);
+		}
+    }, [onDone, server, removeMessage, removeUrl, refreshItems]);
+
+    const edit = useCallback(async (item: T) => {
+		try {
+			setLoading(true);
+			let result = await serverRequest(server, editUrl ?? ('PUT:' + url), item);
+			if (result?.ok) {
+				toast.success(result?.message ?? editMessage ?? `Item edited successful`);
+				onDone?.call(this, item, 'edit');
+				refreshItems();
+				return true;
+			}
+			else {
+				onError?.call(this, item, 'edit');
+				toast.error(result?.error ?? 'Error');
+				return false;
+			};
+		}
+		catch (err) {
+			onError?.call(this, item, 'remove');
+			toast.error(err?.message);
+			return false;
+		}
+		finally {
+			setLoading(false);
+		}
+    }, [onDone, server, editMessage, editUrl, refreshItems]);
+
+	const patch = useCallback(async (item: T, field: string, value: any) => {
+		try {
+			setLoading(true);
+			let result = await serverRequest(server, editUrl ?? ('PUT:' + url), { item, field, value });
+			if (result?.ok) {
+				toast.success(result?.message ?? editMessage ?? `Item edited successful`);
+				onDone?.call(this, item, 'edit');
+				refreshItems();
+				return true;
+			}
+			else {
+				onError?.call(this, item, 'edit');
+				toast.error(result?.error ?? 'Error');
+				return false;
+			}
+		}
+		catch (err) {
+			onError?.call(this, item, 'remove')
+			toast.error(err?.message);
+			return false;
+		}
+		finally {
+			setLoading(false);
+		}
+    }, [onDone, server, editMessage, editUrl, refreshItems]);
+
+	return { insert, remove, edit, patch, isLoading, items, isItemsLoading, refreshItems, itemsError };
+}
+
+
+export function usePropState<T>(prop: T) {
+	let state = useState(prop);
+	useEffect(() => state[1](prop), [prop]);
+	return state;
 }

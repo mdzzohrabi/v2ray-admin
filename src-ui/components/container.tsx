@@ -1,5 +1,6 @@
 import { ArrowRightOnRectangleIcon, ArrowsRightLeftIcon, BriefcaseIcon, ChartPieIcon, CircleStackIcon, CloudIcon, Cog6ToothIcon, ComputerDesktopIcon, CurrencyDollarIcon, HomeIcon, ServerIcon, UsersIcon } from '@heroicons/react/24/outline';
 import classNames from 'classnames';
+import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useCallback, useContext, useMemo } from 'react';
@@ -8,7 +9,13 @@ import { queryString, serverRequest } from '../lib/util';
 import { AppContext } from './app-context';
 import { Popup } from './popup';
 
-export function Container({ children, block = true }) {
+interface ContainerProps {
+    block?: boolean
+    children?: any
+    pageTitle?: string
+}
+
+export function Container({ children, block = true, pageTitle }: ContainerProps) {
     const router = useRouter();
     const isFull = router.query.all == '1';
     const { server, setServer } = useContext(AppContext);
@@ -44,7 +51,9 @@ export function Container({ children, block = true }) {
         router.push(e.target.value + (isFull ? '?all=1' : ''));
     }, [isFull, router]);
 
-    return <div className="flex flex-col h-screen overflow-x-auto w-full text-xs xl:text-sm">
+    return <>
+    {pageTitle?<Head><title>{pageTitle}</title></Head>:null}
+    <div className="flex flex-col h-screen overflow-x-auto w-full text-xs xl:text-sm">
         <div className="flex flex-row items-center">
             <div className="flex flex-row items-center space-x-2 px-4 border-r-[1px] border-r-slate-400">
                 <BriefcaseIcon className='w-8 text-amber-500 bg-white rounded-full p-1'/>
@@ -89,7 +98,7 @@ export function Container({ children, block = true }) {
         <div className="bg-white block shadow-md mt-2 min-w-fit">
             {children}
         </div> : children}
-    </div>
+    </div></>
 }
 
 interface MenuLinkProps {

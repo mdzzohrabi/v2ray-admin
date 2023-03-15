@@ -1,9 +1,7 @@
-import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import React, { createContext, createElement, useCallback, useContext } from "react";
 import { useArrayDelete, useArrayInsert, useArrayUpdate, useObjectCRUD } from "../lib/hooks";
 import { styles } from "../lib/styles";
-import { Popup } from "./popup";
 
 export interface FieldContext<T> {
 	horizontal?: boolean,
@@ -54,7 +52,6 @@ export function FieldObject({ children, path }) {
 	let context = useContext(FieldContext);
 	
 	let setData = useCallback(data => {
-		console.log(`Set Data`, data, context.data, path);
 		if (context.dataSetter) {
 			let obj = { ...context.data };
 			if (!data && context.unsetEmpty) {
@@ -62,7 +59,6 @@ export function FieldObject({ children, path }) {
 			} else {
 				obj[path] = data;
 			}
-			console.log(obj);
 			context.dataSetter(obj);
 		}
 	}, [context.data, context.dataSetter]);

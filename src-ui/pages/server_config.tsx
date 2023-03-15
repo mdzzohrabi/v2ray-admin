@@ -4,15 +4,22 @@ import toast from "react-hot-toast";
 import { AppContext, ServerContext } from "../components/app-context";
 import { Field, FieldsGroup } from "../components/fields";
 import { useStoredState } from "../lib/hooks";
+import { styles } from "../lib/styles";
 
 export default function ServerConfig() {
     let context = useContext(AppContext);
     let router = useRouter();
     let showAll = router.query.all == '1';
 
+    let [mode, setMode] = useState<'token' | 'login'>('login');
+
     let [server, setServer] = useState({
-        url: context?.server?.url, token: context?.server?.token, name: context?.server?.name
+        url: context?.server?.url,
+        token: context?.server?.token,
+        name: context?.server?.name
     })
+
+    let [login, setLogin] = useState({ username: '', password: '' });
 
     let [servers, setServers] = useStoredState<ServerContext[]>('servers', []);
     
@@ -50,15 +57,35 @@ export default function ServerConfig() {
         <form onSubmit={e => connect(e, server)}>
         <h1 className="font-light text-2xl mb-4">Server Config</h1>
         <div className="bg-white rounded-lg shadow-md px-3 py-3 flex flex-col min-w-[20rem]">
+            <div className="flex flex-row px-1 border-b-[1px] pb-1 mb-1">
+                <label className={styles.label + ' flex-1'}>Mode</label>
+                <div className="flex flex-row gap-x-2 items-center text-sm">
+                    <label htmlFor="login">Login</label>
+                    <input checked={mode=='login'} onChange={e => setMode(e.target.value as any)} type="radio" value={'login'} name="mode" id="login"/>
+                    <label htmlFor="token">Token</label>
+                    <input checked={mode=='token'} onChange={e => setMode(e.target.value as any)} type="radio" value={'token'} name="mode" id="token"/>
+                </div>
+            </div>
             <FieldsGroup data={server} dataSetter={setServer}>
                 <Field label="Server URL" htmlFor="url">
-                    <input type="text" placeholder="http://" className="w-full px-2 py-1 ring-1 ring-slate-600 rounded-md" id="url"/>
+                    <input type="text" placeholder="http://" className={styles.input} id="url"/>
                 </Field>
+                {mode == 'token' ?
                 <Field label="Server Token" htmlFor="token">
-                    <input type="password" placeholder="Server Token" className="w-full px-2 py-1 ring-1 ring-slate-600 rounded-md" id="token"/>
-                </Field>
+                    <input type="password" placeholder="Server Token" className={styles.input} id="token"/>
+                </Field> : null}
+                {mode == 'login' ? <>
+                    <FieldsGroup data={login} dataSetter={setLogin}>
+                        <Field label="Username" htmlFor="username">
+                            <input type="text" placeholder="Username" className={styles.input} id="username"/>
+                        </Field>
+                        <Field label="Password" htmlFor="password">
+                            <input type="password" placeholder="Password" className={styles.input} id="password"/>
+                        </Field>
+                    </FieldsGroup>
+                </> : null}
                 <Field label="Server Name" htmlFor="name">
-                    <input type="text" placeholder="My Server" className="w-full px-2 py-1 ring-1 ring-slate-600 rounded-md" id="name"/>
+                    <input type="text" placeholder="My Server" className={styles.input} id="name"/>
                 </Field>
             </FieldsGroup>
             <button type="submit" className="mt-2 py-1 bg-slate-300 rounded-lg hover:bg-slate-800 hover:text-white">Connect</button>

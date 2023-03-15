@@ -1,4 +1,4 @@
-import { ArrowPathIcon, ArrowRightCircleIcon, ArrowUpOnSquareIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import Head from "next/head";
 import { useRouter } from "next/router";

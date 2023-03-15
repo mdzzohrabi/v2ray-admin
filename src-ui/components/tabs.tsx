@@ -1,8 +1,6 @@
-// @ts-check
-
 import classNames from "classnames";
-import React, { createElement, Fragment, ReactElement } from "react";
-import { useState } from "react";
+import { createElement, Fragment, useState } from "react";
+import { ChildOf } from "../types";
 
 interface TabProps {
     children?: any,
@@ -11,10 +9,15 @@ interface TabProps {
     className?: string
 }
 
-export function Tabs({ children }: { children: ReactElement<TabProps, typeof Tab>[] | ReactElement<TabProps, typeof Tab> }) {
-    let [selectedTab, setSelectedTab] = useState('');
+interface TabsProps {
+    children: ChildOf<typeof Tab, TabProps>
+    selectedTabTitle?: string
+}
 
-    if (selectedTab == '') {
+export function Tabs({ children, selectedTabTitle }: TabsProps) {
+    let [selectedTab, setSelectedTab] = useState(selectedTabTitle);
+
+    if (!selectedTab) {
         selectedTab = children[0]?.props?.title ?? '';
     }
 

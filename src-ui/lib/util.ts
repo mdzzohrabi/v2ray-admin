@@ -3,7 +3,7 @@ import {decrypt} from 'crypto-js/aes';
 import encodeUtf8 from 'crypto-js/enc-utf8';
 import { ServerContext } from '../components/app-context';
 
-export function serverRequest<T=any>(server: ServerContext, action: string | { body: any, url: string }, body: any = undefined): Promise<T> {
+export async function serverRequest<T=any>(server: ServerContext, action: string | { body: any, url: string }, body: any = undefined): Promise<T> {
 
     if (typeof action == 'object') {
         body = action['body'];
@@ -17,8 +17,9 @@ export function serverRequest<T=any>(server: ServerContext, action: string | { b
         method = m;
         action = u.join(':');
     }
+
     
-    return fetch(server.url + action, {
+    let response = await fetch(server.url + action, {
         method: method,
         body: body ? JSON.stringify(body) : undefined,
         headers: {
@@ -26,28 +27,25 @@ export function serverRequest<T=any>(server: ServerContext, action: string | { b
             'Authorization': 'Bearer ' + btoa(server.token),
             'Server-Node': server.node ?? ''
         }
-    })
-        .then(result => result.json())
-        .then(result => {
-            if (result.encoded) {
-                return JSON.parse(decrypt(result.encoded, 'masoud').toString(encodeUtf8));
-            }
-            return result;
-        })
-        .then(result => { if (result.error) throw Error(result.error); else return result });
+    });
+
+    let result = await response.json();
+
+    if (result.encoded) {
+        result = JSON.parse(decrypt(result.encoded, 'masoud').toString(encodeUtf8));
+    }
+    
+    if (result.error)
+        throw Error(result.error);
+
+    return result;
 }
 
-export function store(key, value) {
+export function store(key: string, value: any) {
     localStorage[key] = value ? JSON.stringify(value) : undefined;
 }
 
-/**
- * @template T
- * @param {string} key Key
- * @param {T?} _default Default value
- * @returns {T extends null ? any : T}
- */
-export function stored(key, _default = null) {
+export function stored<T>(key: string, _default: T = null): T extends null ? any : T {
     try {
         return localStorage[key] ? JSON.parse(localStorage[key]) : _default ?? null;
     } catch {

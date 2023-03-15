@@ -1,15 +1,8 @@
-// @ts-check
-import React, { createContext, Fragment, useCallback, useContext, useState } from "react";
+import React, { createContext, FormEvent, Fragment, useCallback, useContext, useState } from "react";
 
 export const DialogContext = createContext({ dialogs: [], setDialogs: (dialogs) => null });
 
-/**
- * Dialog
- * @template {Function} T
- * @param {T} builder Dialog builder
- * @returns 
- */
-export function useDialog(builder) {
+export function useDialog<T extends (...args: any) => any>(builder: T) {
     let { dialogs, setDialogs } = useContext(DialogContext);
 
     let closeDialog = useCallback((dialog) => {
@@ -19,10 +12,9 @@ export function useDialog(builder) {
     return {
         /**
          * Show dialog
-         * @param {Parameters<T>} props Builder properties
          */
-        show(...props) {
-            let boundBuilder = builder.bind(dialogs, ...props);
+        show(...props: Parameters<T>) {
+            let boundBuilder = builder.bind(dialogs, ...(props as any));
             setDialogs([ ...dialogs, boundBuilder ]);
         }
     }
@@ -55,17 +47,14 @@ export function DialogsContainer({ children }) {
     </DialogContext.Provider>
 }
 
-/**
- * Dialog
- * @param {{    
- *      children?: any,
- *      title?: string,
- *      onClose?: any,
- *      onSubmit?: (event: import("react").FormEvent) => any
- * }} param0 
- * @returns 
- */
-export function Dialog({ children, title = undefined, onClose = undefined, onSubmit = undefined }) {
+interface DialogProps {
+    children?: any
+    title?: string
+    onClose?: any
+    onSubmit?: (event: FormEvent) => any
+}
+
+export function Dialog({ children, title = undefined, onClose = undefined, onSubmit = undefined }: DialogProps) {
 
     let elDialog = <div className="bg-white rounded-xl p-2 min-w-[30rem] flex flex-col max-h-[90vh] text-xs md:text-sm lg:text-base">
         <div className="flex flex-row px-1 pb-2">
