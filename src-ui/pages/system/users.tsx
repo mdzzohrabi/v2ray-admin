@@ -1,18 +1,49 @@
-import { ArrowPathIcon, BellSlashIcon, BoltIcon, BoltSlashIcon, PencilIcon, PlusIcon, TrashIcon, UsersIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, BoltIcon, BoltSlashIcon, MinusIcon, PencilIcon, PlusIcon, TrashIcon, UsersIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
-import { FormEvent, useCallback, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Container } from "../../components/container";
+import { DateView } from "../../components/date-view";
 import { Dialog, useDialog } from "../../components/dialog";
 import { Field, FieldObject, FieldsGroup } from "../../components/fields";
 import { PopupMenu } from "../../components/popup-menu";
 import { Table } from "../../components/table";
 import { Tabs } from "../../components/tabs";
-import { useCRUD, usePrompt } from "../../lib/hooks";
+import { useContextSWR, useCRUD, usePrompt } from "../../lib/hooks";
 import { styles } from "../../lib/styles";
+
+export function SystemUserSessionsDialog({ userId, onClose }: { userId: string, onClose?: Function }) {
+    const {items: sessions, refreshItems, isItemsLoading: isLoading, isLoading: isDeleting, remove} = useCRUD<LoginSession>(`/system/user/${userId}/sessions`);
+    const prompt = usePrompt();
+
+    return <Dialog onClose={onClose} title="Admin Sessions">
+        <Table
+            columns={['Login Date', 'Last Request', 'IP', 'User Agent', 'Expired', 'Actions']}
+            rows={sessions ?? []}
+            cells={x => [
+                <DateView date={x.loginDate}/>,
+                <DateView date={x.lastRequestTime}/>,
+                x.lastRequestIP,
+                x.userAgent,
+                x.isExpired ? 'Expired' : 'Active',
+                <PopupMenu>
+                    <PopupMenu.Item icon={<TrashIcon className="w-4"/>} action={() => prompt('Delete session ?', 'Delete', () => remove(x))}>Delete Session</PopupMenu.Item>
+                </PopupMenu>
+            ]}
+            loading={isLoading || isDeleting}
+        />
+        <div className="flex flex-row gap-x-2 border-t-0 pt-1 mt-1 text-xs">
+            <button onClick={() => refreshItems()} className={styles.buttonItem}>
+                <ArrowPathIcon className="w-4"/>
+                Refresh Sessions
+            </button>
+        </div>
+    </Dialog>
+}
 
 export function SystemUserDialog({ user: userProp, onClose, onDone }: { user?: SystemUser, onDone?: (user: SystemUser) => any, onClose?: Function }) {
     const [user, setUser] = useState(userProp ?? {});
+    const {data: inbounds} = useContextSWR<string[]>('/inbounds/tag');
     const isNew = !userProp;
     const onSubmit = useCallback(async (e: FormEvent) => {
         e?.preventDefault();
@@ -26,29 +57,31 @@ export function SystemUserDialog({ user: userProp, onClose, onDone }: { user?: S
         }
     }, [user]);
     
-    return <Dialog onClose={onClose} title={'System User'} onSubmit={onSubmit}>
+    return <Dialog onClose={onClose} title={'Admin'} onSubmit={onSubmit}>
         <FieldsGroup data={user} dataSetter={setUser}>
-            <div className="flex flex-row items-center">
-                <Field htmlFor="username" label="Username" className="flex-1">
-                    <input type="text" id="username" required placeholder="Username" className={styles.input}/>
-                </Field>
-                <Field htmlFor="isActive" label="Active">
-                    <input type="checkbox" id="isActive" className={styles.input}/>
-                </Field>
-            </div>
-            <Field htmlFor="password" label="Password" hint={'Leave empty if you won\'t to change password'}>
-                <input type="password" id="password" placeholder="Password" className={styles.input}/>
-            </Field>
-            <div className="flex flex-row my-2">
-                <Field htmlFor="email" className="flex-1" label="E-Mail">
-                    <input type="email" id="email" placeholder="@" className={styles.input}/>
-                </Field>
-                <Field htmlFor="mobile" label="Mobile">
-                    <input type="tel" id="mobile" placeholder="+98" className={styles.input}/>
-                </Field>
-            </div>
             <Tabs>
-                <Tabs.Tab title="Pricing" isSelected={true}>
+                <Tabs.Tab title="User">
+                    <div className="flex flex-row items-center">
+                        <Field htmlFor="username" label="Username" className="flex-1">
+                            <input type="text" id="username" required placeholder="Username" className={styles.input}/>
+                        </Field>
+                        <Field htmlFor="isActive" label="Active">
+                            <input type="checkbox" id="isActive" className={styles.input}/>
+                        </Field>
+                    </div>
+                    <Field htmlFor="password" label="Password" hint={'Leave empty if you won\'t to change password'}>
+                        <input type="password" id="password" placeholder="Password" className={styles.input}/>
+                    </Field>
+                    <div className="flex flex-row my-2">
+                        <Field htmlFor="email" className="flex-1" label="E-Mail">
+                            <input type="email" id="email" placeholder="@" className={styles.input}/>
+                        </Field>
+                        <Field htmlFor="mobile" label="Mobile">
+                            <input type="tel" id="mobile" placeholder="+98" className={styles.input}/>
+                        </Field>
+                    </div>
+                </Tabs.Tab>
+                <Tabs.Tab title="Pricing">
                     <FieldObject path={'pricing'}>
                         <Field htmlFor="newUserCost" label="New User Cost">
                             <input type="number" id="newUserCost" placeholder="0" className={styles.input}/>
@@ -58,12 +91,38 @@ export function SystemUserDialog({ user: userProp, onClose, onDone }: { user?: S
                         </Field>
                     </FieldObject>
                 </Tabs.Tab>
-                <Tabs.Tab title="Access Control List (Acl)" isSelected={true} className="text-sm grid grid-cols-4">
+                <Tabs.Tab id="acls" title="Access Control List (Acl)" className="text-sm grid grid-cols-4">
+                    {/* <div className="flex flex-row text-xs pb-2 col-span-4">
+                        <button type="button" className={styles.buttonItem} onClick={() => setAcls(false)}>
+                            <MinusIcon className="w-4"/>
+                            Un-Check All
+                        </button>
+                        <button type="button" className={styles.buttonItem} onClick={() => setAcls(true)}>
+                            <PlusIcon className="w-4"/>
+                            Check All
+                        </button>
+                    </div> */}
                     <FieldObject path={'acls'}>
-                        <div  className="col-span-1 border-t-[1px] p-2">
+                        <div className={classNames("border-t-[1px] p-2", { 'col-span-1': !user?.acls?.isAdmin, 'col-span-4': user?.acls?.isAdmin })}>
                             <span className="block font-bold">Super Admin</span>
-                            <Field htmlFor="isAdmin" horizontal label="is Admin">
+                            <Field htmlFor="isAdmin" horizontal label="Super Admin">
                                 <input type="checkbox" id="isAdmin" className={styles.input}/>
+                            </Field>
+                        </div>
+                        {!user?.acls?.isAdmin ?
+                        <>
+                        <div className="col-span-3 row-span-1 border-l-[1px] border-t-[1px] p-2">
+                            <span className="block font-bold">Allowed Inbounds</span>
+                            <Field htmlFor="allowedInbounds" horizontal label="Inbounds">
+                                <select id="allowedInbounds" multiple className={styles.input}>
+                                    {inbounds?.map(x => <option key={x}>{x}</option>)}
+                                </select>
+                            </Field>
+                        </div>
+                        <div className="col-span-1 border-t-[1px] p-2">
+                            <span className="block font-bold">Administrators</span>
+                            <Field htmlFor="administrators" horizontal label="Administrators">
+                                <input type="checkbox" id="administrators" className={styles.input}/>
                             </Field>
                         </div>
                         <FieldObject path={'logs'}>
@@ -71,7 +130,7 @@ export function SystemUserDialog({ user: userProp, onClose, onDone }: { user?: S
                                 <span className="block font-bold">Logs</span>
                                 <div className="flex flex-row">
                                     <Field htmlFor="list" horizontal label="List">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="list" className={styles.input}/>
+                                        <input type="checkbox" id="list" className={styles.input}/>
                                     </Field>
                                 </div>
                             </div>
@@ -81,7 +140,7 @@ export function SystemUserDialog({ user: userProp, onClose, onDone }: { user?: S
                                 <span className="block font-bold">Traffic Usage</span>
                                 <div className="flex flex-row">
                                     <Field htmlFor="list" horizontal label="List">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="list" className={styles.input}/>
+                                        <input type="checkbox" id="list" className={styles.input}/>
                                     </Field>
                                 </div>
                             </div>
@@ -91,10 +150,10 @@ export function SystemUserDialog({ user: userProp, onClose, onDone }: { user?: S
                                 <span className="block font-bold">Config</span>
                                 <div className="grid grid-cols-2 gap-x-2">
                                     <Field htmlFor="list" horizontal label="List">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="list" className={styles.input}/>
+                                        <input type="checkbox" id="list" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="edit" horizontal label="Edit">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="edit" className={styles.input}/>
+                                        <input type="checkbox" id="edit" className={styles.input}/>
                                     </Field>
                                 </div>
                             </div>
@@ -104,16 +163,16 @@ export function SystemUserDialog({ user: userProp, onClose, onDone }: { user?: S
                                 <span className="block font-bold">Transactions</span>
                                 <div className="flex flex-row">
                                     <Field htmlFor="list" horizontal label="List">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="list" className={styles.input}/>
+                                        <input type="checkbox" id="list" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="add" horizontal label="Add">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="add" className={styles.input}/>
+                                        <input type="checkbox" id="add" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="edit" horizontal label="Edit">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="edit" className={styles.input}/>
+                                        <input type="checkbox" id="edit" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="delete" horizontal label="Delete">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="delete" className={styles.input}/>
+                                        <input type="checkbox" id="delete" className={styles.input}/>
                                     </Field>
                                 </div>
                             </div>
@@ -123,77 +182,92 @@ export function SystemUserDialog({ user: userProp, onClose, onDone }: { user?: S
                                 <span className="block font-bold">Server Nodes</span>
                                 <div className="flex flex-row">
                                     <Field htmlFor="list" horizontal label="List">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="list" className={styles.input}/>
+                                        <input type="checkbox" id="list" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="add" horizontal label="Add">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="add" className={styles.input}/>
+                                        <input type="checkbox" id="add" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="edit" horizontal label="Edit">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="edit" className={styles.input}/>
+                                        <input type="checkbox" id="edit" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="delete" horizontal label="Delete">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="delete" className={styles.input}/>
+                                        <input type="checkbox" id="delete" className={styles.input}/>
                                     </Field>
                                 </div>
                             </div>
                         </FieldObject>
                         <FieldObject path={'users'}>
                             <div className="col-span-4 border-t-[1px] p-2">
-                                <span className="block font-bold">Users</span>
+                                <span className="block font-bold">Clients</span>
                                 <div className="grid grid-cols-3 gap-x-2">
                                     <Field htmlFor="list" horizontal label="List">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="list" className={styles.input}/>
+                                        <input type="checkbox" id="list" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="add" horizontal label="Add">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="add" className={styles.input}/>
+                                        <input type="checkbox" id="add" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="edit" horizontal label="Edit">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="edit" className={styles.input}/>
+                                        <input type="checkbox" id="edit" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="delete" horizontal label="Delete">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="delete" className={styles.input}/>
+                                        <input type="checkbox" id="delete" className={styles.input}/>
+                                    </Field>
+                                    <Field htmlFor="deleteConnected" horizontal label="Delete Connected Client">
+                                        <input type="checkbox" id="deleteConnected" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="renew" horizontal label="Re-new (+1 Month)">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="renew" className={styles.input}/>
+                                        <input type="checkbox" id="renew" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="active" horizontal label="Active/Deactive">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="active" className={styles.input}/>
+                                        <input type="checkbox" id="active" className={styles.input}/>
+                                    </Field>
+                                    <Field htmlFor="activeExpired" horizontal label="Active/Deactive Expired">
+                                        <input type="checkbox" id="activeExpired" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="subscribeUrl" horizontal label="Subscription URL">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="subscribeUrl" className={styles.input}/>
+                                        <input type="checkbox" id="subscribeUrl" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="clientConfig" horizontal label="Client Config">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="clientConfig" className={styles.input}/>
+                                        <input type="checkbox" id="clientConfig" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="freeUsers" horizontal label="View Free Users">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="freeUsers" className={styles.input}/>
+                                        <input type="checkbox" id="freeUsers" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="changeFree" horizontal label="Change Free/Paid Users">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="changeFree" className={styles.input}/>
+                                        <input type="checkbox" id="changeFree" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="privateUsers" horizontal label="View Private Users">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="privateUsers" className={styles.input}/>
+                                        <input type="checkbox" id="privateUsers" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="changePrivate" horizontal label="Change Private/Public Users">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="changePrivate" className={styles.input}/>
+                                        <input type="checkbox" id="changePrivate" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="regenerateId" horizontal label="Re-generate ID">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="regenerateId" className={styles.input}/>
+                                        <input type="checkbox" id="regenerateId" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="changeInbound" horizontal label="Change Inbound">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="changeInbound" className={styles.input}/>
+                                        <input type="checkbox" id="changeInbound" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="copyUser" horizontal label="Copy User to another Inbound">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="copyUser" className={styles.input}/>
+                                        <input type="checkbox" id="copyUser" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="setFirstConnectionAsCreateDate" horizontal label="Set first connect as create date">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="setFirstConnectionAsCreateDate" className={styles.input}/>
+                                        <input type="checkbox" id="setFirstConnectionAsCreateDate" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="dailyUsage" horizontal label="Daily Usage">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="dailyUsage" className={styles.input}/>
+                                        <input type="checkbox" id="dailyUsage" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="logs" horizontal label="Logs">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="logs" className={styles.input}/>
+                                        <input type="checkbox" id="logs" className={styles.input}/>
+                                    </Field>
+                                    <Field htmlFor="changeExpireDays" horizontal label="Change Expire Days">
+                                        <input type="checkbox" id="changeExpireDays" className={styles.input}/>
+                                    </Field>
+                                    <Field htmlFor="changeMaxConnections" horizontal label="Change Max Connections">
+                                        <input type="checkbox" id="changeMaxConnections" className={styles.input}/>
+                                    </Field>
+                                    <Field htmlFor="changeBandwidth" horizontal label="Change Bandwidth">
+                                        <input type="checkbox" id="changeBandwidth" className={styles.input}/>
                                     </Field>
                                 </div>
                             </div>
@@ -203,28 +277,29 @@ export function SystemUserDialog({ user: userProp, onClose, onDone }: { user?: S
                                 <span className="block font-bold">Home</span>
                                 <div className="grid grid-cols-5 gap-x-2">
                                     <Field htmlFor="show" horizontal label="Show">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="show" className={styles.input}/>
+                                        <input type="checkbox" id="show" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="traffics" horizontal label="Traffics">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="traffics" className={styles.input}/>
+                                        <input type="checkbox" id="traffics" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="users" horizontal label="Traffics">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="users" className={styles.input}/>
+                                        <input type="checkbox" id="users" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="servers" horizontal label="Servers">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="servers" className={styles.input}/>
+                                        <input type="checkbox" id="servers" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="transactions" horizontal label="Transactions">
-                                        <input disabled={user?.acls?.isAdmin} type="checkbox" id="transactions" className={styles.input}/>
+                                        <input type="checkbox" id="transactions" className={styles.input}/>
                                     </Field>
                                 </div>
                             </div>
                         </FieldObject>
+                        </> : null }
                     </FieldObject>
                 </Tabs.Tab>
             </Tabs>
         </FieldsGroup>
-        <div className="flex flex-row pt-2">
+        <div className="flex flex-row pt-2 gap-x-2 text-sm border-t-[1px] mt-2 justify-end">
             <button type="submit" className={styles.buttonItem}>
                 { isNew ? <PlusIcon className="w-4"/> : <PencilIcon className="w-4"/> }
                 { isNew ? 'Add' : 'Edit' } User
@@ -236,13 +311,14 @@ export function SystemUserDialog({ user: userProp, onClose, onDone }: { user?: S
 export default function SystemUsersPage() {
     const { edit, insert, remove, isLoading, isItemsLoading, items, refreshItems } = useCRUD<SystemUser>('/system/users', {});
     const userDialog = useDialog((user?: SystemUser, onDone?: (user: SystemUser) => any, onClose?: Function) => <SystemUserDialog user={user} onDone={onDone} onClose={onClose}/>)
+    const userSessionsDialog = useDialog((userId?: string, onClose?: Function) => <SystemUserSessionsDialog userId={userId} onClose={onClose}/>)
     const prompt = usePrompt();
     
-    return <Container pageTitle={'System Users'}>
+    return <Container pageTitle={'System Administrators'}>
         <FieldsGroup title={
             <span className="flex items-center gap-x-2">
                 <UsersIcon className="w-6"/>
-                System Users
+                System Administrators
             </span>
         } className="px-3">
             <div className="flex-1 flex-row flex items-center">
@@ -276,6 +352,9 @@ export default function SystemUsersPage() {
                         <PopupMenu>
                             <PopupMenu.Item icon={<PencilIcon className='w-4'/>} action={() => userDialog.show(row, edit)}>
                                 Edit User
+                            </PopupMenu.Item>
+                            <PopupMenu.Item icon={<BoltIcon className='w-4'/>} action={() => userSessionsDialog.show(row.id)}>
+                                Sessions
                             </PopupMenu.Item>
                             <PopupMenu.Item icon={<TrashIcon className="w-4"/>} action={() => prompt(`Delete user "${row.username}" ?`, 'Delete user', () => remove(row))}>
                                 Delete

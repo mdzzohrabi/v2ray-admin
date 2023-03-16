@@ -1,105 +1,179 @@
+import { BoltIcon, GlobeAsiaAustraliaIcon, ServerIcon, ServerStackIcon, TrashIcon } from "@heroicons/react/24/outline";
+import classNames from "classnames";
+import Head from "next/head";
 import { useRouter } from "next/router";
 import { FormEvent, useCallback, useContext, useState } from "react";
 import toast from "react-hot-toast";
 import { AppContext, ServerContext } from "../components/app-context";
 import { Field, FieldsGroup } from "../components/fields";
-import { useStoredState } from "../lib/hooks";
+import { Loading } from "../components/loading";
+import { useAwareState, useStoredState } from "../lib/hooks";
 import { styles } from "../lib/styles";
+import { queryString, serverRequest } from "../lib/util";
 
 export default function ServerConfig() {
     let context = useContext(AppContext);
     let router = useRouter();
     let showAll = router.query.all == '1';
-
-    let [mode, setMode] = useState<'token' | 'login'>('login');
-
-    let [server, setServer] = useState({
-        url: context?.server?.url,
-        token: context?.server?.token,
-        name: context?.server?.name
-    })
-
-    let [login, setLogin] = useState({ username: '', password: '' });
-
+    let [loading, setLoading] = useState(false);
+    let [loadingMessage, setLoadingMessage] = useState('Loading ...');
+    let [server, setServer] = useAwareState<ServerContext>({ mode: 'login', ...(context?.server ?? {}) }, [context]);
+    let [login, setLogin] = useState({ password: '' });
     let [servers, setServers] = useStoredState<ServerContext[]>('servers', []);
-    
-    let connect = useCallback((e: FormEvent, server: ServerContext) => {
-        e?.preventDefault();
-        let {url, token} = server;
-        if (!!url && !!token) {
-            context.setServer(server);
-            let foundServer = servers.find(x => x.url == url);
-            
-            // Update Token
-            if (foundServer) {
-                foundServer.token = token;
-                foundServer.name = server.name;
-            // Insert server
-            } else
-                servers.push(server);
 
-            setServers([ ...servers ]);
-            router.push('/users' + (showAll ? '?all=1' : ''));
-        } else {
-            toast.error("Please enter valid server config");
+    const connectTo = useCallback(async (server: ServerContext) => {
+
+        let {url, token, mode, name, username} = server;
+        let {password} = login;
+
+        if (!url)
+            return toast.error(`Server url not entered`);
+
+        // Login (try to get token)
+        if (mode == 'login') {
+            if (!username || !password)
+                return toast.error('Username or password is empty');
+
+            setLoading(true);
+            setLoadingMessage(`Loggin to server ...`);
+            try {
+                let result = await serverRequest({ url }, `/login`, { username, password });
+                if (result.ok) {
+                    token = result.token;
+                }
+                else {
+                    throw Error(`Authentication failed`);
+                }
+            } catch (err) {
+                toast.error(err?.message);
+                return;
+            }
+            finally {
+                setLoading(false);
+            }
         }
-    }, [context, servers]);
+        
+        // Check authenticate by token
+        setLoading(true);
+        setLoadingMessage('Authenticating ...');
+        try {
+            let result = await serverRequest({ url, token }, `/authenticate`);
+            // Authenticated
+            if (result.ok) {
 
-    const removeServer = useCallback((url: string) => {
-        setServers([ ...servers.filter(x => x.url != url) ]);
+                // Set context
+                context.setServer({ ...server, token });
+
+                // Update stored servers
+                let storedServer = servers.find(x => x.url == url && x.username == username);
+                // Update
+                if (storedServer) {
+                    storedServer.token = token;
+                    storedServer.name = name;
+                    storedServer.mode = 'token';
+                }
+                // Insert
+                else {
+                    servers.push({ ...server, mode: 'token' });
+                }
+
+                setLoadingMessage('OK, Redirect ...');
+                setServers([ ...servers ]);
+                router.push(`/users` + queryString({ all: showAll ? '1' : undefined }));
+
+            }
+        }
+        catch (err) {
+            toast.error(err?.message);
+            setLoading(false);
+        }
+    }, [context, servers, login]);
+
+    let onSubmit = useCallback((e: FormEvent) => {
+        e?.preventDefault();
+        connectTo(server);
+    }, [connectTo, server]);
+
+    const removeServer = useCallback((server: ServerContext) => {
+        setServers([ ...servers.filter(x => x.url != server.url || x.username != server.username) ]);
     }, [servers, setServers]);
 
-    const connectTo = useCallback((server: ServerContext) => {
-        connect(null, server);
-    }, [server, connect]);
 
     return <div className="flex flex-col items-center justify-center h-screen">
-        <form onSubmit={e => connect(e, server)}>
-        <h1 className="font-light text-2xl mb-4">Server Config</h1>
+        <Head>
+            <title>Server Connect</title>
+        </Head>
+        <Loading isLoading={loading}>{loadingMessage}</Loading>
+        <form onSubmit={onSubmit}>
+        <h1 className="font-light text-2xl mb-4 flex flex-row gap-x-2 items-center">
+            <ServerIcon className="w-7 text-slate-300"/>
+            <span>Server Connect</span>
+        </h1>
         <div className="bg-white rounded-lg shadow-md px-3 py-3 flex flex-col min-w-[20rem]">
-            <div className="flex flex-row px-1 border-b-[1px] pb-1 mb-1">
-                <label className={styles.label + ' flex-1'}>Mode</label>
-                <div className="flex flex-row gap-x-2 items-center text-sm">
-                    <label htmlFor="login">Login</label>
-                    <input checked={mode=='login'} onChange={e => setMode(e.target.value as any)} type="radio" value={'login'} name="mode" id="login"/>
-                    <label htmlFor="token">Token</label>
-                    <input checked={mode=='token'} onChange={e => setMode(e.target.value as any)} type="radio" value={'token'} name="mode" id="token"/>
-                </div>
+            {loading ?
+            <div className="flex flex-row gap-x-2 items-center justify-center py-5">
+                <GlobeAsiaAustraliaIcon className="w-6 animate-spin"/>
+                {loadingMessage}
             </div>
-            <FieldsGroup data={server} dataSetter={setServer}>
-                <Field label="Server URL" htmlFor="url">
-                    <input type="text" placeholder="http://" className={styles.input} id="url"/>
-                </Field>
-                {mode == 'token' ?
-                <Field label="Server Token" htmlFor="token">
-                    <input type="password" placeholder="Server Token" className={styles.input} id="token"/>
-                </Field> : null}
-                {mode == 'login' ? <>
-                    <FieldsGroup data={login} dataSetter={setLogin}>
+            :
+                <>
+                <div className="flex flex-row px-1 border-b-[1px] pb-1 mb-1">
+                    <label className={styles.label + ' flex-1'}>Mode</label>
+                    <div className="flex flex-row gap-x-2 items-center text-sm">
+                        <div className="flex flex-row border-[1px] border-slate-300 rounded-xl overflow-hidden text-slate-900 text-xs">
+                            <span onClick={() => setServer({ ...server, mode: 'login' })} className={classNames("cursor-pointer px-3 py-1", { 'bg-slate-300': server.mode == 'login' })}>Login</span>
+                            <span onClick={() => setServer({ ...server, mode: 'token' })} className={classNames("cursor-pointer px-3 py-1 border-l-[1px] border-l-slate-300", { 'bg-slate-300': server.mode == 'token' })}>Token</span>
+                        </div>
+                    </div>
+                </div>
+                <FieldsGroup data={server} dataSetter={setServer}>
+                    <Field label="Server URL" htmlFor="url">
+                        <input type="text" placeholder="http://" className={styles.input} id="url"/>
+                    </Field>
+                    {server.mode == 'token' ?
+                    <Field label="Server Token" htmlFor="token">
+                        <input type="password" placeholder="Server Token" className={styles.input} id="token"/>
+                    </Field> : null}
+                    {server.mode == 'login' ? <>
                         <Field label="Username" htmlFor="username">
                             <input type="text" placeholder="Username" className={styles.input} id="username"/>
                         </Field>
-                        <Field label="Password" htmlFor="password">
-                            <input type="password" placeholder="Password" className={styles.input} id="password"/>
-                        </Field>
-                    </FieldsGroup>
-                </> : null}
-                <Field label="Server Name" htmlFor="name">
-                    <input type="text" placeholder="My Server" className={styles.input} id="name"/>
-                </Field>
-            </FieldsGroup>
-            <button type="submit" className="mt-2 py-1 bg-slate-300 rounded-lg hover:bg-slate-800 hover:text-white">Connect</button>
+                        <FieldsGroup data={login} dataSetter={setLogin}>
+                            <Field label="Password" htmlFor="password">
+                                <input type="password" placeholder="Password" className={styles.input} id="password"/>
+                            </Field>
+                        </FieldsGroup>
+                    </> : null}
+                    <Field label="Server Name" htmlFor="name">
+                        <input type="text" placeholder="My Server" className={styles.input} id="name"/>
+                    </Field>
+                </FieldsGroup>
+                <div className="flex flex-row pt-4 justify-end">
+                    <button type="submit" className={styles.buttonItem}>
+                        <BoltIcon className="w-4"/>
+                        Connect
+                    </button>
+                </div>
+                </>
+            }
         </div>
         </form>
+        {!loading ?
         <div className="bg-white rounded-lg shadow-md px-3 py-3 flex flex-col min-w-[20rem] mt-3 text-sm">
-            <span className="font-bold mb-3">Servers</span>
-            {servers.map(x => <div key={x.url} className="text-sm py-2 px-2 hover:bg-slate-100 rounded-sm cursor-pointer border-b-[1px] flex last:border-b-0">
+            <span className="font-bold mb-3 flex flex-row gap-x-2 items-center">
+                <ServerStackIcon className="w-4"/>
+                Servers
+            </span>
+            {servers.map((x, index) => <div key={index} className="text-sm py-2 px-2 hover:bg-slate-100 rounded-md cursor-pointer border-b-[1px] flex last:border-b-0 gap-x-4">
+                <ServerIcon className="w-6 text-slate-400"/>
                 <div className="flex flex-col flex-1">
-                    {x.name ? <span className="font-bold">{x.name}</span> : null}
+                    {x.name ? <span className="font-bold">{x.name} {x.username ? `(${x.username})` : null}</span> : null}
                     <span onClick={() => connectTo(x)} className="flex-1">{x.url}</span>
                 </div>
-                <span onClick={() => removeServer(x.url)} className="block self-center font-bold px-3 hover:bg-red-600 hover:text-white rounded-full">X</span>
+                <span onClick={() => removeServer(x)} className="block self-center font-bold p-2 hover:bg-red-600 hover:text-white rounded-full">
+                    <TrashIcon className="w-4"/>
+                </span>
             </div>)}
-        </div>
+        </div> : null }
     </div>
 }

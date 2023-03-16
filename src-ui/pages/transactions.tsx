@@ -14,7 +14,7 @@ import { Loading } from "../components/loading";
 import { PopupMenu } from "../components/popup-menu";
 import { Price } from "../components/price";
 import { Table } from "../components/table";
-import { useContextSWR, usePrompt, useStoredState } from "../lib/hooks";
+import { useContextSWR, usePrompt, useStoredState, useUser } from "../lib/hooks";
 import { styles } from "../lib/styles";
 import { arrSort, queryString, serverRequest } from "../lib/util";
 
@@ -64,7 +64,6 @@ export default function TransactionsPage() {
 
     let {server} = useContext(AppContext);
     let router = useRouter();
-    let showAll = router.query.all == '1';
 
     let [view, setView] = useStoredState('transactions-view', {
         fullTime: true,
@@ -74,13 +73,11 @@ export default function TransactionsPage() {
         group: true
     });
 
+    let {access} = useUser();
+
     useEffect(() => {
         setView({ ...view, user: router.query.user });
     }, [router.query.user]);
-
-    // useEffect(() => {
-    //     router.push(router.route + queryString({ user: view.user, all: showAll == true ? '1' : undefined }));
-    // }, [view.user]);
     
     let [expanded, setExpanded] = useStoredState('expanded-transactions', { });
 
@@ -88,7 +85,7 @@ export default function TransactionsPage() {
 
     let {data: transactions, mutate: refreshList, isValidating: isLoading} = useContextSWR<Transaction[]>('/transactions');
     let {data: nodes, mutate: refreshNodes} = useContextSWR<ServerNode[]>('/nodes');
-    let {data: users, mutate: refreshUsers} = useContextSWR<string[]>('/inbounds_clients' + queryString({ showAll }));
+    let {data: users, mutate: refreshUsers} = useContextSWR<string[]>('/inbounds_clients');
 
     const addTransaction = useCallback(async (newTransaction) => {
         try {
@@ -118,7 +115,7 @@ export default function TransactionsPage() {
             .catch(err => toast.error(err));
     }, [server]);
 
-    const transactionDialog = useDialog((users, onSubmit, dismiss) => <AddTransactionDialog users={users} onSubmit={onSubmit} dismiss={dismiss}/>);
+    const transactionDialog = useDialog((users, onSubmit, dismiss?: Function) => <AddTransactionDialog users={users} onSubmit={onSubmit} dismiss={dismiss}/>);
 
     let remain = 0;
     transactions = transactions
@@ -141,7 +138,7 @@ export default function TransactionsPage() {
             <title>Transactions</title>
         </Head>
         <div className="flex flex-col lg:flex-col">
-            <FieldsGroup title="Billing" horizontal className="border-b-[1px] lg:border-b-0">
+            <FieldsGroup title="Billing" horizontal className="border-b-[1px] lg:border-b-0 items-center" containerClassName="items-center">
                 <Field label="UnPaid" className="rounded-lg bg-red-100 px-6 items-center align-middle whitespace-nowrap">
                     <Price value={transactions?.filter(x => (Number(x.amount) ?? 0) > 0).reduce((result, t) => result + (Number(t.amount) || 0), 0) ?? 0}/>
                 </Field>
@@ -154,7 +151,7 @@ export default function TransactionsPage() {
                     <Price value={transactions?.reduce((result, t) => result + (Number(t.amount) || 0), 0) ?? 0}/>
                 </Field>
                 <div className="ml-auto mr-2 flex flex-row">
-                    {showAll ? <button className={styles.buttonItem} onClick={() => transactionDialog.show(users, addTransaction)}>
+                    {access('transactions', 'add') ? <button className={styles.buttonItem} onClick={() => transactionDialog.show(users, addTransaction)}>
                         <PlusIcon className="w-4"/>
                         Add Transaction
                     </button> : null}
@@ -237,21 +234,21 @@ export default function TransactionsPage() {
             rowContainer={(row, elRow, group) => !view.group || expanded[group] ? elRow :  null}
             cells={t => [
                 // User
-                <Editable value={t.user} editable={showAll} onEdit={value => editTransaction(t, 'user', value)}>{t.user ?? '-'}</Editable>,
+                <Editable value={t.user} editable={access('transactions', 'edit')} onEdit={value => editTransaction(t, 'user', value)}>{t.user ?? '-'}</Editable>,
                 // Remark
-                <Editable value={t.remark} onEdit={value => editTransaction(t, 'remark', value)} editable={showAll}>
+                <Editable value={t.remark} onEdit={value => editTransaction(t, 'remark', value)} editable={access('transactions', 'edit')}>
                 {t.remark ?? '-'}
                 </Editable>,
                 // Dept
                 (t.amount ?? 0) >= 0 ?
-                <Editable onEdit={value => editTransaction(t, 'amount', value)} value={t.amount} editable={showAll}>
+                <Editable onEdit={value => editTransaction(t, 'amount', value)} value={t.amount} editable={access('transactions', 'edit')}>
                     <span className={classNames("rounded-lg inline-block px-2 text-rtl", { 'bg-red-50 text-red-700': (t.amount ?? 0) >= 0, 'bg-green-50 text-green-700': (t.amount ?? 0) < 0 })}>
                         <Price value={t.amount}/>
                     </span>
                 </Editable> : '-',
                 // Paid
                 (t.amount ?? 0) < 0 ?
-                <Editable onEdit={value => editTransaction(t, 'amount', value)} value={t.amount} editable={showAll}>
+                <Editable onEdit={value => editTransaction(t, 'amount', value)} value={t.amount} editable={access('transactions', 'edit')}>
                     <span className={classNames("rounded-lg inline-block px-2 text-rtl", { 'bg-red-50 text-red-700': (t.amount ?? 0) >= 0, 'bg-green-50 text-green-700': (t.amount ?? 0) < 0 })}>
                         <Price value={Math.abs(Number(t.amount) ?? 0)}/>
                     </span>
@@ -266,7 +263,7 @@ export default function TransactionsPage() {
                 <DateView containerClassName="text-center" precision={true} full={view.fullTime} date={t.createDate?.replace(' ', ' ')}/>,
                 // Action
                 <PopupMenu text="Actions">
-                    <PopupMenu.Item icon={<TrashIcon className="w-4"/>} visible={showAll} action={() => prompt(`Do you want to remove transaction "${t.remark}" ?`, `Remove`, () => removeTransaction(t))}>
+                    <PopupMenu.Item icon={<TrashIcon className="w-4"/>} visible={access('transactions', 'delete')} action={() => prompt(`Do you want to remove transaction "${t.remark}" ?`, `Remove`, () => removeTransaction(t))}>
                         Delete
                     </PopupMenu.Item>
                 </PopupMenu>

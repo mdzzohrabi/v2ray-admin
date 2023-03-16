@@ -2,7 +2,7 @@
 const { randomUUID } = require('crypto');
 const { env } = require('process');
 const { addTransaction, getTransactions, readDb, saveDb } = require('../lib/db');
-const { getPaths, readConfig, applyChanges, writeConfig, readLogFile, getUserConfig, restartService, setUserActive, findUser, log, deleteUser, DateUtil, addUser, db, readLogLinesByOffset, createLogger, ping } = require('../lib/util');
+const { getPaths, readConfig, applyChanges, writeConfig, readLogFile, getUserConfig, restartService, setUserActive, findUser, log, deleteUser, DateUtil, addUser, db, readLogLinesByOffset, createLogger, ping, httpAction } = require('../lib/util');
 
 let {showInfo, showError} = createLogger();
 
@@ -308,7 +308,18 @@ router.get('/status_filters', (req, res) => {
     res.json(Object.keys(statusFilters))
 });
 
-router.post('/inbounds', async (req, res) => {
+router.get('/inbounds/:key', httpAction(async (req, res) => {
+    const {configPath} = getPaths();
+    const config = readConfig(configPath);
+    const {key} = req.params;
+
+    /** @type {SystemUser} */
+    let user = res.locals.user;
+    
+    return config?.inbounds?.filter(x => !user || user?.acls?.isAdmin || user?.acls?.allowedInbounds?.includes(x.tag ?? '')).map(x => x[key]);
+}));
+
+router.post('/inbounds', httpAction(async (req, res) => {
 
     let {configPath, accessLogPath} = getPaths();
     let {view, private} = req.body;
@@ -320,6 +331,23 @@ router.post('/inbounds', async (req, res) => {
         return res.status(500).end('No inbounds defined in configuration');
 
     let inbounds = config.inbounds ?? [];
+    
+    /** @type {SystemUser} */
+    let user = res.locals.user;
+    
+
+    // Filters
+    let filters = {
+        showPrivate: !user || user?.acls?.isAdmin || user?.acls?.users?.privateUsers,
+        showFree: !user || user?.acls?.isAdmin || user?.acls?.users?.freeUsers
+    }
+
+    // Filter inbounds
+    if (user) {
+        let allowedInbounds = user.acls?.allowedInbounds ?? [];
+        if (!user.acls?.isAdmin)
+            inbounds = inbounds.filter(x => allowedInbounds.includes(x.tag ?? ''));
+    }
 
     let usages = await readLogFile(accessLogPath);
 
@@ -329,7 +357,7 @@ router.post('/inbounds', async (req, res) => {
     let skip = (page * limit) - limit;
 
     for (let inbound of inbounds) {
-        let users = (inbound.settings?.clients ?? []).filter(u => private || !u.private);
+        let users = (inbound.settings?.clients ?? []).filter(u => (filters.showPrivate || !u.private) && (filters.showFree || !u.free));
         let total = users.length;
         let maxClientNumber = 0;
         for (let user of users) {
@@ -368,7 +396,7 @@ router.post('/inbounds', async (req, res) => {
     }
 
     res.json(inbounds);
-});
+}));
 
 router.get('/inbounds_clients', async (req, res) => {
     let {configPath} = getPaths();
@@ -564,20 +592,13 @@ router.post('/add_days', async (req, res) => {
     }
 });
 
-router.get('/nodes', async (req, res) => {
-    try {
-        /** @type {ServerNode[]} */
-        let nodes = await db('server-nodes') ?? [];
+router.get('/nodes', httpAction(async (req, res) => {
+    /** @type {ServerNode[]} */
+    let nodes = await db('server-nodes') ?? [];
+    let {all} = req.query;
 
-        let {all} = req.query;
-
-        res.json(nodes.filter(x => !all ? !x.disabled : true));
-    }
-    catch (err) {
-        res.json({ error: err.message });
-        showError(err);
-    }
-});
+    return nodes.filter(x => !all ? !x.disabled : true);
+}));
 
 router.post('/nodes', async (req, res) => {
     try {

@@ -1,8 +1,8 @@
 import classNames from "classnames";
-import { createElement, Fragment, useState } from "react";
+import { createElement, Fragment, HTMLProps, useState } from "react";
 import { ChildOf } from "../types";
 
-interface TabProps {
+interface TabProps extends HTMLProps<HTMLDivElement> {
     children?: any,
     title?: string,
     isSelected?: boolean,
@@ -41,8 +41,8 @@ export function Tabs({ children, selectedTabTitle }: TabsProps) {
 /**
  * Tab
  */
-function Tab({ children, title, isSelected, className = '' }: TabProps) {
-    return <div className={classNames({ 'hidden': !isSelected }, className)}>
+function Tab({ children, title, isSelected, className, ...props }: TabProps) {
+    return <div className={classNames({ 'hidden': !isSelected }, className)} {...props}>
         {children}
     </div>
 }

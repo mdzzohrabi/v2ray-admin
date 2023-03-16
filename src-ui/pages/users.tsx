@@ -1,4 +1,4 @@
-import { ArrowPathIcon, ArrowsUpDownIcon, ArrowUpTrayIcon, BanknotesIcon, BoltIcon, BoltSlashIcon, CalendarDaysIcon, ClockIcon, CurrencyDollarIcon, DevicePhoneMobileIcon, DocumentDuplicateIcon, DocumentPlusIcon, DocumentTextIcon, EyeIcon, EyeSlashIcon, FireIcon, FolderMinusIcon, FolderPlusIcon, PlusIcon, QrCodeIcon, RssIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, ArrowsUpDownIcon, ArrowUpTrayIcon, BoltIcon, BoltSlashIcon, CalendarDaysIcon, ClockIcon, CurrencyDollarIcon, DevicePhoneMobileIcon, DocumentDuplicateIcon, DocumentPlusIcon, DocumentTextIcon, EyeIcon, EyeSlashIcon, FireIcon, FolderMinusIcon, FolderPlusIcon, PlusIcon, QrCodeIcon, RssIcon, TrashIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import ExportJsonExcel from 'js-export-excel';
 import Head from "next/head";
@@ -11,7 +11,7 @@ import { ClientConfig } from "../components/client-config";
 import { Container } from "../components/container";
 import { Copy } from "../components/copy";
 import { DateView } from "../components/date-view";
-import { Dialog, useDialog } from "../components/dialog";
+import { useDialog } from "../components/dialog";
 import { Editable } from "../components/editable";
 import { ChangeInboundEditor } from "../components/editor/change-inbound-editor";
 import { CopyUserEditor } from "../components/editor/copy-user";
@@ -23,7 +23,7 @@ import { Popup } from "../components/popup";
 import { PopupMenu } from "../components/popup-menu";
 import { ServerNode } from "../components/server-node";
 import { Size } from "../components/size";
-import { useContextSWR, usePrompt, useStoredState } from "../lib/hooks";
+import { useContextSWR, usePrompt, useStoredState, useUser } from "../lib/hooks";
 import { styles } from "../lib/styles";
 import { DateUtil, serverRequest } from "../lib/util";
 
@@ -31,9 +31,10 @@ export default function UsersPage() {
 
     let context = useContext(AppContext);
     let router = useRouter();
-    let showAll = router.query.all == '1';
     let initStatusFilter: string[] = [];
     let initInboundsFilter: string[] = [];
+
+    let {access} = useUser();
 
     let [view, setView] = useStoredState('users-view', {
         sortColumn: '',
@@ -52,7 +53,6 @@ export default function UsersPage() {
 
     let {data: inboundsResponse, mutate: refreshInbounds, isValidating: isLoading} = useContextSWR<V2RayConfigInbound[]>('/inbounds',
     {
-        private: showAll,
         view
     });
 
@@ -226,7 +226,7 @@ export default function UsersPage() {
     let maxUsers = inbounds?.map(x => x.settings ? x.settings['totalClients'] : 0).reduce((a, b) => a > b ? a : b, 0) ?? 0;
     let totalPages = Number( Math.ceil( maxUsers / view.limit ) ) || 1;
 
-    let addUserDialog = useDialog((onClose: Function) => <AddUser horizontal={false} onClose={onClose} onRefresh={refreshInbounds} disabled={isLoading} inbounds={inbounds ?? []}/>);
+    let addUserDialog = useDialog((onClose?: Function) => <AddUser horizontal={false} onClose={onClose} onRefresh={refreshInbounds} disabled={isLoading} inbounds={inbounds ?? []}/>);
 
     return <Container>
         <Head>
@@ -257,7 +257,7 @@ export default function UsersPage() {
                     <input type={"text"} id="filter" className={styles.input}/>
                 </Field>
                 <div className="flex flex-row flex-1 place-content-end">
-                    <button className={styles.buttonItem} onClick={() => addUserDialog.show()}><PlusIcon className="w-4"/> Add User</button>
+                    {access('users', 'add') ? <button className={styles.buttonItem} onClick={() => addUserDialog.show()}><PlusIcon className="w-4"/> Add User</button> : null}
                     <button className={styles.buttonItem} onClick={() => refreshInbounds()}><ArrowPathIcon className="w-4"/> Reload</button>
                     <button className={styles.buttonItem} onClick={exportExcel}><ArrowUpTrayIcon className="w-4"/> Export Excel</button>
                 </div>
@@ -367,13 +367,13 @@ export default function UsersPage() {
                                         </div>
                                         <div className="flex-1">
                                             <div className="flex flex-row">
-                                                <Editable editable={!u.firstConnect || showAll} className={"font-semibold inline-block"} onEdit={value => setUsername(i.tag, u, value)} value={u.email}>{u.email}</Editable>
+                                                <Editable editable={(!u.firstConnect && access('users', 'edit')) || access('isAdmin')} className={"font-semibold inline-block"} onEdit={value => setUsername(i.tag, u, value)} value={u.email}>{u.email}</Editable>
                                                 {u.private?<span className="ml-2 text-xs px-2 py-0 rounded-lg bg-gray-100 text-gray-500 cursor-default">Private</span>:null}
                                                 {u.free?<span className="ml-2 text-xs px-2 py-0 rounded-lg bg-green-100 text-green-500 cursor-default">Free</span>:null}
                                             </div>
-                                            <Editable className="text-gray-600 inline-block" onEdit={value => setInfo(i.tag, u, 'fullName', value)} value={u.fullName}>{u.fullName ?? '-'}</Editable>
+                                            <Editable editable={access('users', 'edit')} className="text-gray-600 inline-block" onEdit={value => setInfo(i.tag, u, 'fullName', value)} value={u.fullName}>{u.fullName ?? '-'}</Editable>
                                             {showId?<Info className="ml-3" label={"ID"}>
-                                                <Editable editable={showAll} onEdit={newId => setInfo(i.tag, u, 'id', newId)} value={u.id}>{u.id}</Editable>
+                                                <Editable editable={access('users', 'regenerateId')} onEdit={newId => setInfo(i.tag, u, 'id', newId)} value={u.id}>{u.id}</Editable>
                                             </Info>:null}
                                             {u.deActiveDate ? 
                                             <Info label={"De-active reason"} className="ml-2">
@@ -387,22 +387,22 @@ export default function UsersPage() {
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3">
                                     <Infos>
                                         <Info label={"Mobile"}>
-                                            <Editable onEdit={value => setInfo(i.tag, u, 'mobile', value)} value={u.mobile}>{u.mobile ?? 'N/A'}</Editable>
+                                            <Editable editable={access('users', 'edit')} onEdit={value => setInfo(i.tag, u, 'mobile', value)} value={u.mobile}>{u.mobile ?? 'N/A'}</Editable>
                                         </Info>
                                         <Info label={"Email"}>
-                                            <Editable onEdit={value => setInfo(i.tag, u, 'emailAddress', value)} value={u.emailAddress}>{u.emailAddress ?? 'N/A'}</Editable>
+                                            <Editable editable={access('users', 'edit')} onEdit={value => setInfo(i.tag, u, 'emailAddress', value)} value={u.emailAddress}>{u.emailAddress ?? 'N/A'}</Editable>
                                         </Info>
                                         <Info label={'Max Connections'}>
-                                            <Editable onEdit={value => setMaxConnection(i.tag, u, value)} value={u.maxConnections}>{u.maxConnections}</Editable>
+                                            <Editable editable={access('users', 'changeMaxConnections')} onEdit={value => setMaxConnection(i.tag, u, value)} value={u.maxConnections}>{u.maxConnections}</Editable>
                                         </Info>
                                         <Info label={'Expire Days'}>
-                                            <Editable editable={showAll} onEdit={value => setExpireDays(i.tag, u, value)} value={u.expireDays}>{u.expireDays}</Editable>
+                                            <Editable editable={access('users', 'changeExpireDays')} onEdit={value => setExpireDays(i.tag, u, value)} value={u.expireDays}>{u.expireDays}</Editable>
                                         </Info>
                                         <Info label={'Bandwidth (This Month)'}>
                                             <Editable input={{
                                                 type: 'number',
                                                 placeholder: '1'
-                                            }} editable={true} onEdit={value => setInfo(i.tag, u, 'quotaLimit', value * 1024 * 1024 * 1024)} value={u.quotaLimit} postfix={'GB'}>
+                                            }} editable={access('users', 'changeBandwidth')} onEdit={value => setInfo(i.tag, u, 'quotaLimit', value * 1024 * 1024 * 1024)} value={u.quotaLimit} postfix={'GB'}>
                                                 <Size size={u['quotaUsage'] ?? 0}/> / {u.quotaLimit && u.quotaLimit > 0 ? <Size size={u.quotaLimit ?? 0}/> : '∞' }
                                             </Editable>
                                         </Info>
@@ -452,15 +452,15 @@ export default function UsersPage() {
                                 </td>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3">
                                     <PopupMenu>
-                                        <PopupMenu.Item icon={<RssIcon className="w-4"/>}>
+                                        <PopupMenu.Item visible={access('users', 'subscribeUrl')} icon={<RssIcon className="w-4"/>}>
                                             <Copy className="block text-inherit" notifyText={`User "${u.email}" subscription url copied`} data={process.env.NEXT_PUBLIC_CLIENT_URL + `/api/configs/${u.id}`}>
                                                 Copy Subscription Url
                                             </Copy>
                                         </PopupMenu.Item>
-                                        <PopupMenu.Item icon={<DevicePhoneMobileIcon className="w-4"/>} action={() => clientConfigDialog.show(u, i.tag)}>
+                                        <PopupMenu.Item visible={access('users', 'clientConfig')} icon={<DevicePhoneMobileIcon className="w-4"/>} action={() => clientConfigDialog.show(u, i.tag)}>
                                             Client Config
                                         </PopupMenu.Item>
-                                        <PopupMenu.Item icon={<QrCodeIcon className="w-4"/>} action={() => showQRCode(i.tag, u)}>
+                                        <PopupMenu.Item visible={access('users', 'clientConfig')} icon={<QrCodeIcon className="w-4"/>} action={() => showQRCode(i.tag, u)}>
                                             QR Code
                                         </PopupMenu.Item>
                                         <PopupMenu.Item icon={<DocumentDuplicateIcon className="w-4"/>}>
@@ -468,45 +468,45 @@ export default function UsersPage() {
                                                 Copy User ID
                                             </Copy>
                                         </PopupMenu.Item>
-                                        <PopupMenu.Item icon={<DocumentDuplicateIcon className="w-4"/>}>
+                                        <PopupMenu.Item visible={access('users', 'clientConfig')} icon={<DocumentDuplicateIcon className="w-4"/>}>
                                             <Copy className="block text-inherit" notifyText={`User "${u.email}" client config copied`} data={() => serverRequest(context.server, '/client_config?tag=' + i.tag, u).then(data => data.config)}>
                                                 Copy Config
                                             </Copy>
                                         </PopupMenu.Item>
-                                        <PopupMenu.Item icon={u.deActiveDate?<BoltIcon className="w-4"/>:<BoltSlashIcon className="w-4"/>} visible={showAll || !u.deActiveReason?.includes('Expired')} action={() => prompt(`Change user ${u.email} ${u.deActiveDate?'active':'de-active'} ?`, u.deActiveDate?'Active':'De-active', () => setActive(i.tag, u, u.deActiveDate ? true : false))}>
+                                        <PopupMenu.Item icon={u.deActiveDate?<BoltIcon className="w-4"/>:<BoltSlashIcon className="w-4"/>} visible={access('users', 'active') && (!u.deActiveReason?.includes('Expired') || access('users', 'activeExpired'))} action={() => prompt(`Change user ${u.email} ${u.deActiveDate?'active':'de-active'} ?`, u.deActiveDate?'Active':'De-active', () => setActive(i.tag, u, u.deActiveDate ? true : false))}>
                                             {u.deActiveDate? 'Active User' : 'De-Active User'}
                                         </PopupMenu.Item>
-                                        <PopupMenu.Item icon={<TrashIcon className="w-4"/>} visible={(showAll || !u.firstConnect)} action={() => prompt(`Delete user ${u.email} ?`, `Delete`,() => removeUser(i.protocol, i.tag, u))}>
+                                        <PopupMenu.Item icon={<TrashIcon className="w-4"/>} visible={(access('users', 'delete') && (!u.firstConnect || access('users', 'deleteConnected')))} action={() => prompt(`Delete user ${u.email} ?`, `Delete`,() => removeUser(i.protocol, i.tag, u))}>
                                             Remove User
                                         </PopupMenu.Item>
-                                        <PopupMenu.Item icon={<FireIcon className="w-4"/>} action={() => prompt(`Generate ID for ${u.email} ?`, `Generate`, () => reGenerateId(i.tag, u))}>
+                                        <PopupMenu.Item visible={access('users', 'regenerateId')} icon={<FireIcon className="w-4"/>} action={() => prompt(`Generate ID for ${u.email} ?`, `Generate`, () => reGenerateId(i.tag, u))}>
                                             ReGenerate ID
                                         </PopupMenu.Item>
-                                        <PopupMenu.Item icon={<PlusIcon className="w-4"/>} action={() => prompt(`Add 1 Months to Expire Days for user "${u.email}" ?`, `Add Expire Days`, () => addDays(i.tag, u, 30))}>
+                                        <PopupMenu.Item visible={access('users', 'renew')} icon={<PlusIcon className="w-4"/>} action={() => prompt(`Add 1 Months to Expire Days for user "${u.email}" ?`, `Add Expire Days`, () => addDays(i.tag, u, 30))}>
                                             +1 Months
                                         </PopupMenu.Item>
-                                        <PopupMenu.Item icon={<BanknotesIcon className="w-4"/>} action={() => router.push(`/transactions?user=${u.email}` + (showAll ? `&all=1` : ''))}>
+                                        <PopupMenu.Item visible={access('transactions', 'list')} icon={<CurrencyDollarIcon className="w-4"/>}>
                                             Transactions
                                         </PopupMenu.Item>
-                                        <PopupMenu.Item icon={<CalendarDaysIcon className="w-4"/>} action={() => router.push(`/usages?user=${u.email}` + (showAll ? `&all=1` : ''))}>
+                                        <PopupMenu.Item visible={access('users', 'dailyUsage')} icon={<CalendarDaysIcon className="w-4"/>} action={() => router.push(`/usages?user=${u.email}`)}>
                                             Daily Usages
                                         </PopupMenu.Item>
-                                        <PopupMenu.Item icon={<DocumentTextIcon className="w-4"/>} visible={showAll} action={() => router.push(`/logs?all=1&filter=`+u.email)}>
+                                        <PopupMenu.Item icon={<DocumentTextIcon className="w-4"/>} visible={access('users', 'logs')} action={() => router.push(`/logs?all=1&filter=`+u.email)}>
                                             Logs
                                         </PopupMenu.Item>
-                                        <PopupMenu.Item icon={<ClockIcon className="w-4"/>} visible={!u.createDate || showAll} action={() => prompt(`Set first connect date as create date for user "${u.email}" ?`, `Set Create Date`, () => setInfo(i.tag, u, 'createDate', u.firstConnect))}>
+                                        <PopupMenu.Item icon={<ClockIcon className="w-4"/>} visible={access('users', 'setFirstConnectionAsCreateDate')} action={() => prompt(`Set first connect date as create date for user "${u.email}" ?`, `Set Create Date`, () => setInfo(i.tag, u, 'createDate', u.firstConnect))}>
                                             Set First Connect as Create Date
                                         </PopupMenu.Item>
-                                        <PopupMenu.Item icon={u.private?<EyeIcon className="w-4"/>:<EyeSlashIcon className="w-4"/>} visible={showAll} action={() => prompt(`Set user "${u.email}" ${u.private?"public":"private"}?`, `Change Private`, () => setInfo(i.tag, u, 'private', !u.private))}>
+                                        <PopupMenu.Item icon={u.private?<EyeIcon className="w-4"/>:<EyeSlashIcon className="w-4"/>} visible={access('users', 'changePrivate')} action={() => prompt(`Set user "${u.email}" ${u.private?"public":"private"}?`, `Change Private`, () => setInfo(i.tag, u, 'private', !u.private))}>
                                             Set {u.private?'Public':'Private'}
                                         </PopupMenu.Item>
-                                        <PopupMenu.Item icon={<CurrencyDollarIcon className="w-4"/>} visible={showAll} action={() => prompt(`Set user "${u.email}" as ${u.free?"Non-free":"Free"}?`, `Free/Paid`, () => setInfo(i.tag, u, 'free', !u.free))}>
+                                        <PopupMenu.Item icon={<CurrencyDollarIcon className="w-4"/>} visible={access('users', 'changeFree')} action={() => prompt(`Set user "${u.email}" as ${u.free?"Non-free":"Free"}?`, `Free/Paid`, () => setInfo(i.tag, u, 'free', !u.free))}>
                                             Set {u.free?'Non-Free':'Free'}
                                         </PopupMenu.Item>
-                                        <PopupMenu.Item icon={<ArrowsUpDownIcon className="w-4"/>} action={() => changeInboundDialog.show(context, inbounds, i.tag, u.email, () => refreshInbounds())}>
+                                        <PopupMenu.Item visible={access('users', 'changeInbound')} icon={<ArrowsUpDownIcon className="w-4"/>} action={() => changeInboundDialog.show(context, inbounds, i.tag, u.email, () => refreshInbounds())}>
                                             Change Inbound
                                         </PopupMenu.Item>
-                                        <PopupMenu.Item icon={<DocumentPlusIcon className="w-4"/>} visible={showAll} action={() => copyUserDialog.show(context, inbounds, i.tag, u.email, () => refreshInbounds())}>
+                                        <PopupMenu.Item icon={<DocumentPlusIcon className="w-4"/>} visible={access('users', 'copyUser')} action={() => copyUserDialog.show(context, inbounds, i.tag, u.email, () => refreshInbounds())}>
                                             Copy User
                                         </PopupMenu.Item>
                                     </PopupMenu>

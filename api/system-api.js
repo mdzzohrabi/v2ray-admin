@@ -95,6 +95,25 @@ router.delete('/system/users', httpAction(async (req, res) => {
     return { ok: true, message: 'User deleted successful' };
 }));
 
+router.get('/system/user/:user/sessions', httpAction(async (req, res) => {
+    let {user: userId} = req.params;
+    /** @type {LoginSession[]} */
+    let sessions = await db('sessions') ?? [];
 
+    return sessions.filter(x => x.userId == userId);
+}));
+
+router.delete('/system/user/:user/sessions', httpAction(async (req, res) => {
+    let {user: userId} = req.params;
+    let {token} = req.body;
+    /** @type {LoginSession[]} */
+    let sessions = await db('sessions') ?? [];
+    
+    sessions = sessions.filter(x => !(x.userId == userId && x.token == token));
+
+    await db('sessions', sessions);
+
+    return { ok: true, message: 'Session removed successful' };
+}));
 
 module.exports = { router };

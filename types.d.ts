@@ -290,15 +290,42 @@ interface CRUDAcl {
 }
 
 interface SystemAcls {
-    isAdmin?: boolean
-    transactions?: CRUDAcl
-    serverNodes?: CRUDAcl
-    trafficUsage?: { list?: boolean }
-    logs?: { list?: boolean }
-    users?: CRUDAcl & { renew?: boolean, active?: boolean, subscribeUrl?: boolean, clientConfig?: boolean, freeUsers?: boolean, changeFree?: boolean, privateUsers?: boolean, changePrivate?: boolean, regenerateId?: boolean, changeInbound?: boolean, copyUser?: boolean, setFirstConnectionAsCreateDate?: boolean, dailyUsage?: boolean, logs?: boolean }
-    config?: { list?: boolean, edit?: boolean }
-    home?: { show?: boolean, traffics?: boolean, users?: boolean, servers?: boolean, transactions?: boolean }
-    allowedInbounds?: string[]
+	isAdmin?: boolean;
+	administrators?: boolean;
+	transactions?: CRUDAcl;
+	serverNodes?: CRUDAcl;
+	trafficUsage?: { list?: boolean };
+	logs?: { list?: boolean };
+	users?: CRUDAcl & {
+		deleteConnected?: boolean;
+		renew?: boolean;
+		active?: boolean;
+		activeExpired?: boolean;
+		subscribeUrl?: boolean;
+		clientConfig?: boolean;
+		freeUsers?: boolean;
+		changeFree?: boolean;
+		privateUsers?: boolean;
+		changePrivate?: boolean;
+		regenerateId?: boolean;
+		changeInbound?: boolean;
+		copyUser?: boolean;
+		setFirstConnectionAsCreateDate?: boolean;
+		dailyUsage?: boolean;
+		logs?: boolean;
+		changeExpireDays?: boolean
+		changeMaxConnections?: boolean
+		changeBandwidth?: boolean
+	};
+	config?: { list?: boolean; edit?: boolean };
+	home?: {
+		show?: boolean;
+		traffics?: boolean;
+		users?: boolean;
+		servers?: boolean;
+		transactions?: boolean;
+	};
+	allowedInbounds?: string[];
 }
 
 interface SystemUser {
@@ -328,4 +355,6 @@ interface LoginSession {
     loginDate?: number
     lastRequestTime?: number
     isExpired?: boolean
+    userAgent?: string
+    lastRequestIP?: string
 }

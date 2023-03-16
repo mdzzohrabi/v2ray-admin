@@ -1,6 +1,6 @@
 // @ts-check
 
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { Dispatch, SetStateAction, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import useSWR, { Fetcher, SWRConfiguration } from "swr";
 import { AppContext } from "../components/app-context";
@@ -122,10 +122,26 @@ export function useObjectCRUD(initValue = null, setter = null) {
 }
 
 
-export function useStoredState<T>(key: string, init: T) {
-	let state = useState<T>(stored(key) ?? init);
-	useEffect(() => store(key, state[0]), [state[0]]);
-	return state;
+export function useStoredState<T>(key: string, init: T): [T, Dispatch<SetStateAction<T>>, boolean] {
+	const [state, setState] = useState<T>(init);
+	const [loaded, setLoaded] = useState(false);
+	const firstRun = useRef(true);
+
+	useEffect(() => {
+		setState(stored(key) ?? init);
+		setLoaded(true);
+	}, [key]);
+
+	// Change effect
+	useEffect(() => {
+		if (firstRun.current) {
+			firstRun.current = false;
+			return;
+		}
+		store(key, state);
+	}, [state]);
+
+	return [state, setState, loaded];
 }
 
 export function useContextSWR<T = any>(key: any, body: any = undefined, config: SWRConfiguration<T, any, Fetcher<T, any>> = undefined) {
@@ -172,7 +188,7 @@ interface CRUDOptions<T> {
 	listUrl?: string
 }
 
-export function useCRUD<T>(url: string, { onDone, insertMessage, removeMessage, editMessage, removeUrl, editUrl, insertUrl, onError, listUrl }: CRUDOptions<T>) {
+export function useCRUD<T>(url: string, { onDone, insertMessage, removeMessage, editMessage, removeUrl, editUrl, insertUrl, onError, listUrl }: CRUDOptions<T> = {}) {
 	const {server} = useContext(AppContext);
 	const [isLoading, setLoading] = useState(false);
 	const {data: items, isValidating: isItemsLoading, mutate: refreshItems, error: itemsError} = useContextSWR<T[]>(listUrl ?? url, null, {});
@@ -290,5 +306,48 @@ export function useCRUD<T>(url: string, { onDone, insertMessage, removeMessage, 
 export function usePropState<T>(prop: T) {
 	let state = useState(prop);
 	useEffect(() => state[1](prop), [prop]);
+	return state;
+}
+
+let counterKeys: { [name: string]: number } = {};
+
+export function clearCounter() {
+	counterKeys = {};
+}
+
+export function useCounter(key: string) {
+	return useMemo(() => {
+		if (typeof counterKeys[key] == 'undefined')
+			counterKeys[key] = 0;
+		return counterKeys[key]++;
+	}, [key]);
+}
+
+export function useUser() {
+	let {server} = useContext(AppContext);
+	let { data, isValidating, mutate, error } = useSWR<{ ok: boolean, user?: SystemUser }>('/authenticate', serverRequest.bind(this, { ...server, node: undefined }));
+	let { ok, user } = data ?? {};
+
+	let access = useCallback(function <T extends keyof SystemAcls>(acl: T, subAcl?: keyof SystemAcls[T]): boolean {
+		if (user?.acls?.isAdmin) return true;
+		if (!user?.acls) return false;
+		if (!user?.acls[acl]) return false;
+		if (subAcl && !user?.acls[acl][subAcl]) return false;
+		return true;
+	}, [user]);
+
+	return { ok, user, access, isValidating, mutate, error }
+}
+
+export function useAwareState<T>(init: T, deps: any[]) {
+	let state = useState(init);
+	let firstLoad = useRef(true);
+	useEffect(() => {
+		if (firstLoad.current) {
+			firstLoad.current = false;
+			return;
+		}
+		state[1](init);
+	}, deps);
 	return state;
 }

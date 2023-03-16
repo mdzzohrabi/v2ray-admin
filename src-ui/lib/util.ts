@@ -1,4 +1,3 @@
-// @ts-check
 import {decrypt} from 'crypto-js/aes';
 import encodeUtf8 from 'crypto-js/enc-utf8';
 import { ServerContext } from '../components/app-context';

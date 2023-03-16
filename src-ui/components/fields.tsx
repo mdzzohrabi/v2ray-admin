@@ -1,6 +1,6 @@
 import classNames from "classnames";
-import React, { createContext, createElement, useCallback, useContext } from "react";
-import { useArrayDelete, useArrayInsert, useArrayUpdate, useObjectCRUD } from "../lib/hooks";
+import React, { ChangeEvent, createContext, createElement, useCallback, useContext, useMemo } from "react";
+import { useArrayDelete, useArrayInsert, useArrayUpdate, useCounter, useObjectCRUD } from "../lib/hooks";
 import { styles } from "../lib/styles";
 
 export interface FieldContext<T> {
@@ -89,14 +89,20 @@ export function Field({ label, children, className = '', horizontal = undefined,
 	dataSetter = dataSetter ?? context.dataSetter;
 	unsetEmpty = unsetEmpty ?? context.unsetEmpty ?? true;
 
-	let setData = useCallback(/** @param {React.ChangeEvent<HTMLInputElement>} e */ e => {
+	let uniqueIdPostfix = useCounter(htmlFor);
+
+	let setData = useCallback((e: ChangeEvent<HTMLInputElement>) => {
 		let target = e.currentTarget;
-		let value = target.value;
-		if (target.type == 'checkbox') {
+		let value: any = target.value;
+
+		if (target.tagName?.toLowerCase() == 'select' && target.multiple) {
+			let selectedValues = [...target.querySelectorAll('option')].filter(x => x.selected).map(x => x.value);
+			value = selectedValues;
+		}
+		else if (target.type == 'checkbox') {
 			value = target.checked;
 		}
-
-		if (target.type == 'number') {
+		else if (target.type == 'number') {
 			value = value ? Number(value) : value;
 		}
 
@@ -119,15 +125,33 @@ export function Field({ label, children, className = '', horizontal = undefined,
 			if (child?.type == 'input' || child?.type == 'select' || child?.type == 'textarea') {
 				let valueProp = 'value';
 				if (child.props.type == 'checkbox') valueProp = 'checked';
-				return createElement(child.type, { key: index, onChange: setData, [valueProp]: (htmlFor && typeof data == 'object' ? data[htmlFor] : data) ?? '', ...child.props });
+
+				let value = data ?? '';
+
+				if (htmlFor && typeof value == 'object') {
+					value = value[htmlFor];
+				}
+				
+				// Mutiple array
+				if (child?.type == 'select' && child?.props?.multiple) {
+					value = !value ? [] : Array.isArray(value) ? value : [value];
+				}
+
+				return createElement(child.type, {
+					key: index,
+					onChange: setData,
+					[valueProp]: value,
+					...child.props,
+					id: child.props?.id + '_' + uniqueIdPostfix
+				});
 			}
 		}
 		return child;
 	})
 
 	return <div className={classNames(className ,'px-1')}>
-		<div className={classNames("flex", { 'flex-col': !horizontal, 'flex-row self-center': horizontal })}>
-			{label ? <label htmlFor={htmlFor} className={classNames(styles.label, { 'pr-3': horizontal }, 'whitespace-nowrap')}>{label}</label> : null}
+		<div className={classNames("flex", { 'flex-col': !horizontal, 'flex-row self-center items-center': horizontal })}>
+			{label ? <label htmlFor={htmlFor + '_' + uniqueIdPostfix} className={classNames(styles.label, { 'pr-3': horizontal }, 'whitespace-nowrap')}>{label}</label> : null}
 			{childs}
 		</div>
 		{ hint ? <div className="text-xs text-gray-500 whitespace-pre-wrap">{hint}</div> : null }
