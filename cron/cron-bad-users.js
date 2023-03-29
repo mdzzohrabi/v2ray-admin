@@ -119,8 +119,6 @@ async function cronBadUsers(cron, range = 1, reActiveUsers = true) {
         }
     }
 
-    exit(0);
-
     if (isConfigChanged)
         writeConfig(configPath, config);
 
