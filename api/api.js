@@ -2,7 +2,7 @@
 const { randomUUID } = require('crypto');
 const { env } = require('process');
 const { addTransaction, getTransactions, readDb, saveDb } = require('../lib/db');
-const { getPaths, readConfig, applyChanges, writeConfig, readLogFile, getUserConfig, restartService, setUserActive, findUser, log, deleteUser, DateUtil, addUser, db, readLogLinesByOffset, createLogger, ping } = require('../lib/util');
+const { getPaths, readConfig, applyChanges, writeConfig, readLogFile, getUserConfig, restartService, setUserActive, findUser, log, deleteUser, DateUtil, addUser, db, readLogLinesByOffset, createLogger, ping, httpAction } = require('../lib/util');
 
 let {showInfo, showError} = createLogger();
 
@@ -308,7 +308,18 @@ router.get('/status_filters', (req, res) => {
     res.json(Object.keys(statusFilters))
 });
 
-router.post('/inbounds', async (req, res) => {
+router.get('/inbounds/:key', httpAction(async (req, res) => {
+    const {configPath} = getPaths();
+    const config = readConfig(configPath);
+    const {key} = req.params;
+
+    /** @type {SystemUser} */
+    let user = res.locals.user;
+    
+    return config?.inbounds?.filter(x => !user || user?.acls?.isAdmin || user?.acls?.allowedInbounds?.includes(x.tag ?? '')).map(x => x[key]);
+}));
+
+router.post('/inbounds', httpAction(async (req, res) => {
 
     let {configPath, accessLogPath} = getPaths();
     let {view, private} = req.body;
@@ -320,6 +331,23 @@ router.post('/inbounds', async (req, res) => {
         return res.status(500).end('No inbounds defined in configuration');
 
     let inbounds = config.inbounds ?? [];
+    
+    /** @type {SystemUser} */
+    let user = res.locals.user;
+    
+
+    // Filters
+    let filters = {
+        showPrivate: !user || user?.acls?.isAdmin || user?.acls?.users?.privateUsers,
+        showFree: !user || user?.acls?.isAdmin || user?.acls?.users?.freeUsers
+    }
+
+    // Filter inbounds
+    if (user) {
+        let allowedInbounds = user.acls?.allowedInbounds ?? [];
+        if (!user.acls?.isAdmin)
+            inbounds = inbounds.filter(x => allowedInbounds.includes(x.tag ?? ''));
+    }
 
     let usages = await readLogFile(accessLogPath);
 
@@ -329,7 +357,7 @@ router.post('/inbounds', async (req, res) => {
     let skip = (page * limit) - limit;
 
     for (let inbound of inbounds) {
-        let users = (inbound.settings?.clients ?? []).filter(u => private || !u.private);
+        let users = (inbound.settings?.clients ?? []).filter(u => (filters.showPrivate || !u.private) && (filters.showFree || !u.free));
         let total = users.length;
         let maxClientNumber = 0;
         for (let user of users) {
@@ -368,7 +396,7 @@ router.post('/inbounds', async (req, res) => {
     }
 
     res.json(inbounds);
-});
+}));
 
 router.get('/inbounds_clients', async (req, res) => {
     let {configPath} = getPaths();
@@ -384,6 +412,8 @@ router.get('/inbounds_clients', async (req, res) => {
 router.post('/user', async (req, res) => {
     try {
         let {email, tag, fullName, mobile, emailAddress, private, free, quotaLimit} = req.body;
+        /** @type {SystemUser?} */
+        let user = res.locals.user;
         if (!email) return res.json({ error: 'Email not entered' });
         if (!tag) return res.json({ error: 'Tag not entered' });
         let {configPath} = getPaths();
@@ -394,8 +424,10 @@ router.post('/user', async (req, res) => {
         if (!free) {
             await addTransaction({
                 user: email,
-                amount: Number(env.CREATE_COST ?? 50000),
-                remark: `Create user ${email}`
+                amount: Number(user?.pricing?.newUserCost ?? env.CREATE_COST ?? 50000),
+                remark: `Create user ${email}`,
+                createdBy: user?.username,
+                createdById: user?.id
             });
         }
         res.json({ ok: true, id: result.id });
@@ -404,6 +436,53 @@ router.post('/user', async (req, res) => {
         res.json({ error: err.message });
     }
 });
+
+router.get('/user/nodes', httpAction(async (req, res) => {
+    /** @type {ServerNode[]} */
+    const nodes = await db('server-nodes') ?? [];
+
+    /** @type {string} */
+    const userId = String(req.query.id);
+
+    if (!userId)
+        throw Error(`User id is invalid`);
+
+    const fetch = (await import('node-fetch')).default;
+
+    /** @type {V2RayConfigInboundClient[]} */
+    const clients = [];
+
+    for (let node of nodes) {       
+            try {
+            let result = await fetch(node.address + '/inbounds', {
+                body: JSON.stringify({
+                    private: true,
+                    view: {
+                        filter: userId,
+                        limit: 10,
+                    }
+                }),
+                method: 'post',
+                headers: {
+                    Authorization: 'Bearer ' + Buffer.from(node.apiKey).toString('base64'),
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            /** @type {V2RayConfigInbound[]} */
+            // @ts-ignore
+            let inbounds = await result.json();
+
+            clients.push(...inbounds?.flatMap(x => x?.settings?.clients ?? [])?.map(x => {
+                return {...x, serverNode: node.id }
+            }) ?? []);
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    res.json(clients);
+}));
 
 router.get('/transactions', async (req, res) => {
     try {
@@ -416,8 +495,10 @@ router.get('/transactions', async (req, res) => {
 
 
 router.post('/transactions', async (req, res) => {
+    /** @type {SystemUser?} */
+    let user = res.locals.user;
     try {
-        let result = await addTransaction(req.body);
+        let result = await addTransaction({ ...req.body, createdBy: user?.username, createdById: user?.id });
         res.json({ transaction: result });
     }
     catch (err) {
@@ -523,6 +604,8 @@ router.get('/daily_usage_logs', async (req, res) => {
 router.post('/add_days', async (req, res) => {
     try {
         let {email, days, tag} = req.body;
+        /** @type {SystemUser?} */
+        let systemUser = res.locals.user;
         if (!email) return res.json({ error: 'Email not entered' });
         let {configPath} = getPaths();
         let config = readConfig(configPath);
@@ -533,7 +616,7 @@ router.post('/add_days', async (req, res) => {
         let isDeActive = !!user?.deActiveDate;
         let isExpired = user?.deActiveReason?.includes('Expired');
         let needRestart = false;
-        let cost = (days / 30) * Number(env.MONTH_COST ?? 50000);
+        let cost = (days / 30) * Number(systemUser?.pricing?.renewUserCost ?? env.MONTH_COST ?? 50000);
         
         if (isDeActive && isExpired) {
             // Active user
@@ -549,7 +632,9 @@ router.post('/add_days', async (req, res) => {
             await addTransaction({
                 amount: cost,
                 user: email,
-                remark: `Add ${days} days (${days/30} months)`
+                remark: `Add ${days} days (${days/30} months)`,
+                createdBy: systemUser?.username,
+                createdById: systemUser?.id
             });
         }
 
@@ -564,20 +649,13 @@ router.post('/add_days', async (req, res) => {
     }
 });
 
-router.get('/nodes', async (req, res) => {
-    try {
-        /** @type {ServerNode[]} */
-        let nodes = await db('server-nodes') ?? [];
+router.get('/nodes', httpAction(async (req, res) => {
+    /** @type {ServerNode[]} */
+    let nodes = await db('server-nodes') ?? [];
+    let {all} = req.query;
 
-        let {all} = req.query;
-
-        res.json(nodes.filter(x => !all ? !x.disabled : true));
-    }
-    catch (err) {
-        res.json({ error: err.message });
-        showError(err);
-    }
-});
+    return nodes.filter(x => !all ? !x.disabled : true);
+}));
 
 router.post('/nodes', async (req, res) => {
     try {

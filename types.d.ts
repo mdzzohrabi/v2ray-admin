@@ -227,6 +227,8 @@ interface Transaction {
     createDate?: string
     creator?: string
     serverNodeId?: string
+    createdBy?: string
+    createdById?: string
 }
 
 interface V2RayDb {
@@ -280,4 +282,82 @@ interface ServerNode {
     lastSyncDate?: string
     sync?: boolean
     disabled?: boolean
+}
+
+interface CRUDAcl {
+    add?: boolean
+    list?: boolean
+    edit?: boolean
+    delete?: boolean
+}
+
+interface SystemAcls {
+	isAdmin?: boolean;
+	administrators?: boolean;
+	transactions?: CRUDAcl;
+	serverNodes?: CRUDAcl;
+	trafficUsage?: { list?: boolean };
+	logs?: { list?: boolean };
+	users?: CRUDAcl & {
+		deleteConnected?: boolean;
+		renew?: boolean;
+		active?: boolean;
+		activeExpired?: boolean;
+		subscribeUrl?: boolean;
+		clientConfig?: boolean;
+		freeUsers?: boolean;
+		changeFree?: boolean;
+		privateUsers?: boolean;
+		changePrivate?: boolean;
+		regenerateId?: boolean;
+		changeInbound?: boolean;
+		copyUser?: boolean;
+		setFirstConnectionAsCreateDate?: boolean;
+		dailyUsage?: boolean;
+		logs?: boolean;
+		changeExpireDays?: boolean
+		changeMaxConnections?: boolean
+		changeBandwidth?: boolean
+        otherNodes?: boolean
+	};
+	config?: { list?: boolean; edit?: boolean };
+	home?: {
+		show?: boolean;
+		traffics?: boolean;
+		users?: boolean;
+		servers?: boolean;
+		transactions?: boolean;
+	};
+	allowedInbounds?: string[];
+}
+
+interface SystemUser {
+    id?: string
+    username?: string
+    password?: string
+    isActive?: boolean
+    email?: string
+    mobile?: string
+    acls?: SystemAcls
+    pricing?: SystemPricing
+}
+
+interface SystemPricing {
+    newUserCost?: number
+    renewUserCost?: number
+}
+
+interface SystemConfig extends SystemPricing {
+    webPort?: boolean
+}
+
+interface LoginSession {
+    token?: string
+    username?: string
+    userId?: string
+    loginDate?: number
+    lastRequestTime?: number
+    isExpired?: boolean
+    userAgent?: string
+    lastRequestIP?: string
 }

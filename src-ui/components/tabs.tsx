@@ -1,20 +1,23 @@
-// @ts-check
-
 import classNames from "classnames";
-import React, { createElement, Fragment, ReactElement } from "react";
-import { useState } from "react";
+import { createElement, Fragment, HTMLProps, useState } from "react";
+import { ChildOf } from "../types";
 
-interface TabProps {
+interface TabProps extends HTMLProps<HTMLDivElement> {
     children?: any,
     title?: string,
     isSelected?: boolean,
     className?: string
 }
 
-export function Tabs({ children }: { children: ReactElement<TabProps, typeof Tab>[] | ReactElement<TabProps, typeof Tab> }) {
-    let [selectedTab, setSelectedTab] = useState('');
+interface TabsProps {
+    children: ChildOf<typeof Tab, TabProps>
+    selectedTabTitle?: string
+}
 
-    if (selectedTab == '') {
+export function Tabs({ children, selectedTabTitle }: TabsProps) {
+    let [selectedTab, setSelectedTab] = useState(selectedTabTitle);
+
+    if (!selectedTab) {
         selectedTab = children[0]?.props?.title ?? '';
     }
 
@@ -38,8 +41,8 @@ export function Tabs({ children }: { children: ReactElement<TabProps, typeof Tab
 /**
  * Tab
  */
-function Tab({ children, title, isSelected, className = '' }: TabProps) {
-    return <div className={classNames({ 'hidden': !isSelected }, className)}>
+function Tab({ children, title, isSelected, className, ...props }: TabProps) {
+    return <div className={classNames({ 'hidden': !isSelected }, className)} {...props}>
         {children}
     </div>
 }

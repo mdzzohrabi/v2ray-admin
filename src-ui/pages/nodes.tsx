@@ -11,7 +11,7 @@ import { Field, FieldsGroup } from "../components/fields";
 import { Info, Infos } from "../components/info";
 import { PopupMenu } from "../components/popup-menu";
 import { Table } from "../components/table";
-import { useContextSWR, usePrompt } from "../lib/hooks";
+import { useContextSWR, useCRUD, usePrompt } from "../lib/hooks";
 import { styles } from "../lib/styles";
 import { serverRequest } from "../lib/util";
 
@@ -83,7 +83,10 @@ export default function NodesPage() {
     let [isPinging, setIsPinging] = useState(false);
     
     let [nodes, setNodes] = useState<(ServerNode & { ping?: number | string })[]>([]);
-    let {mutate: refreshNodes, data: nodesResponse, isValidating: isLoading} = useContextSWR<ServerNode[]>('/nodes?all=1');
+
+    let { insert: addNode, edit: editNode, remove: deleteNode, items: nodesResponse, refreshItems: refreshNodes, isItemsLoading, isLoading } = useCRUD<ServerNode>('/nodes', {
+        listUrl: '/nodes?all=1'
+    })
     
     useEffect(() => setNodes(nodesResponse), [nodesResponse]);
 
@@ -94,43 +97,7 @@ export default function NodesPage() {
         setIsPinging(false);
     }, [server]);
 
-    let addNode = useCallback(async (node: ServerNode) => {
-        try {
-            let result = await serverRequest(server, 'POST:/nodes', node);
-            if (result?.ok) {
-                toast.success(result?.message);
-                refreshNodes();
-            }
-        } catch (e) {
-            toast.error(e?.message);
-        }
-    }, [server]);
-
-    let editNode = useCallback(async (node: ServerNode) => {
-        try {
-            let result = await serverRequest(server, 'PUT:/nodes', node);
-            if (result?.ok) {
-                toast.success(result?.message);
-                refreshNodes();
-            }
-        } catch (e) {
-            toast.error(e?.message);
-        }
-    }, [server]);
-
-    let deleteNode = useCallback(async (node: ServerNode) => {
-        try {
-            let result = await serverRequest(server, 'DELETE:/nodes', node);
-            if (result?.ok) {
-                toast.success(result?.message);
-                refreshNodes();
-            }
-        } catch (e) {
-            toast.error(e?.message);
-        }
-    }, [server]);
-
-    let serverNodeDialog = useDialog((node: ServerNode, onEdit: ((node: Partial<ServerNode>) => any), onClose: Function) => <ServerNodeDialog
+    let serverNodeDialog = useDialog((node: Partial<ServerNode> = {}, onEdit: ((node: Partial<ServerNode>) => any), onClose?: Function) => <ServerNodeDialog
         onClose={onClose}
         node={node}
         onEdit={onEdit}
@@ -141,13 +108,10 @@ export default function NodesPage() {
 
     let prompt = usePrompt();
 
-    return <Container>
-        <Head>
-            <title>Server Nodes</title>
-        </Head>
+    return <Container pageTitle="Server Nodes">
         <FieldsGroup title={<span className="flex items-center gap-x-2"><CloudIcon className="w-6"/> Server Nodes</span>} className="px-3">
             <div className="flex-1 flex-row flex items-center">
-                {isLoading? <span className="rounded-lg bg-gray-700 text-white px-3 py-0">Loading</span> :null}
+                {isLoading || isItemsLoading? <span className="rounded-lg bg-gray-700 text-white px-3 py-0">Loading</span> :null}
                 {isPinging? <span className="rounded-lg bg-rose-200 text-rose-900 px-3 py-0">Pinging</span> :null}
             </div>
             <div className="flex flex-row">

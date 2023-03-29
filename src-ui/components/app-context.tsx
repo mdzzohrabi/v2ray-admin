@@ -1,28 +1,33 @@
-// @ts-check
-import React, { createContext, useEffect, useState, Dispatch, SetStateAction, Context } from "react";
+import { createContext, Dispatch, SetStateAction, useMemo } from "react";
 import { useStoredState } from "../lib/hooks";
-import { store, stored } from "../lib/util";
 
 
 export interface ServerContext {
-     url: string,
-     token: string,
-     name?: string,
-     node?: string
+    url?: string,
+    token?: string,
+    name?: string,
+    node?: string
+    username?: string
+    mode?: 'login' | 'token'
 }
 
 export interface AppContext {
-     server: ServerContext,
-     setServer: Dispatch<SetStateAction<ServerContext>>,
+    server: ServerContext,
+    setServer: Dispatch<SetStateAction<ServerContext>>,
+    isStoreLoaded: boolean
 }
 
 
 export const AppContext = createContext<AppContext>({} as any);
 
 export function AppContextContainer({ children }) {
-    let [server, setServer] = useStoredState('server', { url: '', token: '' });
+    let [server, setServer, isStoreLoaded] = useStoredState('server', { url: '', token: '' });
 
-    return <AppContext.Provider value={{ server, setServer }}>
-        {children}
+    let context = useMemo(() => {
+        return {server, setServer, isStoreLoaded};
+    }, [server, setServer, isStoreLoaded]);
+
+    return <AppContext.Provider value={context}>
+        {children}  
     </AppContext.Provider>;
 }
