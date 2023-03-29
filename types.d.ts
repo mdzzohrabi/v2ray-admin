@@ -318,6 +318,7 @@ interface SystemAcls {
 		changeExpireDays?: boolean
 		changeMaxConnections?: boolean
 		changeBandwidth?: boolean
+        otherNodes?: boolean
 	};
 	config?: { list?: boolean; edit?: boolean };
 	home?: {

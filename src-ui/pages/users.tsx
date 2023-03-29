@@ -12,6 +12,7 @@ import { Container } from "../components/container";
 import { Copy } from "../components/copy";
 import { DateView } from "../components/date-view";
 import { useDialog } from "../components/dialog";
+import { UserNodesDialog } from "../components/dialog/user-nodes";
 import { Editable } from "../components/editable";
 import { ChangeInboundEditor } from "../components/editor/change-inbound-editor";
 import { CopyUserEditor } from "../components/editor/copy-user";
@@ -227,6 +228,8 @@ export default function UsersPage() {
     let totalPages = Number( Math.ceil( maxUsers / view.limit ) ) || 1;
 
     let addUserDialog = useDialog((onClose?: Function) => <AddUser horizontal={false} onClose={onClose} onRefresh={refreshInbounds} disabled={isLoading} inbounds={inbounds ?? []}/>);
+
+    const userNodesDialog = useDialog((user: V2RayConfigInboundClient, onClose?: Function) => <UserNodesDialog user={user} onClose={onClose}/>);
 
     return <Container>
         <Head>
@@ -508,6 +511,9 @@ export default function UsersPage() {
                                         </PopupMenu.Item>
                                         <PopupMenu.Item icon={<DocumentPlusIcon className="w-4"/>} visible={access('users', 'copyUser')} action={() => copyUserDialog.show(context, inbounds, i.tag, u.email, () => refreshInbounds())}>
                                             Copy User
+                                        </PopupMenu.Item>
+                                        <PopupMenu.Item icon={<DocumentPlusIcon className="w-4"/>} visible={access('users', 'otherNodes')} action={() => userNodesDialog.show(u)}>
+                                            View in other Servers
                                         </PopupMenu.Item>
                                     </PopupMenu>
                                 </td>

@@ -437,6 +437,53 @@ router.post('/user', async (req, res) => {
     }
 });
 
+router.get('/user/nodes', httpAction(async (req, res) => {
+    /** @type {ServerNode[]} */
+    const nodes = await db('server-nodes') ?? [];
+
+    /** @type {string} */
+    const userId = String(req.query.id);
+
+    if (!userId)
+        throw Error(`User id is invalid`);
+
+    const fetch = (await import('node-fetch')).default;
+
+    /** @type {V2RayConfigInboundClient[]} */
+    const clients = [];
+
+    for (let node of nodes) {       
+            try {
+            let result = await fetch(node.address + '/inbounds', {
+                body: JSON.stringify({
+                    private: true,
+                    view: {
+                        filter: userId,
+                        limit: 10,
+                    }
+                }),
+                method: 'post',
+                headers: {
+                    Authorization: 'Bearer ' + Buffer.from(node.apiKey).toString('base64'),
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            /** @type {V2RayConfigInbound[]} */
+            // @ts-ignore
+            let inbounds = await result.json();
+
+            clients.push(...inbounds?.flatMap(x => x?.settings?.clients ?? [])?.map(x => {
+                return {...x, serverNode: node.id }
+            }) ?? []);
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    res.json(clients);
+}));
+
 router.get('/transactions', async (req, res) => {
     try {
         res.json(await getTransactions());

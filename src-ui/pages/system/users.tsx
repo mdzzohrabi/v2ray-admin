@@ -269,6 +269,9 @@ export function SystemUserDialog({ user: userProp, onClose, onDone }: { user?: S
                                     <Field htmlFor="changeBandwidth" horizontal label="Change Bandwidth">
                                         <input type="checkbox" id="changeBandwidth" className={styles.input}/>
                                     </Field>
+                                    <Field htmlFor="otherNodes" horizontal label="Other Nodes">
+                                        <input type="checkbox" id="otherNodes" className={styles.input}/>
+                                    </Field>
                                 </div>
                             </div>
                         </FieldObject>
