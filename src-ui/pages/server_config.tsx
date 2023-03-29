@@ -165,10 +165,10 @@ export default function ServerConfig() {
                 Servers
             </span>
             {servers.map((x, index) => <div key={index} className="text-sm py-2 px-2 hover:bg-slate-100 rounded-md cursor-pointer border-b-[1px] flex last:border-b-0 gap-x-4">
-                <ServerIcon className="w-6 text-slate-400"/>
-                <div className="flex flex-col flex-1">
+                <ServerIcon onClick={() => connectTo(x)} className="w-6 text-slate-400"/>
+                <div onClick={() => connectTo(x)} className="flex flex-col flex-1">
                     {x.name ? <span className="font-bold">{x.name} {x.username ? `(${x.username})` : null}</span> : null}
-                    <span onClick={() => connectTo(x)} className="flex-1">{x.url}</span>
+                    <span className="flex-1">{x.url}</span>
                 </div>
                 <span onClick={() => removeServer(x)} className="block self-center font-bold p-2 hover:bg-red-600 hover:text-white rounded-full">
                     <TrashIcon className="w-4"/>

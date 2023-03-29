@@ -412,6 +412,8 @@ router.get('/inbounds_clients', async (req, res) => {
 router.post('/user', async (req, res) => {
     try {
         let {email, tag, fullName, mobile, emailAddress, private, free, quotaLimit} = req.body;
+        /** @type {SystemUser?} */
+        let user = res.locals.user;
         if (!email) return res.json({ error: 'Email not entered' });
         if (!tag) return res.json({ error: 'Tag not entered' });
         let {configPath} = getPaths();
@@ -422,8 +424,10 @@ router.post('/user', async (req, res) => {
         if (!free) {
             await addTransaction({
                 user: email,
-                amount: Number(env.CREATE_COST ?? 50000),
-                remark: `Create user ${email}`
+                amount: Number(user?.pricing?.newUserCost ?? env.CREATE_COST ?? 50000),
+                remark: `Create user ${email}`,
+                createdBy: user?.username,
+                createdById: user?.id
             });
         }
         res.json({ ok: true, id: result.id });
@@ -444,8 +448,10 @@ router.get('/transactions', async (req, res) => {
 
 
 router.post('/transactions', async (req, res) => {
+    /** @type {SystemUser?} */
+    let user = res.locals.user;
     try {
-        let result = await addTransaction(req.body);
+        let result = await addTransaction({ ...req.body, createdBy: user?.username, createdById: user?.id });
         res.json({ transaction: result });
     }
     catch (err) {
@@ -551,6 +557,8 @@ router.get('/daily_usage_logs', async (req, res) => {
 router.post('/add_days', async (req, res) => {
     try {
         let {email, days, tag} = req.body;
+        /** @type {SystemUser?} */
+        let systemUser = res.locals.user;
         if (!email) return res.json({ error: 'Email not entered' });
         let {configPath} = getPaths();
         let config = readConfig(configPath);
@@ -561,7 +569,7 @@ router.post('/add_days', async (req, res) => {
         let isDeActive = !!user?.deActiveDate;
         let isExpired = user?.deActiveReason?.includes('Expired');
         let needRestart = false;
-        let cost = (days / 30) * Number(env.MONTH_COST ?? 50000);
+        let cost = (days / 30) * Number(systemUser?.pricing?.renewUserCost ?? env.MONTH_COST ?? 50000);
         
         if (isDeActive && isExpired) {
             // Active user
@@ -577,7 +585,9 @@ router.post('/add_days', async (req, res) => {
             await addTransaction({
                 amount: cost,
                 user: email,
-                remark: `Add ${days} days (${days/30} months)`
+                remark: `Add ${days} days (${days/30} months)`,
+                createdBy: systemUser?.username,
+                createdById: systemUser?.id
             });
         }
 

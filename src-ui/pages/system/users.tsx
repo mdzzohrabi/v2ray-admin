@@ -272,7 +272,7 @@ export function SystemUserDialog({ user: userProp, onClose, onDone }: { user?: S
                                 </div>
                             </div>
                         </FieldObject>
-                        <FieldObject path={'config'}>
+                        <FieldObject path={'home'}>
                             <div className="col-span-4 border-t-[1px] p-2">
                                 <span className="block font-bold">Home</span>
                                 <div className="grid grid-cols-5 gap-x-2">
@@ -313,6 +313,7 @@ export default function SystemUsersPage() {
     const userDialog = useDialog((user?: SystemUser, onDone?: (user: SystemUser) => any, onClose?: Function) => <SystemUserDialog user={user} onDone={onDone} onClose={onClose}/>)
     const userSessionsDialog = useDialog((userId?: string, onClose?: Function) => <SystemUserSessionsDialog userId={userId} onClose={onClose}/>)
     const prompt = usePrompt();
+    const NA = <span className="text-gray-400">N/A</span>
     
     return <Container pageTitle={'System Administrators'}>
         <FieldsGroup title={
@@ -343,8 +344,8 @@ export default function SystemUsersPage() {
                     cells={row => [
                         row.id,
                         row.username,
-                        row.email,
-                        row.mobile,
+                        row.email ?? NA,
+                        row.mobile ?? NA,
                         <div className="flex flex-row items-center gap-x-2">
                             {row.isActive?<BoltIcon className="w-4"/>:<BoltSlashIcon className="w-4"/>}
                             {row.isActive?'Active':'De-active'}

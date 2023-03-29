@@ -227,6 +227,8 @@ interface Transaction {
     createDate?: string
     creator?: string
     serverNodeId?: string
+    createdBy?: string
+    createdById?: string
 }
 
 interface V2RayDb {
