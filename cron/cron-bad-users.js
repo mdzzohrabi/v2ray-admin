@@ -91,7 +91,7 @@ async function cronBadUsers(cron, range = 1, reActiveUsers = true) {
     for (let user of result) {
         if (user.hasMultipleAccess && user.deActive) {
             showInfo(`De-active user ${user.user} due to multiple ip access (${user.ips.length}/${user.maxConnections} ips)`);
-            setUserActive(config, /** All inbounds */ null, user.user, false, `Used by ${user.ips.length} ips in ${range} mins ago (${user.ips.join(', ')})`, env.BAD_USER_TAG ?? 'baduser');
+            setUserActive(config, /** All inbounds */ null, user.user, false, `Used by ${user.ips.length}/${user.maxConnections} ips in ${range} mins ago (${user.ips.join(', ')})`, env.BAD_USER_TAG ?? 'baduser');
             isConfigChanged = true;
             hasDeActiveUser = true;
         }
