@@ -1,6 +1,6 @@
 // @ts-check
 
-const { env } = require("process");
+const { env, exit } = require("process");
 const { getPaths, readLogLines, cache, findUser, setUserActive, createLogger, readConfig, writeConfig } = require("../lib/util");
 
 /**
@@ -12,7 +12,7 @@ async function cronBadUsers(cron, range = 1, reActiveUsers = true) {
 
     showInfo(`Start`)
 
-    let fromDate = new Date();
+    let fromDate = new Date('2023/03/29 15:54:05');
     let rangeMinutes = range;
     fromDate.setMinutes(fromDate.getMinutes() - rangeMinutes);
     
@@ -44,10 +44,11 @@ async function cronBadUsers(cron, range = 1, reActiveUsers = true) {
         // Users ip access
         let splits = clientAddress.split(':');
         let clientIpAddress = splits[splits.length - 2];
-        let clientIps = users[user] = users[user] ?? {};
+        let clientIps = users[user] = (users[user] ?? {});
         let ipCounter = Object.values(clientIps).length;
-        let clientIP = clientIps[clientIpAddress] ?? { order: ipCounter, accessTimes: 1 };
+        let clientIP = clientIps[clientIpAddress] = (clientIps[clientIpAddress] ?? { order: ipCounter, accessTimes: 1 });
         clientIP.lastAccessDate = dateTime;
+        // clientIP.lastAccessDate2 = new Date(dateTime).toLocaleString();
         if (clientIP.order != ipCounter) {
             clientIP.accessTimes++;
         }
@@ -60,7 +61,7 @@ async function cronBadUsers(cron, range = 1, reActiveUsers = true) {
     await cache(`last-${rangeMinutes}-minutes`, lastMinutesRecords);
 
     /**
-     * @type {{ user: string, hasMultipleAccess: boolean, ips: string[], deActive: boolean }[]}
+     * @type {{ user: string, hasMultipleAccess: boolean, ips: string[], deActive: boolean, maxConnections: number }[]}
      */
     let result = [];
 
@@ -78,21 +79,27 @@ async function cronBadUsers(cron, range = 1, reActiveUsers = true) {
 
         result.push({
             user: userName,
+            maxConnections: user.maxConnections ?? 3,
             hasMultipleAccess,
             ips: Object.keys(ips).filter(ip => ips[ip].accessTimes > 1),
-            deActive: !user.deActiveDate    // De-active user only if it's active
+            deActive: hasMultipleAccess && !user.deActiveDate    // De-active user only if it's active
         });
     }
 
+    let hasDeActiveUser = false;
     // De-active users
     for (let user of result) {
         if (user.hasMultipleAccess && user.deActive) {
-            showInfo(`De-active user ${user.user} due to multiple ip access (${user.ips.length} ips)`);
+            showInfo(`De-active user ${user.user} due to multiple ip access (${user.ips.length}/${user.maxConnections} ips)`);
             setUserActive(config, /** All inbounds */ null, user.user, false, `Used by ${user.ips.length} ips in ${range} mins ago (${user.ips.join(', ')})`, env.BAD_USER_TAG ?? 'baduser');
             isConfigChanged = true;
-            cron.needRestartService = true;
-            showInfo(`Request restart service due to de-activated users`);
+            hasDeActiveUser = true;
         }
+    }
+
+    if (hasDeActiveUser) {
+        showInfo(`Request restart service due to de-activated users`);
+        cron.needRestartService = true;
     }
     
     // Active users
@@ -111,6 +118,8 @@ async function cronBadUsers(cron, range = 1, reActiveUsers = true) {
             }
         }
     }
+
+    exit(0);
 
     if (isConfigChanged)
         writeConfig(configPath, config);
