@@ -442,7 +442,7 @@ router.get('/user/nodes', httpAction(async (req, res) => {
     const nodes = await db('server-nodes') ?? [];
 
     /** @type {string} */
-    const userId = String(req.query.id);
+    const userId = String(req.query.userId);
 
     if (!userId)
         throw Error(`User id is invalid`);
@@ -452,7 +452,7 @@ router.get('/user/nodes', httpAction(async (req, res) => {
     /** @type {V2RayConfigInboundClient[]} */
     const clients = [];
 
-    for (let node of nodes) {       
+    for (let node of nodes.filter(x => !x.disabled)) {       
             try {
             let result = await fetch(node.address + '/inbounds', {
                 body: JSON.stringify({
@@ -460,6 +460,10 @@ router.get('/user/nodes', httpAction(async (req, res) => {
                     view: {
                         filter: userId,
                         limit: 10,
+                        inbounds: [],
+                        statusFilter: [],
+                        showId: true,
+                        sortAsc: true 
                     }
                 }),
                 method: 'post',
@@ -472,12 +476,13 @@ router.get('/user/nodes', httpAction(async (req, res) => {
             /** @type {V2RayConfigInbound[]} */
             // @ts-ignore
             let inbounds = await result.json();
-
-            clients.push(...inbounds?.flatMap(x => x?.settings?.clients ?? [])?.map(x => {
-                return {...x, serverNode: node.id }
-            }) ?? []);
+            if (Array.isArray(inbounds)) {
+                clients.push(...inbounds?.flatMap(x => x?.settings?.clients ?? [])?.map(x => {
+                    return {...x, serverNode: node.name }
+                }) ?? []);
+            }
         } catch (err) {
-            console.error(err);
+            console.error(`Error on node : ${node.name}`, err);
         }
     }
 

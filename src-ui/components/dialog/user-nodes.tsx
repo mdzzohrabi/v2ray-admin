@@ -1,6 +1,7 @@
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { useContextSWR } from "../../lib/hooks";
 import { styles } from "../../lib/styles";
+import { Copy } from "../copy";
 import { DateView } from "../date-view";
 import { Dialog } from "../dialog";
 import { Popup } from "../popup";
@@ -27,7 +28,9 @@ export function UserNodesDialog({ onClose, user }: UserNodesDialogProps) {
                 <DateView precision={true} full={false} date={u['lastConnect']}/>,
                 <DateView precision={true} full={false} date={u.deActiveDate}/>,
                 <Popup popup={u.deActiveReason?.length ?? 0 > 30 ? u.deActiveReason : null}>
-                    {(u.deActiveReason?.length ?? 0) > 30 ? u.deActiveReason?.substring(0,30) + '...' : (u.deActiveReason ?? '-')}
+                    <Copy data={u.deActiveReason}>
+                        {(u.deActiveReason?.length ?? 0) > 30 ? u.deActiveReason?.substring(0,30) + '...' : (u.deActiveReason ?? '-')}
+                    </Copy>
                 </Popup>,
                 <Size size={u['quotaUsageAfterBilling'] ?? 0}/>,
                 <Size size={u['quotaUsage'] ?? 0}/>
