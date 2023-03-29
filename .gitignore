@@ -8,3 +8,4 @@ config.bridge.json
 /db/*
 __restored
 __test
+bash/v2ray-admin.code-workspace

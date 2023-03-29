@@ -55,6 +55,9 @@ export SERVER_NAME=$serverName
 # Set time-zone
 timedatectl set-timezone Asia/Tehran
 
+# Update APT
+apt update
+
 # Install V2Fly
 bash <(curl -L https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh)
 
