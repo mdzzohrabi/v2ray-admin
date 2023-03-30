@@ -1,13 +1,11 @@
-// @ts-check
-
 import classNames from "classnames";
-import React, { Fragment } from "react";
+import { Fragment, ReactElement } from "react";
 import { styles } from "../lib/styles";
 
-export interface TableProps<T, G> {
-    columns?: string[],
+export interface TableProps<T, G, C extends string> {
+    columns?: C[],
     rows: T[],
-    cells?: (row: T, index: number) => any[],
+    cells?: (row: T, index: number, items: T[]) => any[],
     loading?: boolean,
     rowContainer?: (row: T, children: any, group?: G) => any
     index?: (row: T, index: number) => any
@@ -16,13 +14,24 @@ export interface TableProps<T, G> {
     groupFooter?: (group: G, items: T[]) => any
     footer?: (items: T[]) => any
     className?: string
+    cellMerge?: C[]
 }
 
+function hasKey(value: any): value is ReactElement {
+    return typeof value == 'object' && !!value && 'key' in value;
+}
 
-export function Table<T, G>({ columns, rows, cells, loading, rowContainer, index: indexGetter, groupBy, group, groupFooter, footer, className }: TableProps<T, G>) {
+export function Table<T, G, C extends string>({ columns, rows, cells, loading, rowContainer, index: indexGetter, groupBy, group, groupFooter, footer, className, cellMerge }: TableProps<T, G, C>) {
 
     let prevGroup = null;
     let groupItems = [];
+    let mergedCells: { [cellIndex: number]: number } = {};
+
+    let renderedRows = rows?.map((row, index) => {
+        return cells?.call(this, row, index, rows);
+    });
+
+    let groups = groupBy ? rows?.map((row, index) => groupBy(row, index)) : [];
 
     return <table className={classNames("w-full text-xs", className)}>
         <thead className="sticky top-0 xl:top-0 bg-white shadow-md z-40">
@@ -43,29 +52,68 @@ export function Table<T, G>({ columns, rows, cells, loading, rowContainer, index
             {rows?.map((row, index) => {
                 let elGroupFooter = null;
                 let elGroup = null;
-                let rowGroup;
-                if (groupBy && group) {
-                    rowGroup = groupBy(row, index);
-                    if (rowGroup) {
-                        // New Group
-                        if (rowGroup != prevGroup) {
-                            // End of group
-                            if (prevGroup != null && !!groupFooter) {
-                                elGroupFooter = groupFooter(prevGroup, groupItems);
-                            }
-
-                            elGroup = group(rowGroup);
-                            prevGroup = rowGroup;
-                            groupItems = [];
+                let rowGroup = groups[index];
+                let prevGroup = groups[index - 1];
+                let isGroupChanged = rowGroup != prevGroup;
+                if (rowGroup) {
+                    // New Group
+                    if (isGroupChanged) {
+                        // End of group
+                        if (prevGroup != null && !!groupFooter) {
+                            elGroupFooter = groupFooter(prevGroup, groupItems);
                         }
-                        groupItems.push(row);
+
+                        elGroup = group ? group(rowGroup) : null;
+                        groupItems = [];
+                    }
+                    groupItems.push(row);
+                }
+            
+
+                let renderedCells: any[] = renderedRows[index];
+
+                // Merged Cells
+                if (cellMerge) {
+                    mergedCells = {};
+                    let cursor = 1;
+                    while (true) {
+                        let nextRowIndex = index + cursor;
+                        if (groups[index] != groups[nextRowIndex]) break;
+                        let nextCells = renderedRows[nextRowIndex];
+                        if (nextCells) {
+                            let hasAnyMerge = false;
+                            renderedCells.forEach((cell, index) => {
+                                if (!cellMerge.includes(columns[index])) return;
+                                let nextRowCell = nextCells[index];
+                                if (cell && nextRowCell && cell == nextRowCell || (hasKey(cell) && hasKey(nextRowCell) && cell.key?.toString()?.startsWith('merge-') && cell.key == nextRowCell.key)) {
+                                    let rowSpan = (mergedCells[index] ?? 1) + 1;
+                                    if (rowSpan == cursor + 1) {
+                                        mergedCells[index] = (mergedCells[index] ?? 1) + 1;
+                                        nextCells[index] = undefined;
+                                        hasAnyMerge = true;
+                                    }
+                                }
+                            });
+                            cursor++;
+                            if (!hasAnyMerge)
+                                break;
+                        } else {
+                            break;
+                        }
                     }
                 }
 
-
-                let elRow = <tr className="bg-white odd:bg-slate-50" key={index}>
-                    <td className={classNames(styles.td)}>{indexGetter ? indexGetter(row, index) : index}</td>
-                    {cells?.call(this, row, index)?.map((cell, index) => <td key={index} className={classNames(styles.td)}>{cell}</td>)}
+                let elRow = <tr className={classNames("bg-white", { "odd:bg-slate-50": !cellMerge })} key={index}>
+                    <td className={classNames(styles.td, {
+                        'border-r-[1px]': cellMerge
+                    })}>{indexGetter ? indexGetter(row, index) : index}</td>
+                    {renderedCells?.map((cell, index) => {
+                        if (cell === undefined) return null;
+                        let rowSpan = mergedCells[index] ?? 1;
+                        return <td rowSpan={rowSpan} key={index} className={classNames(styles.td, {
+                            'border-r-[1px]': cellMerge
+                        })}>{cell}</td>;
+                    })}
                 </tr>;
 
                 return <Fragment key={index}>

@@ -378,12 +378,11 @@ export default function UsersPage() {
                                             {showId?<Info className="ml-3" label={"ID"}>
                                                 <Editable editable={access('users', 'regenerateId')} onEdit={newId => setInfo(i.tag, u, 'id', newId)} value={u.id}>{u.id}</Editable>
                                             </Info>:null}
-                                            {u.deActiveDate ? 
-                                            <Info label={"De-active reason"} className="ml-2">
+                                            <Info label={u.deActiveReason ? "De-active reason" : null} className="ml-2">
                                                 <Popup popup={u.deActiveReason?.length ?? 0 > 30 ? u.deActiveReason : null}>
-                                                    <Editable onEdit={value => setInfo(i.tag, u, 'deActiveReason', value)} value={u.deActiveReason}>{(u.deActiveReason?.length ?? 0) > 30 ? u.deActiveReason?.substring(0,30) + '...' : (u.deActiveReason ?? '-')}</Editable>
+                                                    <Editable onEdit={value => setInfo(i.tag, u, 'deActiveReason', value)} value={u.deActiveReason}>{(u.deActiveReason?.length ?? 0) > 30 ? u.deActiveReason?.substring(0,30) + '...' : (u.deActiveReason ? u.deActiveReason : '-')}</Editable>
                                                 </Popup>
-                                            </Info> : null }
+                                            </Info>
                                         </div>
                                     </div>
                                 </td>

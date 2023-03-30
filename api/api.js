@@ -477,9 +477,9 @@ router.get('/user/nodes', httpAction(async (req, res) => {
             // @ts-ignore
             let inbounds = await result.json();
             if (Array.isArray(inbounds)) {
-                clients.push(...inbounds?.flatMap(x => x?.settings?.clients ?? [])?.map(x => {
-                    return {...x, serverNode: node.name }
-                }) ?? []);
+                clients.push(...inbounds?.flatMap(x => x?.settings?.clients?.map(u => {
+                    return {...u, serverNode: node.name, inboundTag: x.tag }
+                }) ?? []) ?? []);
             }
         } catch (err) {
             console.error(`Error on node : ${node.name}`, err);
