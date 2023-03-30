@@ -12,7 +12,7 @@ async function cronBadUsers(cron, range = 1, reActiveUsers = true) {
 
     showInfo(`Start`)
 
-    let fromDate = new Date('2023/03/29 15:54:05');
+    let fromDate = new Date();
     let rangeMinutes = range;
     fromDate.setMinutes(fromDate.getMinutes() - rangeMinutes);
     
