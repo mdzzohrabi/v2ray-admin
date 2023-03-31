@@ -15,9 +15,10 @@ export interface TableProps<T, G, C extends string> {
     footer?: (items: T[]) => any
     className?: string
     cellMerge?: C[]
+    sortColumns?: C[]
 }
 
-function hasKey(value: any): value is ReactElement {
+function isReactNode(value: any): value is ReactElement {
     return typeof value == 'object' && !!value && 'key' in value;
 }
 
@@ -85,7 +86,7 @@ export function Table<T, G, C extends string>({ columns, rows, cells, loading, r
                             renderedCells.forEach((cell, index) => {
                                 if (!cellMerge.includes(columns[index])) return;
                                 let nextRowCell = nextCells[index];
-                                if (cell && nextRowCell && cell == nextRowCell || (hasKey(cell) && hasKey(nextRowCell) && cell.key?.toString()?.startsWith('merge-') && cell.key == nextRowCell.key)) {
+                                if (cell && nextRowCell && cell == nextRowCell || (isReactNode(cell) && isReactNode(nextRowCell) && cell.key?.toString()?.startsWith('merge-') && cell.key == nextRowCell.key)) {
                                     let rowSpan = (mergedCells[index] ?? 1) + 1;
                                     if (rowSpan == cursor + 1) {
                                         mergedCells[index] = (mergedCells[index] ?? 1) + 1;

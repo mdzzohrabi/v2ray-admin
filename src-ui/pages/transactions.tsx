@@ -1,5 +1,6 @@
-import { ArrowPathIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, ArrowUpTrayIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
+import ExportJsonExcel from 'js-export-excel';
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, useContext, useEffect, useState } from 'react';
@@ -68,15 +69,16 @@ export default function TransactionsPage() {
     let [view, setView] = useStoredState('transactions-view', {
         fullTime: true,
         user: router.query.user,
-        sortColumn: '',
-        sortOrder: 'asc',
+        sortColumn: 'createDate',
+        sortOrder: 'desc',
         group: true
     });
 
     let {access} = useUser();
 
     useEffect(() => {
-        setView({ ...view, user: router.query.user });
+        if (router.query.user)
+            setView({ ...view, user: router.query.user });
     }, [router.query.user]);
     
     let [expanded, setExpanded] = useStoredState('expanded-transactions', { });
@@ -133,6 +135,41 @@ export default function TransactionsPage() {
         }))
     ;
 
+    const exportExcel = useCallback(() => {
+        console.log('Export Excel');
+        let intl = new Intl.DateTimeFormat('fa-IR-u-nu-latn', {
+            timeStyle: 'medium',
+            dateStyle: 'full'
+        });
+        let excel = new ExportJsonExcel({
+            fileName: 'V2Ray-Transactions',
+            datas: [
+                {
+                    sheetData: transactions?.map(x => ({
+                        Date: intl.format(new Date(x.createDate)),
+                        User: x.user,
+                        Remark: x.remark,
+                        Dept: Number(x.amount) > 0 ? Number(x.amount) : 0,
+                        Paid: Number(x.amount) < 0 ? Number(x.amount) : 0,
+                        Remain: x['remain'],
+                        Creator: x.createdBy
+                    })),
+                    sheetName: 'Transactions',
+                    sheetHeader: [
+                        'Date',
+                        'User',
+                        'Remark',
+                        'Dept',
+                        'Paid',
+                        'Remain',
+                        'Creator'
+                    ]
+                }
+            ]
+        })
+        excel.saveExcel();
+    }, [transactions]);
+
     return <Container>
         <Head>
             <title>Transactions</title>
@@ -151,6 +188,7 @@ export default function TransactionsPage() {
                     <Price value={transactions?.reduce((result, t) => result + (Number(t.amount) || 0), 0) ?? 0}/>
                 </Field>
                 <div className="ml-auto mr-2 flex flex-row">
+                    <button className={styles.buttonItem} onClick={exportExcel}><ArrowUpTrayIcon className="w-4"/> Export Excel</button>
                     {access('transactions', 'add') ? <button className={styles.buttonItem} onClick={() => transactionDialog.show(users, addTransaction)}>
                         <PlusIcon className="w-4"/>
                         Add Transaction

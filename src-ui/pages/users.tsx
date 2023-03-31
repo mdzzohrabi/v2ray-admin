@@ -487,7 +487,7 @@ export default function UsersPage() {
                                         <PopupMenu.Item visible={access('users', 'renew')} icon={<PlusIcon className="w-4"/>} action={() => prompt(`Add 1 Months to Expire Days for user "${u.email}" ?`, `Add Expire Days`, () => addDays(i.tag, u, 30))}>
                                             +1 Months
                                         </PopupMenu.Item>
-                                        <PopupMenu.Item visible={access('transactions', 'list')} icon={<CurrencyDollarIcon className="w-4"/>}>
+                                        <PopupMenu.Item visible={access('transactions', 'list')} action={() => router.push(`/transactions?user=${u.email}`)} icon={<CurrencyDollarIcon className="w-4"/>}>
                                             Transactions
                                         </PopupMenu.Item>
                                         <PopupMenu.Item visible={access('users', 'dailyUsage')} icon={<CalendarDaysIcon className="w-4"/>} action={() => router.push(`/usages?user=${u.email}`)}>

@@ -452,7 +452,7 @@ router.get('/user/nodes', httpAction(async (req, res) => {
     /** @type {V2RayConfigInboundClient[]} */
     const clients = [];
 
-    for (let node of nodes.filter(x => !x.disabled)) {       
+    for (let node of nodes.filter(x => !x.disabled && x.show_in_other_nodes)) {       
             try {
             let result = await fetch(node.address + '/inbounds', {
                 body: JSON.stringify({
@@ -822,7 +822,7 @@ router.get('/summary', async (req, res) => {
                 .sort((a, b) => a.traffic > b.traffic ? -1 : 1)
                 .slice(0, 10)
             },
-            nodes: nodes.filter(x => !x.disabled).map(x => {
+            nodes: nodes.filter(x => !x.disabled && x.show_in_home).map(x => {
                 x['connectedClients'] = users.filter(u => statusFilters['Connected (1 Hour)'](u) && u['lastConnectNode'] == x.id).length;
                 x['monthlyTrafficUsage'] = trafficMonth.filter(t => t.server == x.id && t.type == 'outbound').reduce((s, t) => s + t.traffic, 0);
                 return x;

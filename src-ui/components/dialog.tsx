@@ -1,4 +1,5 @@
-import React, { createContext, FormEvent, Fragment, useCallback, useContext, useState } from "react";
+import classNames from "classnames";
+import React, { createContext, FormEvent, Fragment, HTMLProps, useCallback, useContext, useState } from "react";
 
 export const DialogContext = createContext({ dialogs: [], setDialogs: (dialogs) => null });
 
@@ -47,14 +48,14 @@ export function DialogsContainer({ children }) {
     </DialogContext.Provider>
 }
 
-interface DialogProps {
+interface DialogProps extends HTMLProps<HTMLDivElement> {
     children?: any
     title?: string
     onClose?: any
     onSubmit?: (event: FormEvent) => any
 }
 
-export function Dialog({ children, title = undefined, onClose = undefined, onSubmit = undefined }: DialogProps) {
+export function Dialog({ children, title = undefined, onClose = undefined, onSubmit = undefined, className, ...props }: DialogProps) {
 
     let elDialog = <div className="bg-white rounded-xl p-2 min-w-[30rem] flex flex-col max-h-[90vh] text-xs md:text-sm lg:text-base">
         <div className="flex flex-row px-1 pb-2">
@@ -63,7 +64,7 @@ export function Dialog({ children, title = undefined, onClose = undefined, onSub
                 {onClose ? <span onClick={onClose} className="aspect-square bg-slate-200 rounded-full px-2 py-1 text-gray-600 cursor-pointer hover:bg-slate-900 hover:text-white">X</span> : null }
             </div>
         </div>
-        <div className="overflow-auto">
+        <div className={classNames("overflow-auto", className)} {...props}>
             {children}
         </div>
     </div>;

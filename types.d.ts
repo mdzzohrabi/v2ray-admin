@@ -281,7 +281,10 @@ interface ServerNode {
     lastConnectIP?: string
     lastSyncDate?: string
     sync?: boolean
+    syncConfig?: boolean
     disabled?: boolean
+    show_in_other_nodes?: boolean
+    show_in_home?: boolean
 }
 
 interface CRUDAcl {

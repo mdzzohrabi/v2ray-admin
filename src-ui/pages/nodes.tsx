@@ -31,7 +31,7 @@ function ServerNodeDialog({ onEdit, onClose, node: nodeProp }: ServerNodeDialogP
         onClose();
     }, [onEdit, serverNode]);
 
-    return <Dialog title="Server Node" onClose={onClose} onSubmit={onSubmit}>
+    return <Dialog title="Server Node" onClose={onClose} onSubmit={onSubmit} className="text-sm">
         <FieldsGroup data={serverNode} dataSetter={setServerNode}>
             <div className="flex flex-row">
                 <Field className={'flex-1'} label="Name" htmlFor="name">
@@ -50,15 +50,6 @@ function ServerNodeDialog({ onEdit, onClose, node: nodeProp }: ServerNodeDialogP
             {serverNode?.type == 'server' ? <Field label="Api Key" htmlFor="apiKey">
                 <input type="text" id="apiKey" className={styles.input} readOnly={serverNode?.type != 'server'}/>
             </Field> : null }
-            {serverNode?.type == 'server' ? <div className="flex flex-row gap-3 py-2/">
-                <Field label="Sync Database" htmlFor="sync" horizontal hint={'Sync database with the server'}>
-                    <input type="checkbox" id="sync" className={styles.input}/>
-                </Field>
-                <Field label="Sync V2Ray Config" htmlFor="syncConfig" horizontal hint={'Copy V2Ray config from server only if its defined also in the server'}>
-                    <input type="checkbox" id="syncConfig" className={styles.input}/>
-                </Field>
-            </div>
-            : null }
             <Infos className={'p-2 leading-8'}>
                 <Info label={'ID'}>{serverNode?.id ?? '-'}</Info>
                 {serverNode?.type == 'client' ? <Info label={'Api Key'}>{serverNode?.apiKey ?? '-'}</Info> : null }
@@ -66,6 +57,25 @@ function ServerNodeDialog({ onEdit, onClose, node: nodeProp }: ServerNodeDialogP
                 <Info label={'Last Connect Date'}>{serverNode?.lastConnectDate ?? '-'}</Info>
                 <Info label={'Last Sync Date'}>{serverNode?.lastSyncDate ?? '-'}</Info>
             </Infos>
+            {serverNode?.type == 'server' ? 
+                <div className="flex flex-row gap-3 py-2 border-t-[1px]">
+                    <Field label="Sync Database" htmlFor="sync" horizontal hint={'Sync database with the server'}>
+                        <input type="checkbox" id="sync" className={styles.input}/>
+                    </Field>
+                    <Field label="Sync V2Ray Config" htmlFor="syncConfig" horizontal hint={'Copy V2Ray config from server only if its defined also in the server'}>
+                        <input type="checkbox" id="syncConfig" className={styles.input}/>
+                    </Field>
+                </div>
+            :
+                <div className="flex flex-row gap-3 py-2 border-t-[1px]">
+                    <Field label="Show in user other nodes" htmlFor="show_in_other_nodes" horizontal hint={'Available in "View in other Servers" dialog'}>
+                        <input type="checkbox" id="show_in_other_nodes" className={styles.input}/>
+                    </Field>
+                    <Field label="Show in home" htmlFor="show_in_home" horizontal hint={'Available in home summary'}>
+                        <input type="checkbox" id="show_in_home" className={styles.input}/>
+                    </Field>
+                </div>
+            }
             <div className="flex flex-row border-t-[1px] pt-2 mt-2">
                 <Field htmlFor="disabled" label="Disabled" horizontal>
                     <input type={'checkbox'} id="disabled"/>
@@ -133,7 +143,7 @@ export default function NodesPage() {
             <div className="rounded-lg flex flex-col flex-1 border-2">
                 <Table
                     rows={nodes ?? []}
-                    columns={[ 'ID', 'Type', 'Name', 'Address', 'Api Key', 'Ping (ms)', 'Last Connect', 'Actions' ]}
+                    columns={[ 'ID', 'Type', 'Name', 'Address', 'Api Key',' Status', 'Ping (ms)', 'Last Connect', 'Actions' ]}
                     cells={row => [
                         row.id,
                         <div className="flex flex-row space-x-2">
@@ -146,6 +156,15 @@ export default function NodesPage() {
                         </div>,
                         row.address ?? NA,
                         row.apiKey ?? NA,
+                        <Infos>
+                            {row.type == 'client' ? <>
+                            <Info label={'Show in Home'}>{row.show_in_home ? 'Yes' : 'No'}</Info>
+                            <Info label={'Show in other servers'}>{row.show_in_other_nodes ? 'Yes' : 'No'}</Info>
+                            </> : <>
+                            <Info label={'Sync Database'}>{row.sync ? 'Yes' : 'No'}</Info>
+                            <Info label={'Sync Config'}>{row.syncConfig ? 'Yes' : 'No'}</Info>
+                            </>}
+                        </Infos>,
                         typeof row.ping == 'number' ? row.ping + ' ms' : row.ping ?? NA,
                         <Infos>
                             <Info label={'IP'}>{row.lastConnectIP ?? '-'}</Info>
