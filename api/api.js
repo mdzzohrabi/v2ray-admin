@@ -665,7 +665,7 @@ router.get('/nodes', httpAction(async (req, res) => {
 router.post('/nodes', async (req, res) => {
     try {
         /** @type {Partial<ServerNode>} */
-        let { address, type = 'client', sync = false, apiKey, name, disabled } = req.body;
+        let { address, type = 'client', sync = false, apiKey, name, disabled, show_in_home, show_in_other_nodes, syncConfig } = req.body;
 
         /** @type {ServerNode[]} */
         let nodes = await db('server-nodes') ?? [];
@@ -682,6 +682,9 @@ router.post('/nodes', async (req, res) => {
             address,
             type,
             sync,
+            syncConfig,
+            show_in_home,
+            show_in_other_nodes,
             disabled
         });
 
@@ -698,7 +701,7 @@ router.post('/nodes', async (req, res) => {
 router.put('/nodes', async (req, res) => {
     try {
         /** @type {Partial<ServerNode>} */
-        let { id, type, address, sync, name, apiKey, disabled } = req.body;
+        let { id, type, address, sync, name, apiKey, disabled, show_in_home, show_in_other_nodes, syncConfig } = req.body;
 
         /** @type {ServerNode[]} */
         let nodes = await db('server-nodes') ?? [];
@@ -717,6 +720,9 @@ router.put('/nodes', async (req, res) => {
         node.type = type;
         node.sync = sync;
         node.disabled = disabled;
+        node.show_in_home = show_in_home;
+        node.show_in_other_nodes = show_in_other_nodes;
+        node.syncConfig = syncConfig;
 
         await db('server-nodes', nodes);
 
