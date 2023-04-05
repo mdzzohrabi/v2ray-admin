@@ -1,38 +1,32 @@
-// @ts-check
-/// <reference types="../../../types"/>
 import Head from "next/head";
 import { useRouter } from "next/router";
-import React, { useContext } from 'react';
-import { useMemo } from "react";
-import useSWR from 'swr';
-import { AppContext } from "../../components/app-context";
+import { useEffect, useMemo } from 'react';
 import { Container } from "../../components/container";
+import { FieldServerNodes } from "../../components/field-server-nodes";
 import { Field, FieldsGroup } from "../../components/fields";
 import { ServerNode } from "../../components/server-node";
 import { Size } from "../../components/size";
 import { Table } from "../../components/table";
-import { FieldServerNodes } from "../../components/field-server-nodes";
-import { useContextSWR, usePrompt, useStoredState } from "../../lib/hooks";
+import { useContextSWR, usePrompt, useStoredState, useUser } from "../../lib/hooks";
 import { styles } from "../../lib/styles";
-import { arrSort, queryString, serverRequest } from "../../lib/util";
+import { arrSort, queryString } from "../../lib/util";
 
 export default function TrafficUsagePage() {
 
-    let context = useContext(AppContext);
     let router = useRouter();
     let showAll = router.query.all == '1';
     let email = router.query.user;
-
     let isEn = router.query.date == 'en';
     let dateLocale = isEn ? 'en-US' : 'fa-IR-u-nu-latn';
     let intl = new Intl.DateTimeFormat(dateLocale, { dateStyle: 'short' });
     let now = new Date();
+    let {access} = useUser();
 
-    const dateParts = (/** @type {Date} */ date) => ({
+    const dateParts = (date: Date) => ({
         year: intl.formatToParts(date).find(x => x.type == 'year')?.value,
         month: intl.formatToParts(date).find(x => x.type == 'month')?.value,
         day: intl.formatToParts(date).find(x => x.type == 'day')?.value,
-    })
+    });
 
     let [view, setView] = useStoredState('usages-traffic-view', {
         showDetail: showAll ? true : false,
@@ -50,10 +44,12 @@ export default function TrafficUsagePage() {
         serverNode: ''
     });
 
-    /**
-     * @type {import("swr").SWRResponse<any>}
-     */
-    let {data: usages, mutate: refreshUsages, isValidating: isLoading} = useContextSWR('/traffic' + queryString({ email }));
+    // Filter by user
+    useEffect(() => {
+        setView({ ...view, filter: `=${email}`, type: 'user' });
+    }, [email]);
+
+    let {data: usages, mutate: refreshUsages, isValidating: isLoading} = useContextSWR<any>('/traffic' + queryString({ email }));
     const prompt = usePrompt();
 
     let dates = useMemo(() => Object.keys(usages ?? {}).map(x => new Date(x)), [usages]);
@@ -116,6 +112,7 @@ export default function TrafficUsagePage() {
                     <option value="downlink">DownLink</option>
                 </select>
             </Field>
+            {access('trafficUsage', 'list') ? <>
             <Field label="Type" htmlFor="type">
                 <select id="type" className={styles.input}>
                     <option value={''}>-</option>
@@ -127,6 +124,8 @@ export default function TrafficUsagePage() {
             <Field label="Filter" htmlFor="filter">
                 <input type={"text"} id="filter" className={styles.input}/>
             </Field>
+            </>
+             : null }
             <Field label="Select Top" htmlFor="top">
                 <input type={"number"} id="top" width={4} className={styles.input}/>
             </Field>
@@ -172,7 +171,7 @@ export default function TrafficUsagePage() {
                 ) ])
             }
             groupBy={x => x.date}
-            group={date => <tr className="bg-slate-50">
+            group={(date: string) => <tr className="bg-slate-50">
                 <td></td>
                 <td className="font-bold text-lg py-1 px-2">{intl.format(new Date(date))}</td>
                 <td colSpan={4}></td>

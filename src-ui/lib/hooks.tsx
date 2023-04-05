@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import useSWR, { Fetcher, SWRConfiguration } from "swr";
 import { AppContext } from "../components/app-context";
 import { deepCopy, serverRequest, store, stored } from "./util";
+import '../../types';
 
 export function useOutsideAlerter(ref, callback) {
 	useEffect(() => {

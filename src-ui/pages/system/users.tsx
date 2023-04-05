@@ -142,6 +142,9 @@ export function SystemUserDialog({ user: userProp, onClose, onDone }: { user?: S
                                     <Field htmlFor="list" horizontal label="List">
                                         <input type="checkbox" id="list" className={styles.input}/>
                                     </Field>
+                                    <Field htmlFor="customFilter" horizontal label="Custom Filter">
+                                        <input type="checkbox" id="customFilter" className={styles.input}/>
+                                    </Field>
                                 </div>
                             </div>
                         </FieldObject>
@@ -271,6 +274,9 @@ export function SystemUserDialog({ user: userProp, onClose, onDone }: { user?: S
                                     </Field>
                                     <Field htmlFor="otherNodes" horizontal label="Other Nodes">
                                         <input type="checkbox" id="otherNodes" className={styles.input}/>
+                                    </Field>
+                                    <Field htmlFor="traffics" horizontal label="Traffic Usage">
+                                        <input type="checkbox" id="traffics" className={styles.input}/>
                                     </Field>
                                 </div>
                             </div>

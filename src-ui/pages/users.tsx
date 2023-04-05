@@ -514,6 +514,9 @@ export default function UsersPage() {
                                         <PopupMenu.Item icon={<DocumentPlusIcon className="w-4"/>} visible={access('users', 'otherNodes')} action={() => userNodesDialog.show(u)}>
                                             View in other Servers
                                         </PopupMenu.Item>
+                                        <PopupMenu.Item icon={<DocumentPlusIcon className="w-4"/>} visible={access('trafficUsage', 'list')} action={() => router.push(`/usages/traffic?user=${u.email}`)}>
+                                            Traffic Usage
+                                        </PopupMenu.Item>
                                     </PopupMenu>
                                 </td>
                             </tr>
