@@ -282,6 +282,7 @@ interface ServerNode {
     lastSyncDate?: string
     sync?: boolean
     syncConfig?: boolean
+    readLastMinutesLogs?: boolean
     disabled?: boolean
     show_in_other_nodes?: boolean
     show_in_home?: boolean
@@ -364,3 +365,5 @@ interface LoginSession {
     userAgent?: string
     lastRequestIP?: string
 }
+
+type AsyncGeneratorType<T extends AsyncGenerator<any>> = T extends AsyncGenerator<infer R> ? R : any;

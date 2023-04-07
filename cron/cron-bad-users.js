@@ -1,18 +1,17 @@
 // @ts-check
-
-const { env, exit } = require("process");
-const { getPaths, readLogLines, cache, findUser, setUserActive, createLogger, readConfig, writeConfig } = require("../lib/util");
+const { env } = require("process");
+const { getPaths, readLogLines, cache, findUser, setUserActive, createLogger, readConfig, writeConfig, db, serverNodeRequest } = require("../lib/util");
 
 /**
  * Cron Bad Users
  * @param {import("./index").CronContext} cron Cron context
  */
 async function cronBadUsers(cron, range = 1, reActiveUsers = true) {
-    let { showInfo } = createLogger('[Bad-Users]');
+    let { showInfo, showError } = createLogger('[Bad-Users]');
 
     showInfo(`Start`)
 
-    let fromDate = new Date();
+    let fromDate = new Date('2023/03/29 15:54:05');
     let rangeMinutes = range;
     fromDate.setMinutes(fromDate.getMinutes() - rangeMinutes);
     
@@ -23,6 +22,8 @@ async function cronBadUsers(cron, range = 1, reActiveUsers = true) {
      */
     let users = {};
     let lines = readLogLines(accessLogPath, `last-${rangeMinutes}-minutes-bytes`);
+
+    /** @type {AsyncGeneratorType<ReturnType<typeof readLogLines>>[]} */
     let lastMinutesRecords = await cache(`last-${rangeMinutes}-minutes`) ?? [];
 
     // Read log lines
@@ -33,6 +34,36 @@ async function cronBadUsers(cron, range = 1, reActiveUsers = true) {
         lastMinutesRecords.push(line);
     }
 
+    // Grab from remote nodes
+    /** @type {ServerNode[]} */
+    const serverNodes = await db('server-nodes') ?? [];
+
+    const serverNodesLogReaderPromises = serverNodes.map(async node => {
+        try {
+            // Skip
+            if (node.disabled === true || node.readLastMinutesLogs !== true) return;
+
+            /** @type {AsyncGeneratorType<ReturnType<typeof readLogLines>>[]} */
+            let nodeLogs = await serverNodeRequest(node, '/api/last_log_records?m=' + rangeMinutes, 'get', undefined, 5000);
+
+            if (Array.isArray(nodeLogs)) {
+                nodeLogs.forEach(item => lastMinutesRecords.push(item));
+                return true;
+            }
+
+            return false;
+        } catch (err) {
+            showError(err?.message);
+            return false;
+        }
+    });
+
+    // Wait for all servers to respond
+    await Promise.allSettled(serverNodesLogReaderPromises);
+    
+    // Sort by dateTiem
+    lastMinutesRecords = lastMinutesRecords.sort((a, b) => a.dateTime == b.dateTime ? 0 : new Date(a.dateTime) < new Date(b.dateTime) ? -1 : 1);
+    
     // Old log lines from cache that is not in time range
     let removed = [];
     for (let line of lastMinutesRecords) {
@@ -56,7 +87,7 @@ async function cronBadUsers(cron, range = 1, reActiveUsers = true) {
     
     // Log lines that is in time-range
     lastMinutesRecords = lastMinutesRecords.filter(x => !removed.includes(x));
-
+    
     // Cache time-ranged log lines
     await cache(`last-${rangeMinutes}-minutes`, lastMinutesRecords);
 
@@ -123,6 +154,7 @@ async function cronBadUsers(cron, range = 1, reActiveUsers = true) {
         writeConfig(configPath, config);
 
     showInfo(`Complete`);
+    process.exit(0);
 }
 
 module.exports = { cronBadUsers };

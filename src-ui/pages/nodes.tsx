@@ -74,6 +74,9 @@ function ServerNodeDialog({ onEdit, onClose, node: nodeProp }: ServerNodeDialogP
                     <Field label="Show in home" htmlFor="show_in_home" horizontal hint={'Available in home summary'}>
                         <input type="checkbox" id="show_in_home" className={styles.input}/>
                     </Field>
+                    <Field label="Read log recods" htmlFor="readLastMinutesLogs" horizontal hint={'Read last minutes log recods'}>
+                        <input type="checkbox" id="readLastMinutesLogs" className={styles.input}/>
+                    </Field>
                 </div>
             }
             <div className="flex flex-row border-t-[1px] pt-2 mt-2">

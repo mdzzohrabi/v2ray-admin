@@ -1,7 +1,7 @@
 // @ts-check
 const { env } = require("process");
 const { getTransactions } = require("../lib/db");
-const { readConfig, getPaths, db, createLogger, writeConfig } = require("../lib/util");
+const { readConfig, getPaths, db, createLogger, writeConfig, serverNodeRequest: request } = require("../lib/util");
 
 /**
  * 
@@ -11,37 +11,8 @@ async function cronSync(cron) {
 
     let {showError, showInfo, showWarn} = createLogger('[Sync]');
 
-    /**
-     * 
-     * @param {ServerNode} serverNode 
-     * @param {string} action 
-     * @param {string} method 
-     * @param {any} body 
-     * @returns {Promise<any>}
-     */
-    async function request(serverNode, action, method = 'GET', body = undefined) {
-        return await fetch(serverNode.address + action, {
-            method,
-            body: body ? JSON.stringify(body) : undefined,
-            headers: {
-                'Authorization': 'Bearer ' + Buffer.from(serverNode.apiKey, 'utf-8').toString('base64'),
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(async result => {
-            try {
-                return await result.json();
-            }
-            catch (err) {
-                showError(err?.message);
-                showError(await result.text());
-            }
-        });
-    }
-
     showInfo('Start');
 
-    let { default: fetch } = await import('node-fetch');
     let {configPath} = getPaths();
     let tempConfig = readConfig(configPath);
 

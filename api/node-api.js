@@ -1,7 +1,6 @@
-const { readDb, saveDb } = require('../lib/db');
-const { arrSync, db, getPaths, readConfig, getUserConfig } = require('../lib/util');
-
 // @ts-check
+const { readDb, saveDb } = require('../lib/db');
+const { arrSync, db, getPaths, readConfig, getUserConfig, httpAction, readLogLines, cache } = require('../lib/util');
 const router = require('express').Router();
 
 router.post('/api/sync/transactions', async (req, res) => {
@@ -157,5 +156,41 @@ router.post('/api/client_config', async (req, res) => {
 
     res.json({ config: strClientConfig });
 });
+
+router.get('/api/last_log_records', httpAction(async (req, res) => {
+    const { m: rangeMinutes = 1 } = req.query;
+    if (!rangeMinutes) throw Error(`Invalid time range`);
+    const {accessLogPath} = getPaths();
+    const lines = readLogLines(accessLogPath, `last-${rangeMinutes}-minutes-bytes`);
+    const fromDate = new Date();
+    fromDate.setMinutes(fromDate.getMinutes() - rangeMinutes);
+    let lastMinutesRecords = await cache(`last-${rangeMinutes}-minutes`) ?? [];
+    
+    // Read log lines
+    for await (let line of lines) {
+        let {dateTime, status} = line;
+        if (status != 'accepted') continue;
+        if (dateTime < fromDate) continue;
+        lastMinutesRecords.push(line);
+    }
+    
+    // Old log lines from cache that is not in time range
+    let removed = [];
+    for (let line of lastMinutesRecords) {
+        let {dateTime} = line;
+        if (new Date(dateTime) < fromDate) {
+            removed.push(line);
+            continue;
+        }
+    }
+    
+    // Log lines that is in time-range
+    lastMinutesRecords = lastMinutesRecords.filter(x => !removed.includes(x));
+    
+    // Cache time-ranged log lines
+    await cache(`last-${rangeMinutes}-minutes`, lastMinutesRecords);
+
+    return lastMinutesRecords;
+}));
 
 module.exports = { router };
