@@ -379,7 +379,7 @@ router.post('/inbounds', httpAction(async (req, res) => {
         }
         
         let filtered = users
-            .filter(u => !filter || (u.id == filter || u['lastConnectIP'] == filter || u['lastConnectNode'] == filter || u.fullName?.toLowerCase().includes(filter.toLowerCase()) || u.email?.toLowerCase().includes(filter.toLowerCase())))
+            .filter(u => !filter || (u.id == filter || u['lastConnectIP'] == filter || u['lastConnectNode'] == filter || u.fullName?.toLowerCase().includes(filter.toLowerCase()) || u.deActiveReason?.toLowerCase().includes(filter.toLowerCase()) || u.email?.toLowerCase().includes(filter.toLowerCase())))
             .filter(u => !serverNode ? true : serverNode == 'local' ? !u['lastConnectNode'] || u['lastConnectNode'] == 'local' : u['lastConnectNode'] == serverNode)
             .filter(u => statusFilter.length == 0 || statusFilter.map(filter => statusFilters[filter]).every(filter => filter(u)))
             .sort((a, b) => !sortColumn ? 0 : a[sortColumn] == b[sortColumn] ? 0 : a[sortColumn] < b[sortColumn] ? (sortAsc ? -1 : 1) : (sortAsc ? 1 : -1))
