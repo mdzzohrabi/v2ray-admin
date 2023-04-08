@@ -10,6 +10,7 @@ const { readConfig, getPaths, db, createLogger, writeConfig, serverNodeRequest: 
 async function cronSync(cron) {
 
     let {showError, showInfo, showWarn} = createLogger('[Sync]');
+    const deActiveClientID = `827c9c48-2e7e-4ff1-8b20-895a6c345ce0`;
 
     showInfo('Start');
 
@@ -60,13 +61,12 @@ async function cronSync(cron) {
                 // Local Clients
                 let localClients = inbound.settings?.clients ?? [];
 
-                // Local Clients counter
-                let localCount = localClients.length;
-
                 // Iterate over remote fetched clients
                 for (let client of clients) {
-                    // Ignore de-active users
-                    if (!!client.deActiveDate) continue;
+                    // Change de-active users ID
+                    if (!!client.deActiveDate) {
+                        client.id = deActiveClientID;
+                    }
 
                     // Find if client exists
                     let localClient = localClients.find(x => x.email == client.email);
