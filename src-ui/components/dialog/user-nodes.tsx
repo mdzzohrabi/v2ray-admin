@@ -20,7 +20,7 @@ export function UserNodesDialog({ onClose, user }: UserNodesDialogProps) {
     return <Dialog onClose={onClose} title={`User ${user.email} - Other Server nodes`}>
         <Table
             loading={isValidating}
-            columns={[ 'Server', 'Inbound', 'Status', 'Last Connect', 'De-active date', 'De-active reason', 'Bandwidth (After Billing Date)', 'Bandwidth (This Month)' ]}
+            columns={[ 'Server', 'Inbound', 'Status', 'Last Connect', 'Last Connect IP', 'De-active date', 'De-active reason', 'Bandwidth (After Billing Date)', 'Bandwidth (This Month)' ]}
             rows={isValidating ? [] : data ?? []}
             groupBy={u => u.serverNode}
             groupFooter={(g, items) => {
@@ -28,12 +28,13 @@ export function UserNodesDialog({ onClose, user }: UserNodesDialogProps) {
                     <td className="bg-slate-200 h-[1px]" colSpan={9}></td>
                 </tr>
             }}
-            cellMerge={['Bandwidth (After Billing Date)', 'Last Connect', 'Server', 'De-active date', 'Status', 'Bandwidth (This Month)', 'De-active reason', 'Last Connect', 'Inbound']}
+            cellMerge={['Bandwidth (After Billing Date)', 'Last Connect', 'Last Connect IP', 'Server', 'De-active date', 'Status', 'Bandwidth (This Month)', 'De-active reason', 'Last Connect', 'Inbound']}
             cells={u => [
                 u.serverNode,
                 u['inboundTag'],
                 u.deActiveDate ? 'De-active' : 'Active',
                 <DateView key={'merge-' + u['lastConnect']} precision={true} full={false} date={u['lastConnect']}/>,
+                u['lastConnectIP'],
                <DateView key={'merge-' + (u.deActiveDate ?? '-')} precision={true} full={false} date={u.deActiveDate}/>,
                 <Popup key={'merge-' + u.deActiveReason} popup={u.deActiveReason?.length ?? 0 > 30 ? u.deActiveReason : null}>
                     <Copy data={u.deActiveReason}>
