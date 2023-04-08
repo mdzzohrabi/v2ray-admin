@@ -14,7 +14,6 @@ import { queryString, serverRequest } from "../lib/util";
 export default function ServerConfig() {
     let context = useContext(AppContext);
     let router = useRouter();
-    let showAll = router.query.all == '1';
     let [loading, setLoading] = useState(false);
     let [loadingMessage, setLoadingMessage] = useState('Loading ...');
     let [server, setServer] = useAwareState<ServerContext>({ mode: 'login', ...(context?.server ?? {}) }, [context]);
@@ -79,7 +78,7 @@ export default function ServerConfig() {
 
                 setLoadingMessage('OK, Redirect ...');
                 setServers([ ...servers ]);
-                router.push(`/users` + queryString({ all: showAll ? '1' : undefined }));
+                router.push(`/users`);
 
             }
         }

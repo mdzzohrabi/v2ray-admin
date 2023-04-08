@@ -7,17 +7,17 @@ import { DateView } from "../components/date-view";
 import { Field, FieldsGroup } from "../components/fields";
 import { Info, Infos } from "../components/info";
 import { Table } from "../components/table";
-import { useContextSWR, usePrompt, useStoredState } from "../lib/hooks";
+import { useContextSWR, usePrompt, useStoredState, useUser } from "../lib/hooks";
 import { styles } from "../lib/styles";
 import { queryString } from "../lib/util";
 
 export default function UsagesPage() {
 
     let router = useRouter();
-    let showAll = router.query.all == '1';
+    let {access} = useUser();
     let email = router.query.user;
     let [view, setView] = useStoredState('usages-view', {
-        showDetail: showAll ? true : false
+        showDetail: access('isAdmin') ? true : false
     });
 
     let {data: usages, mutate: refreshUsages, isValidating: isLoading} = useContextSWR<any[]>('/daily_usages' + queryString({ email }));
@@ -34,7 +34,7 @@ export default function UsagesPage() {
             <Field label="User" className="border-x-[1px] px-4 m-2">
                 <span className="text-gray-800 py-1 px-2 rounded-lg border-[1px]">{email}</span>
             </Field>
-            {showAll?<Field label="Show Detail" htmlFor="showDetail">
+            {access('isAdmin')?<Field label="Show Detail" htmlFor="showDetail">
                 <input type="checkbox" id="showDetail" />
             </Field>:null}
         </FieldsGroup>
@@ -70,8 +70,8 @@ export default function UsagesPage() {
                     {x.outbounds.map(o => {
                         return <Info label={o.tag}>
                             {o.counter} requests 
-                            {showAll ? 
-                                <a className={classNames(styles.link, 'pl-2')} href={`/usages/logs?all=${showAll?1:0}&user=${email}&tag=${o.tag}&from=${o.firstConnectLogOffset}&to=${o.lastConnectLogOffset}`}> (Logs)</a> : null}
+                            {access('isAdmin') ? 
+                                <a className={classNames(styles.link, 'pl-2')} href={`/usages/logs?user=${email}&tag=${o.tag}&from=${o.firstConnectLogOffset}&to=${o.lastConnectLogOffset}`}> (Logs)</a> : null}
                         </Info>
                     })}
                 </Infos>

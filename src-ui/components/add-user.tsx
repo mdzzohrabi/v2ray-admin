@@ -1,8 +1,10 @@
 import { UserPlusIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
+import { access } from "fs";
 import { useRouter } from "next/router";
 import { FormEvent, useCallback, useContext, useState } from "react";
 import toast from "react-hot-toast";
+import { useUser } from "../lib/hooks";
 import { styles } from "../lib/styles";
 import { serverRequest } from "../lib/util";
 import { AppContext } from "./app-context";
@@ -34,7 +36,7 @@ export function AddUser({ disabled = false, onRefresh, setLoading, inbounds, cla
 
     const context = useContext(AppContext);
     const router = useRouter();
-    let showAll = router.query.all == '1';
+    const {access} = useUser();
 
     let [user, setUser] = useState<UserState>({});
 
@@ -70,7 +72,7 @@ export function AddUser({ disabled = false, onRefresh, setLoading, inbounds, cla
         <FieldsGroup horizontal={false} className={className} containerClassName="items-center" data={user} dataSetter={setUser}>
             <div className="flex flex-row">
                 <Field label={"Username"} htmlFor="email">
-                    <input placeholder="user" pattern={showAll ? undefined : '^user[a-z0-9_-]+'} disabled={disabled} className={styles.input} type="text" id="email"/>
+                    <input placeholder="user" pattern={access('isAdmin') ? undefined : '^user[a-z0-9_-]+'} disabled={disabled} className={styles.input} type="text" id="email"/>
                     <span className="text-xs">
                         Last User Number : <b>{lastUserNumber}</b>
                     </span>
@@ -97,11 +99,11 @@ export function AddUser({ disabled = false, onRefresh, setLoading, inbounds, cla
                 <input placeholder="Email" inputMode={"email"} disabled={disabled} className={styles.input} type="text" id="emailAddress"/>
             </Field>
             <div className="flex flex-row gap-x-4">
-                {showAll?
+                {access('users', 'changePrivate') ?
                 <Field htmlFor="private" horizontal label="Private">
                     <input type="checkbox" id="private"/>
                 </Field>:null}
-                {showAll?
+                {access('users', 'changeFree')?
                 <Field htmlFor="free" horizontal label="Free">
                     <input type="checkbox" id="free"/>
                 </Field>:null}

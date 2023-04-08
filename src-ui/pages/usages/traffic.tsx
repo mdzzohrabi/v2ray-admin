@@ -14,7 +14,6 @@ import { arrSort, queryString } from "../../lib/util";
 export default function TrafficUsagePage() {
 
     let router = useRouter();
-    let showAll = router.query.all == '1';
     let email = router.query.user;
     let isEn = router.query.date == 'en';
     let dateLocale = isEn ? 'en-US' : 'fa-IR-u-nu-latn';
@@ -29,7 +28,7 @@ export default function TrafficUsagePage() {
     });
 
     let [view, setView] = useStoredState('usages-traffic-view', {
-        showDetail: showAll ? true : false,
+        showDetail: access('isAdmin') ? true : false,
         sortColumn: 'type',
         sortAsc: true,
         filter: '',
@@ -142,7 +141,7 @@ export default function TrafficUsagePage() {
                 </select>
             </Field> */}
             <div className="flex flex-row">
-                {showAll ? <button className={styles.button} onClick={() => refreshUsages()}>Reload</button> : null }
+                {access('isAdmin') ? <button className={styles.button} onClick={() => refreshUsages()}>Reload</button> : null }
             </div>
         </FieldsGroup>
         {isLoading ? <div className="absolute bg-slate-900 text-white rounded-lg px-3 py-1 bottom-3 left-3">

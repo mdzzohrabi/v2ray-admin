@@ -774,7 +774,7 @@ router.delete('/nodes', async (req, res) => {
 
 router.get('/summary', async (req, res) => {
     try {
-        let {showAll} = req.query;
+        let showAll = (res.locals?.user?.acls?.isAdmin ? 'true' : 'false') ?? req.query.showAll;
 
         let {configPath, accessLogPath} = getPaths();
         let config = readConfig(configPath);

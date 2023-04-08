@@ -26,7 +26,6 @@ export default function ConfigurationPage() {
 
     let {server} = useContext(AppContext);
     let router = useRouter();
-    let showAll = router.query.all == '1';
     let [view, setView] = useState({
         showDetail: true
     });
@@ -162,7 +161,7 @@ export default function ConfigurationPage() {
                     // Actions
                     <PopupMenu>
                         <PopupMenu.Item action={() => inboundDialog.show(row, inbounds.updateItem)}>Edit</PopupMenu.Item>
-                        <PopupMenu.Item action={() => router.push('/users?protocol=' + row.protocol + (showAll?'&all=1':''))}>Users</PopupMenu.Item>
+                        <PopupMenu.Item action={() => router.push('/users?protocol=' + row.protocol)}>Users</PopupMenu.Item>
                         <PopupMenu.Item action={() => inbounds.deleteItem(row)}>Delete</PopupMenu.Item>
                     </PopupMenu>
                 ]}

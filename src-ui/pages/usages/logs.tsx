@@ -15,7 +15,6 @@ export default function UsageLogsPage() {
     let context = useContext(AppContext);
     let router = useRouter();
     let {all, user: email, from: fromOffset, to: toOffset, tag} = router.query;
-    let showAll = all == '1';
     let [view, setView] = useState({
         search: '',
         page: 1,
