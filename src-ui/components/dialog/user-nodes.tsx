@@ -25,7 +25,7 @@ export function UserNodesDialog({ onClose, user }: UserNodesDialogProps) {
             groupBy={u => u.serverNode}
             groupFooter={(g, items) => {
                 return <tr>
-                    <td className="bg-slate-200 h-[1px]" colSpan={9}></td>
+                    <td className="bg-slate-200 h-[1px]" colSpan={10}></td>
                 </tr>
             }}
             cellMerge={['Bandwidth (After Billing Date)', 'Last Connect', 'Last Connect IP', 'Server', 'De-active date', 'Status', 'Bandwidth (This Month)', 'De-active reason', 'Last Connect', 'Inbound']}
