@@ -379,7 +379,22 @@ router.post('/inbounds', httpAction(async (req, res) => {
         }
         
         let filtered = users
-            .filter(u => !filter || (u.id == filter || u['lastConnectIP'] == filter || u['lastConnectNode'] == filter || u.fullName?.toLowerCase().includes(filter.toLowerCase()) || u.deActiveReason?.toLowerCase().includes(filter.toLowerCase()) || u.email?.toLowerCase().includes(filter.toLowerCase())))
+            .filter(u => {
+                if (!filter) return true;
+                // ID
+                if (u.id == filter) return true;
+                // Last Connect IP
+                if (u['lastConnectIP'] == filter) return true;
+                // Last Connect Node
+                if (u['lastConnectNode'] == filter) return true;
+                // Full Name
+                if (u.fullName?.toLowerCase().includes(filter.toLowerCase())) return true;
+                // De-active reason
+                if (u.deActiveReason?.toLowerCase().includes(filter.toLowerCase())) return true;
+                // E-Mail
+                if (u.email?.toLowerCase().includes(filter.toLowerCase()) || (filter[0] == '=' && u.email == String(filter).substring(1))) return true;
+                return false;
+            })
             .filter(u => !serverNode ? true : serverNode == 'local' ? !u['lastConnectNode'] || u['lastConnectNode'] == 'local' : u['lastConnectNode'] == serverNode)
             .filter(u => statusFilter.length == 0 || statusFilter.map(filter => statusFilters[filter]).every(filter => filter(u)))
             .sort((a, b) => !sortColumn ? 0 : a[sortColumn] == b[sortColumn] ? 0 : a[sortColumn] < b[sortColumn] ? (sortAsc ? -1 : 1) : (sortAsc ? 1 : -1))
@@ -444,8 +459,11 @@ router.get('/user/nodes', httpAction(async (req, res) => {
     /** @type {string} */
     const userId = String(req.query.userId);
 
-    if (!userId)
-        throw Error(`User id is invalid`);
+    /** @type {string} */
+    const email = String(req.query.email);
+
+    if (!userId && !email)
+        throw Error(`User is invalid`);
 
     const fetch = (await import('node-fetch')).default;
 
@@ -458,7 +476,7 @@ router.get('/user/nodes', httpAction(async (req, res) => {
                 body: JSON.stringify({
                     private: true,
                     view: {
-                        filter: userId,
+                        filter: userId ? userId : '=' + email,
                         limit: 10,
                         inbounds: [],
                         statusFilter: [],

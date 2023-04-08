@@ -1,12 +1,14 @@
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { useContextSWR } from "../../lib/hooks";
 import { styles } from "../../lib/styles";
+import { queryString } from "../../lib/util";
 import { Copy } from "../copy";
 import { DateView } from "../date-view";
 import { Dialog } from "../dialog";
 import { Popup } from "../popup";
 import { Size } from "../size";
 import { Table } from "../table";
+// import '../../../types';
 
 interface UserNodesDialogProps {
     onClose?: Function
@@ -15,7 +17,10 @@ interface UserNodesDialogProps {
 
 export function UserNodesDialog({ onClose, user }: UserNodesDialogProps) {
 
-    const { isValidating, mutate, data } = useContextSWR<V2RayConfigInboundClient[]>('/user/nodes?userId=' + user?.id);
+    const { isValidating, mutate, data } = useContextSWR<V2RayConfigInboundClient[]>('/user/nodes' + queryString({
+        userId: user?.id,
+        email: user?.email
+    }));
 
     return <Dialog onClose={onClose} title={`User ${user.email} - Other Server nodes`}>
         <Table

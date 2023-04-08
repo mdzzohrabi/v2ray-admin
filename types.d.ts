@@ -1,5 +1,3 @@
-// @ts-check
-
 interface V2RayConfig {
     log?: V2RayConfigLog,
     api?: V2RayConfigApi,
