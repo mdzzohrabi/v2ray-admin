@@ -476,7 +476,7 @@ router.get('/user/nodes', httpAction(async (req, res) => {
                 body: JSON.stringify({
                     private: true,
                     view: {
-                        filter: userId ? userId : '=' + email,
+                        filter: email ? '=' + email : userId,
                         limit: 10,
                         inbounds: [],
                         statusFilter: [],
