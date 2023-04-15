@@ -11,7 +11,7 @@ import { Field, FieldsGroup } from "../components/fields";
 import { Info, Infos } from "../components/info";
 import { PopupMenu } from "../components/popup-menu";
 import { Table } from "../components/table";
-import { useContextSWR, useCRUD, usePrompt } from "../lib/hooks";
+import { useContextSWR, useCRUD, usePrompt, useStoredState } from "../lib/hooks";
 import { styles } from "../lib/styles";
 import { serverRequest } from "../lib/util";
 
@@ -100,6 +100,10 @@ export default function NodesPage() {
     let { insert: addNode, edit: editNode, remove: deleteNode, items: nodesResponse, refreshItems: refreshNodes, isItemsLoading, isLoading } = useCRUD<ServerNode>('/nodes', {
         listUrl: '/nodes?all=1'
     })
+
+    let [view, setView] = useStoredState('nodes', {
+        onlyActive: true
+    });
     
     useEffect(() => setNodes(nodesResponse), [nodesResponse]);
 
@@ -127,6 +131,13 @@ export default function NodesPage() {
                 {isLoading || isItemsLoading? <span className="rounded-lg bg-gray-700 text-white px-3 py-0">Loading</span> :null}
                 {isPinging? <span className="rounded-lg bg-rose-200 text-rose-900 px-3 py-0">Pinging</span> :null}
             </div>
+            <div className="flex flex-row items-center px-4">
+                <FieldsGroup data={view} dataSetter={setView} horizontal>
+                    <Field htmlFor="onlyActive" label="Only Active Servers">
+                        <input type="checkbox" id="onlyActive"/>
+                    </Field>
+                </FieldsGroup>
+            </div>
             <div className="flex flex-row">
                 <button type={"button"} onClick={() => pingNodes()} className={classNames(styles.buttonItem)}>
                     <BoltIcon className="w-4"/>
@@ -145,7 +156,9 @@ export default function NodesPage() {
         <div className="p-3">
             <div className="rounded-lg flex flex-col flex-1 border-2">
                 <Table
-                    rows={nodes ?? []}
+                    rows={(nodes ?? []).filter(x => {
+                        return !view.onlyActive || x.disabled !== true;
+                    })}
                     columns={[ 'ID', 'Type', 'Name', 'Address', 'Api Key',' Status', 'Ping (ms)', 'Last Connect', 'Actions' ]}
                     cells={row => [
                         row.id,
