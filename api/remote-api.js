@@ -25,7 +25,7 @@ router.use(async (req, res, next) => {
 
         try {
             let result = await fetch(node.address + path, {
-                body: req.method.toLowerCase() == 'post' ? JSON.stringify(req.body) : undefined,
+                body: ['post', 'put', 'delete'].includes(req.method.toLowerCase()) ? JSON.stringify(req.body) : undefined,
                 method: req.method,
                 headers: {
                     Authorization: 'Bearer ' + Buffer.from(node.apiKey).toString('base64'),
