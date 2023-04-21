@@ -82,6 +82,10 @@ interface V2RayConfigInbound {
     address?: string
     /** Client Config Prefix (Custom) */
     configPrefix?: string
+    /** Custom */
+    configSNI?: string
+    /** Custom */
+    configHost?: string
     listen?: string
     port?: number | string
     protocol?: string

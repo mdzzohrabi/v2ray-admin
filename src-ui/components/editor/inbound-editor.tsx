@@ -45,13 +45,19 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }: Inbound
                         <option value="dokodemo-door">Dokodemo-door</option>
                     </select>
                 </Field>
+                <Field htmlFor="configPrefix" className="flex-1" label="Client Config Prefix">
+                    <input type="text" id="configPrefix" className={styles.input} placeholder='Config Name Prefix'/>
+                </Field>
             </div>
             <div className="flex flex-row">
                 <Field htmlFor="address" className="flex-1" label="Client Address">
-                    <input type="text" id="address" className={styles.input}/>
+                    <input type="text" id="address" className={styles.input} placeholder='Config Client Address'/>
                 </Field>
-                <Field htmlFor="configPrefix" className="flex-1" label="Client Config Prefix">
-                    <input type="text" id="configPrefix" className={styles.input}/>
+                <Field htmlFor="configHost" className="flex-1" label="Client Host">
+                    <input type="text" id="configHost" className={styles.input} placeholder='Config Host'/>
+                </Field>
+                <Field htmlFor="configSNI" className="flex-1" label="SNI">
+                    <input type="text" id="configSNI" className={styles.input} placeholder='Config SNI'/>
                 </Field>
             </div>
             {inbound?.protocol == 'http' ?
