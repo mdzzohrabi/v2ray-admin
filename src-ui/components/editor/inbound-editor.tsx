@@ -46,6 +46,14 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }: Inbound
                     </select>
                 </Field>
             </div>
+            <div className="flex flex-row">
+                <Field htmlFor="address" className="flex-1" label="Client Address">
+                    <input type="text" id="address" className={styles.input}/>
+                </Field>
+                <Field htmlFor="configPrefix" className="flex-1" label="Client Config Prefix">
+                    <input type="text" id="configPrefix" className={styles.input}/>
+                </Field>
+            </div>
             {inbound?.protocol == 'http' ?
             <>
                 <div className="flex flex-row pt-2">

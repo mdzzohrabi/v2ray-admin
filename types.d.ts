@@ -78,6 +78,10 @@ interface V2RayConfigInboundStreamSettings {
 }
 
 interface V2RayConfigInbound {
+    /** Client Address (Custom) */
+    address?: string
+    /** Client Config Prefix (Custom) */
+    configPrefix?: string
     listen?: string
     port?: number | string
     protocol?: string
