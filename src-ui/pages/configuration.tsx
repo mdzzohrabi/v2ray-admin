@@ -129,6 +129,14 @@ export default function ConfigurationPage() {
         onClose = null
     ) => <RoutingBalancerEditor balancer={balancer} dissmis={onClose} onEdit={onEdit}/>);
 
+    let moveItemInArray = useCallback(function <T>(arr: T[], item: T, move: number) {
+        let index = arr.indexOf(item);
+        let newIndex = index + move;
+        arr.splice(index, 1);
+        arr.splice(newIndex, 0, item);
+        return arr;
+    }, []);
+
     let Inbounds = <div id="config-inbounds" className="rounded-lg border-2 flex flex-col flex-1">
         <Collection data={config?.inbounds ?? []} dataSetter={inbounds => setConfig({ ...config, inbounds })}>{inbounds => <>
             <FieldsGroup title={"Inbounds"} data={view} dataSetter={setView} horizontal>
@@ -308,6 +316,8 @@ export default function ConfigurationPage() {
                     <Info label={'Network'}>{x.streamSettings?.network ?? NA}</Info>
                 </Infos>,
                 <PopupMenu>
+                    <PopupMenu.Item action={() => outbounds.dataSetter(moveItemInArray(outbounds.items, x, -1))}>Move Top</PopupMenu.Item>
+                    <PopupMenu.Item action={() => outbounds.dataSetter(moveItemInArray(outbounds.items, x, 1))}>Move Down</PopupMenu.Item>
                     <PopupMenu.Item action={() => outboundDialog.show(x, outbounds.updateItem)}>Edit</PopupMenu.Item>
                     <PopupMenu.Item action={() => outbounds.deleteItem(x)}>Delete</PopupMenu.Item>
                 </PopupMenu>
@@ -372,6 +382,8 @@ export default function ConfigurationPage() {
                         <Info label={"Users"}>{rule.user ? Array.isArray(rule.user) && rule.user?.length > 1 ? `${rule.user.length} users` : rule.user : NA}</Info>
                     </Infos>,
                     <PopupMenu>
+                        <PopupMenu.Item action={() => rules.dataSetter(moveItemInArray(rules.items, rule, -1))}>Move Top</PopupMenu.Item>
+                        <PopupMenu.Item action={() => rules.dataSetter(moveItemInArray(rules.items, rule, 1))}>Move Down</PopupMenu.Item>
                         <PopupMenu.Item action={() => routingRuleDialog.show(rule, rules.updateItem)}>Edit</PopupMenu.Item>
                         <PopupMenu.Item action={() => rules.deleteItem(rule)}>Delete</PopupMenu.Item>
                     </PopupMenu>
