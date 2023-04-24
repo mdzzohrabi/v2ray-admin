@@ -381,7 +381,7 @@ router.post('/inbounds', httpAction(async (req, res) => {
         let filtered = users
             .filter(u => {
                 // Only own users
-                if (user?.acls?.users?.allUsers != true) {
+                if (!user?.acls?.isAdmin && user?.acls?.users?.allUsers != true) {
                     if (u.createdById != user.id) return false;
                 }
                 if (!filter) return true;
