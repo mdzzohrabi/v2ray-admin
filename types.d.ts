@@ -39,6 +39,7 @@ interface V2RayConfigInboundClient {
     id?: string
     email?: string
     level?: number
+    /** Custom fields */
     deActiveDate?: string
     maxConnections?: number
     deActiveReason?: string
@@ -55,6 +56,8 @@ interface V2RayConfigInboundClient {
     quotaLimit?: number
     serverNode?: string
     serverNodeInbound?: string
+    createdBy?: string
+    createdById?: string
 }
 
 interface V2RayConfigInboundSettings {
@@ -309,6 +312,7 @@ interface SystemAcls {
 	trafficUsage?: { list?: boolean };
 	logs?: { list?: boolean };
 	users?: CRUDAcl & {
+        allUsers?: boolean;
 		deleteConnected?: boolean;
 		renew?: boolean;
 		active?: boolean;

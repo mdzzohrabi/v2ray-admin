@@ -380,6 +380,10 @@ router.post('/inbounds', httpAction(async (req, res) => {
         
         let filtered = users
             .filter(u => {
+                // Only own users
+                if (user?.acls?.users?.allUsers != true) {
+                    if (u.createdById != user.id) return false;
+                }
                 if (!filter) return true;
                 // ID
                 if (u.id == filter) return true;
@@ -434,7 +438,9 @@ router.post('/user', async (req, res) => {
         let {configPath} = getPaths();
         if (quotaLimit) quotaLimit = Number(quotaLimit);
         let result = await addUser(configPath, email, 'vmess', tag, {
-            fullName, mobile, emailAddress, private, free, quotaLimit
+            fullName, mobile, emailAddress, private, free, quotaLimit,
+            createdBy: user?.username,
+            createdById: user?.id
         });
         if (!free) {
             await addTransaction({

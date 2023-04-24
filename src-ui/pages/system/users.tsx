@@ -215,6 +215,9 @@ export function SystemUserDialog({ user: userProp, onClose, onDone }: { user?: S
                                     <Field htmlFor="delete" horizontal label="Delete">
                                         <input type="checkbox" id="delete" className={styles.input}/>
                                     </Field>
+                                    <Field htmlFor="allUsers" horizontal label="Show all users">
+                                        <input type="checkbox" id="allUsers" className={styles.input}/>
+                                    </Field>
                                     <Field htmlFor="deleteConnected" horizontal label="Delete Connected Client">
                                         <input type="checkbox" id="deleteConnected" className={styles.input}/>
                                     </Field>
