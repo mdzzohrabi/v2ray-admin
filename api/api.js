@@ -384,6 +384,9 @@ router.post('/inbounds', httpAction(async (req, res) => {
                 if (!user?.acls?.isAdmin && user?.acls?.users?.allUsers != true) {
                     if (u.createdById != user.id) return false;
                 }
+                return true;
+            })
+            .filter(u => {
                 if (!filter) return true;
                 // ID
                 if (u.id == filter) return true;
