@@ -9,6 +9,7 @@ const { router: authentication } = require('./api/authentication');
 const { router: api } = require('./api/api');
 const { router: nodeApi } = require('./api/node-api');
 const { router: systemApi } = require('./api/system-api');
+const { router: monitorApi } = require('./api/monitor');
 const { createSocketServer } = require('./api/socket');
 
 let {showInfo} = createLogger();
@@ -34,6 +35,7 @@ app.use(express.json({
 }));
 
 app.use('/client', clientApi);
+app.use(monitorApi);
 app.use(authentication);
 app.use(systemApi);
 app.use(remoteApi);
