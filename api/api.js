@@ -783,7 +783,9 @@ router.delete('/nodes', async (req, res) => {
 
 router.get('/summary', async (req, res) => {
     try {
-        let showAll = (res.locals?.user?.acls?.isAdmin ? 'true' : 'false') ?? req.query.showAll;
+        /** @type {SystemUser?} */
+        let systemUser = res.locals.user;
+        let showAll = (systemUser?.acls?.isAdmin ? 'true' : 'false') ?? req.query.showAll;
 
         let {configPath, accessLogPath} = getPaths();
         let config = readConfig(configPath);
@@ -796,8 +798,14 @@ router.get('/summary', async (req, res) => {
 
         /** @type {V2RayConfigInboundClient[]} */
         let users = config?.inbounds
-            ?.flatMap(x => x.settings?.clients ?? [])
-            .filter(x => showAll == 'true' || !x.private)
+            // Filter based on allowed inbounds
+            ?.filter(x => systemUser?.acls?.isAdmin || (x.tag && systemUser?.acls?.allowedInbounds?.includes(x.tag)))
+            // Unwind clients
+            .flatMap(x => x.settings?.clients ?? [])
+            // Private users
+            .filter(x => systemUser?.acls?.isAdmin || systemUser?.acls?.users?.privateUsers || !x.private)
+            // Owned users
+            .filter(x => systemUser?.acls?.isAdmin || systemUser?.acls?.users?.allUsers || x.createdById == systemUser?.id)
             .map(user => {
                 let usage = usages[user.email ?? ''];
                 user.firstConnect = user.firstConnect ?? usage?.firstConnect;

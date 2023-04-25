@@ -36,18 +36,34 @@ router.post('/monitor/download-test', httpAction(async (req, res) => {
     if (path) {
         let tStart = Date.now();
         let tConnect, tFirstChunk = null;
-        let avgSpeed, minSpeed, maxSpeed = 0;
+        let avgSpeed, minSpeed, maxSpeed, speed = 0;
         let nDownloaded = 0;
+
         let downloader = http.get(path, res => {
             tConnect = Date.now();
-            let lastChunkSize = 0;
+            let tLastChunk = Date.now();
             res.on('data', (/** @type {Buffer} */ buffer) => {
-                lastChunkSize = buffer.length;
-                nDownloaded += lastChunkSize;
+                if (!tFirstChunk) tFirstChunk = Date.now();
+                let nSize = buffer.length;
+                speed = nSize / Date.now() - tLastChunk;
+                minSpeed = Math.min(minSpeed, speed);
+                maxSpeed = Math.max(maxSpeed, speed);
+                avgSpeed = (avgSpeed + speed) / 2
+                nDownloaded += nSize;
             });
+
+            
         });
 
         downloader.on('connect', () => tConnect = Date.now());
+        downloader.on('finish', () => {
+            res.json({
+
+            })
+        });
+        downloader.on('error', err => {
+
+        });
     }
     else {
         throw Error('Invalid request');
