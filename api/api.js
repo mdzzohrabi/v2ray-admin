@@ -879,27 +879,4 @@ router.get('/summary', async (req, res) => {
 
 });
 
-
-router.get('/ping-nodes', async (req, res) => {
-    try {
-        /** @type {ServerNode[]} */
-        let nodes = await db('server-nodes') ?? [];
-
-        let result = await Promise.all(nodes.map(async x => {
-            if (!x.address) return x;
-            try {
-                x['ping'] = await ping(x.address);
-            } catch (err) {
-                x['ping'] = err?.message ?? 'Error';
-            }
-            return x;
-        }));
-
-        res.json(result);
-    }
-    catch (err) {
-        res.json({ ok: false, error: err?.message ?? 'Error' });
-    }
-});
-
 module.exports = { router };

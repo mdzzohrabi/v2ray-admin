@@ -38,8 +38,11 @@ router.post('/monitor/download-test', httpAction(async (req, res) => {
         let tConnect, tFirstChunk = null;
         let avgSpeed, minSpeed, maxSpeed, speed = 0;
         let nDownloaded = 0;
+        let abortController = new AbortController();
+        let timeout = time ? setTimeout(() => abortController.abort(), Number(time ?? 5000)) : null;
 
-        let downloader = http.get(path, res => {
+        // Downloader
+        let downloader = https.get(path, res => {
             tConnect = Date.now();
             let tLastChunk = Date.now();
             res.on('data', (/** @type {Buffer} */ buffer) => {
@@ -51,18 +54,27 @@ router.post('/monitor/download-test', httpAction(async (req, res) => {
                 avgSpeed = (avgSpeed + speed) / 2
                 nDownloaded += nSize;
             });
+        });
 
-            
+        // Timeout
+        abortController.signal.addEventListener('abort', () => {
+            downloader.destroy(Error(`Timeout`));
         });
 
         downloader.on('connect', () => tConnect = Date.now());
-        downloader.on('finish', () => {
+        downloader.once('finish', () => {
+            timeout && clearTimeout(timeout);
+            let tEnd = Date.now();
             res.json({
-
+                path,
+                avgSpeed, minSpeed, maxSpeed, speed, nDownloaded, tStart, tEnd, tConnect
             })
         });
-        downloader.on('error', err => {
-
+        downloader.once('error', err => {
+            res.json({
+                error: err?.message,
+                ok: false
+            })
         });
     }
     else {
@@ -106,6 +118,20 @@ router.get('/monitor/ping-nodes', async (req, res) => {
         res.json({ ok: false, error: err?.message ?? 'Error' });
     }
 });
+
+// V2Ray Status
+router.get('/monitor/service', httpAction(async (req, res) => {
+    const { exec } = require('child_process');
+    exec('service v2ray status', (err, stdout, stderr) => {
+        if (err) {
+            throw err;
+        }
+        res.json({
+            output: stdout ?? stderr,
+            ok: true
+        });
+    });
+}));
 
 
 module.exports = { router };

@@ -109,7 +109,7 @@ export default function NodesPage() {
 
     const pingNodes = useCallback(async () => {
         setIsPinging(true);
-        let result = await serverRequest<ServerNode[]>(server, '/ping-nodes');
+        let result = await serverRequest<ServerNode[]>(server, '/monitor/ping-nodes');
         setNodes(result);        
         setIsPinging(false);
     }, [server]);
@@ -187,6 +187,9 @@ export default function NodesPage() {
                             <Info label={'Date'}><DateView locale="en" date={row.lastConnectDate}/></Info>
                         </Infos>,
                         <PopupMenu>
+                            <PopupMenu.Item icon={<PencilIcon className='w-4'/>} action={() => serverNodeDialog.show(row, editNode)}>
+                                Download Speed Test
+                            </PopupMenu.Item>
                             <PopupMenu.Item icon={<PencilIcon className='w-4'/>} action={() => serverNodeDialog.show(row, editNode)}>
                                 Edit Node
                             </PopupMenu.Item>
