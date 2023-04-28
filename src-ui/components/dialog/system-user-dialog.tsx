@@ -1,49 +1,18 @@
-import { ArrowPathIcon, BoltIcon, BoltSlashIcon, MinusIcon, PencilIcon, PlusIcon, TrashIcon, UsersIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, PencilIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
-import { FormEvent, useCallback, useEffect, useState } from "react";
-import { toast } from "react-hot-toast";
-import { Container } from "../../components/container";
-import { DateView } from "../../components/date-view";
-import { Dialog, useDialog } from "../../components/dialog";
-import { Field, FieldObject, FieldsGroup } from "../../components/fields";
-import { PopupMenu } from "../../components/popup-menu";
-import { Table } from "../../components/table";
-import { Tabs } from "../../components/tabs";
-import { useContextSWR, useCRUD, usePrompt } from "../../lib/hooks";
+import { useState, useCallback, FormEvent } from "react";
+import toast from "react-hot-toast";
+import { useContextSWR } from "../../lib/hooks";
 import { styles } from "../../lib/styles";
-
-export function SystemUserSessionsDialog({ userId, onClose }: { userId: string, onClose?: Function }) {
-    const {items: sessions, refreshItems, isItemsLoading: isLoading, isLoading: isDeleting, remove} = useCRUD<LoginSession>(`/system/user/${userId}/sessions`);
-    const prompt = usePrompt();
-
-    return <Dialog onClose={onClose} title="Admin Sessions">
-        <Table
-            columns={['Login Date', 'Last Request', 'IP', 'User Agent', 'Expired', 'Actions']}
-            rows={sessions ?? []}
-            cells={x => [
-                <DateView date={x.loginDate}/>,
-                <DateView date={x.lastRequestTime}/>,
-                x.lastRequestIP,
-                x.userAgent,
-                x.isExpired ? 'Expired' : 'Active',
-                <PopupMenu>
-                    <PopupMenu.Item icon={<TrashIcon className="w-4"/>} action={() => prompt('Delete session ?', 'Delete', () => remove(x))}>Delete Session</PopupMenu.Item>
-                </PopupMenu>
-            ]}
-            loading={isLoading || isDeleting}
-        />
-        <div className="flex flex-row gap-x-2 border-t-0 pt-1 mt-1 text-xs">
-            <button onClick={() => refreshItems()} className={styles.buttonItem}>
-                <ArrowPathIcon className="w-4"/>
-                Refresh Sessions
-            </button>
-        </div>
-    </Dialog>
-}
+import { Dialog } from "../dialog";
+import { FieldsGroup, Field, FieldObject } from "../fields";
+import { MultiSelect } from "../multi-select";
+import { Tabs } from "../tabs";
 
 export function SystemUserDialog({ user: userProp, onClose, onDone }: { user?: SystemUser, onDone?: (user: SystemUser) => any, onClose?: Function }) {
     const [user, setUser] = useState(userProp ?? {});
     const {data: inbounds} = useContextSWR<string[]>('/inbounds/tag');
+    const {data: users} = useContextSWR<{ id: string, username: string }[]>('/system/users?fields=id,username');
     const isNew = !userProp;
     const onSubmit = useCallback(async (e: FormEvent) => {
         e?.preventDefault();
@@ -80,6 +49,11 @@ export function SystemUserDialog({ user: userProp, onClose, onDone }: { user?: S
                             <input type="tel" id="mobile" placeholder="+98" className={styles.input}/>
                         </Field>
                     </div>
+                    <div className="flex flex-row my-2">
+                        <Field htmlFor="subUsers" label="Sub Users">
+                            <MultiSelect items={users?.filter(x => x.username != user?.username) ?? []} valueMember='username' displayMember='username'/>
+                        </Field>
+                    </div>
                 </Tabs.Tab>
                 <Tabs.Tab title="Pricing">
                     <FieldObject path={'pricing'}>
@@ -114,9 +88,10 @@ export function SystemUserDialog({ user: userProp, onClose, onDone }: { user?: S
                         <div className="col-span-3 row-span-1 border-l-[1px] border-t-[1px] p-2">
                             <span className="block font-bold">Allowed Inbounds</span>
                             <Field htmlFor="allowedInbounds" horizontal label="Inbounds">
-                                <select id="allowedInbounds" multiple className={styles.input}>
+                                <MultiSelect items={inbounds} id='allowedInbounds'/>
+                                {/* <select id="allowedInbounds" multiple className={styles.input}>
                                     {inbounds?.map(x => <option key={x}>{x}</option>)}
-                                </select>
+                                </select> */}
                             </Field>
                         </div>
                         <div className="col-span-1 border-t-[1px] p-2">
@@ -294,7 +269,7 @@ export function SystemUserDialog({ user: userProp, onClose, onDone }: { user?: S
                                     <Field htmlFor="traffics" horizontal label="Traffics">
                                         <input type="checkbox" id="traffics" className={styles.input}/>
                                     </Field>
-                                    <Field htmlFor="users" horizontal label="Traffics">
+                                    <Field htmlFor="users" horizontal label="Clients">
                                         <input type="checkbox" id="users" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="servers" horizontal label="Servers">
@@ -318,65 +293,4 @@ export function SystemUserDialog({ user: userProp, onClose, onDone }: { user?: S
             </button>
         </div>
     </Dialog>
-}
-
-export default function SystemUsersPage() {
-    const { edit, insert, remove, isLoading, isItemsLoading, items, refreshItems } = useCRUD<SystemUser>('/system/users', {});
-    const userDialog = useDialog((user?: SystemUser, onDone?: (user: SystemUser) => any, onClose?: Function) => <SystemUserDialog user={user} onDone={onDone} onClose={onClose}/>)
-    const userSessionsDialog = useDialog((userId?: string, onClose?: Function) => <SystemUserSessionsDialog userId={userId} onClose={onClose}/>)
-    const prompt = usePrompt();
-    const NA = <span className="text-gray-400">N/A</span>
-    
-    return <Container pageTitle={'System Administrators'}>
-        <FieldsGroup title={
-            <span className="flex items-center gap-x-2">
-                <UsersIcon className="w-6"/>
-                System Administrators
-            </span>
-        } className="px-3">
-            <div className="flex-1 flex-row flex items-center">
-                {isLoading || isItemsLoading? <span className="rounded-lg bg-gray-700 text-white px-3 py-0">Loading</span> :null}
-            </div>
-            <div className="flex flex-row">
-                <button type={"button"} onClick={() => refreshItems()} className={classNames(styles.buttonItem)}>
-                    <ArrowPathIcon className="w-4"/>
-                    Reload
-                </button>
-                <button onClick={e => userDialog.show(null, insert)} className={classNames(styles.buttonItem)}>
-                    <PlusIcon className="w-4"/>
-                    Add User
-                </button>
-            </div>
-        </FieldsGroup>
-        <div className="p-3">
-            <div className="rounded-lg flex flex-col flex-1 border-2">
-                <Table
-                    rows={items ?? []}
-                    columns={[ 'ID', 'Username', 'Email', 'Mobile', 'Active', 'Actions' ]}
-                    cells={row => [
-                        row.id,
-                        row.username,
-                        row.email ?? NA,
-                        row.mobile ?? NA,
-                        <div className="flex flex-row items-center gap-x-2">
-                            {row.isActive?<BoltIcon className="w-4"/>:<BoltSlashIcon className="w-4"/>}
-                            {row.isActive?'Active':'De-active'}
-                        </div>,
-                        <PopupMenu>
-                            <PopupMenu.Item icon={<PencilIcon className='w-4'/>} action={() => userDialog.show(row, edit)}>
-                                Edit User
-                            </PopupMenu.Item>
-                            <PopupMenu.Item icon={<BoltIcon className='w-4'/>} action={() => userSessionsDialog.show(row.id)}>
-                                Sessions
-                            </PopupMenu.Item>
-                            <PopupMenu.Item icon={<TrashIcon className="w-4"/>} action={() => prompt(`Delete user "${row.username}" ?`, 'Delete user', () => remove(row))}>
-                                Delete
-                            </PopupMenu.Item>
-                        </PopupMenu>
-                    ]}
-                    
-                />
-            </div>
-        </div>
-    </Container>
 }

@@ -4,7 +4,7 @@ const { env } = require('process');
 const { readConfig, getPaths, getUserConfig, readLogFile, DateUtil, db } = require('../lib/util');
 let router = express.Router();
 
-router.get('/configs/:id', async (req, res) => {
+router.get('/client/configs/:id', async (req, res) => {
     let {id} = req.params;
     if (!id) return res.status(400).end('Invalid id');
 
@@ -37,7 +37,7 @@ router.get('/configs/:id', async (req, res) => {
     await db('subscribers', subscribers);
 });
 
-router.get('/info/:id', async (req, res) => {
+router.get('/client/info/:id', async (req, res) => {
     let {id} = req.params;
     if (!id) return res.json({ ok: false, error: 'Invalid id' });
 

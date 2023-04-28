@@ -14,6 +14,7 @@ import { Field, FieldsGroup } from "../components/fields";
 import { Loading } from "../components/loading";
 import { PopupMenu } from "../components/popup-menu";
 import { Price } from "../components/price";
+import { Select } from "../components/select";
 import { Table } from "../components/table";
 import { useContextSWR, usePrompt, useStoredState, useUser } from "../lib/hooks";
 import { styles } from "../lib/styles";
@@ -88,6 +89,7 @@ export default function TransactionsPage() {
     let {data: transactions, mutate: refreshList, isValidating: isLoading} = useContextSWR<Transaction[]>('/transactions');
     let {data: nodes, mutate: refreshNodes} = useContextSWR<ServerNode[]>('/nodes');
     let {data: users, mutate: refreshUsers} = useContextSWR<string[]>('/inbounds_clients');
+    let {data: admins} = useContextSWR<{ id: string, username: string }[]>('/system/users?fields=id,username');
 
     const addTransaction = useCallback(async (newTransaction) => {
         try {
@@ -223,10 +225,9 @@ export default function TransactionsPage() {
                     </select>
                 </Field>
                 <Field label={"User"} htmlFor="user">
-                    <select className={styles.input} id="user">
-                        <option value="">-</option>
-                        {(users ??[]).map((client, index) => <option key={index} value={client}>{client}</option>)}
-                    </select>
+                    <Select
+                        items={users ?? []}  
+                    />
                 </Field>
             </FieldsGroup>
         </div>
@@ -234,7 +235,7 @@ export default function TransactionsPage() {
         <Table
             className="border-separate border-spacing-0"
             rows={transactions ?? []}
-            columns={[ 'User', 'Remark', 'Debt', 'Paid', 'Remain', 'Node Server', 'Creator', 'Dates', 'Actions' ]}
+            columns={[ 'User', 'Remark', 'Debt', 'Paid', 'Remain', 'Node Server', 'Creator', 'Created For', 'Dates', 'Actions' ]}
             groupBy={t => {
                 try {
                     return !view.group ? null : t.createDate ? new Intl.DateTimeFormat('fa-IR', { month: 'long', year: 'numeric' }).format(new Date(t.createDate.replace(' ', ' '))) : null;
@@ -244,7 +245,7 @@ export default function TransactionsPage() {
                 }
             }}
             group={(monthName: string) => <tr>
-                <td onClick={() => setExpanded({ ...expanded, [monthName]: !expanded[monthName] })} className="cursor-pointer py-2 px-6 text-lg font-bold sticky z-10 bg-zinc-50 top-[1.8rem] xl:top-[1.8rem] border-b-2 border-t-2 border-t-gray-400" colSpan={10}>
+                <td onClick={() => setExpanded({ ...expanded, [monthName]: !expanded[monthName] })} className="cursor-pointer py-2 px-6 text-lg font-bold sticky z-10 bg-zinc-50 top-[1.8rem] xl:top-[1.8rem] border-b-2 border-t-2 border-t-gray-400" colSpan={11}>
                     <span className="font-bold w-7 text-center py-0 mr-4 inline-block rounded-full bg-gray-200 text-lg select-none text-gray-500">{expanded[monthName] ? '-' : '+'}</span>
                     {monthName}
                 </td>
@@ -266,13 +267,13 @@ export default function TransactionsPage() {
                             items.filter(t => Number(t.amount) < 0).reduce((r, t) => r + (Math.abs(Number(t.amount)) || 0), 0)
                         }/>
                     </td>
-                    <td className="py-2 px-6 text-md font-bold" colSpan={4}></td>
+                    <td className="py-2 px-6 text-md font-bold" colSpan={54}></td>
                 </tr>
             }
             rowContainer={(row, elRow, group) => !view.group || expanded[group] ? elRow :  null}
             cells={t => [
                 // User
-                <Editable value={t.user} editable={access('transactions', 'edit')} onEdit={value => editTransaction(t, 'user', value)}>{t.user ?? '-'}</Editable>,
+                <Editable items={users} value={t.user} editable={access('transactions', 'edit')} onEdit={value => editTransaction(t, 'user', value)}>{t.user ?? '-'}</Editable>,
                 // Remark
                 <Editable value={t.remark} onEdit={value => editTransaction(t, 'remark', value)} editable={access('transactions', 'edit')}>
                 {t.remark ?? '-'}
@@ -297,7 +298,12 @@ export default function TransactionsPage() {
                 </span>,
                 // Node
                 t.serverNodeId ? nodes?.find(x => x.id == t.serverNodeId)?.name : '-',
-                t.createdBy ?? '-',
+                <Editable items={admins?.map(x => x.username)} value={t.createdBy ?? ''} onEdit={value => editTransaction(t, 'createdBy', value)} editable={access('transactions', 'edit')}>
+                    {t.createdBy ?? '-'}
+                </Editable>,
+                <Editable items={admins?.map(x => x.username)} value={t.createdFor ?? ''} onEdit={value => editTransaction(t, 'createdFor', value)} editable={access('transactions', 'edit')}>
+                    {t.createdFor ?? '-'}
+                </Editable>,
                 // Date
                 <DateView containerClassName="text-center" precision={true} full={view.fullTime} date={t.createDate?.replace(' ', ' ')}/>,
                 // Action

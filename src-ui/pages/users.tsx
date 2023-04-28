@@ -20,10 +20,11 @@ import { FieldServerNodes } from "../components/field-server-nodes";
 import { Field, FieldsGroup } from "../components/fields";
 import { Info, Infos } from "../components/info";
 import { Loading } from "../components/loading";
+import { MultiSelect } from "../components/multi-select";
 import { Popup } from "../components/popup";
 import { PopupMenu } from "../components/popup-menu";
 import { ServerNode } from "../components/server-node";
-import { Size } from "../components/size";
+import { Size } from "../components/size"; 
 import { useContextSWR, usePrompt, useStoredState, useUser } from "../lib/hooks";
 import { styles } from "../lib/styles";
 import { DateUtil, serverRequest } from "../lib/util";
@@ -247,14 +248,15 @@ export default function UsersPage() {
                         {(inbounds ?? []).map((x, index) => <option key={index} value={x.tag}>{x.tag} ({x.protocol})</option>)}
                     </select>
                 </Field>
-                <Field label="Status" htmlFor="status">
-                    <div className="flex gap-1 mb-1">
+                <Field label="Status" htmlFor="statusFilter">
+                    <MultiSelect items={statusFilters}/>
+                    {/* <div className="flex gap-1 mb-1">
                         {view.statusFilter?.map((filter, index) => <span key={index} onClick={() => setView({ ...view, statusFilter: view.statusFilter.filter(x => x != filter)})} className={classNames("whitespace-nowrap bg-slate-200 px-3 py-1 rounded-3xl cursor-pointer hover:bg-slate-700 hover:text-white")}>{filter}</span> )}
                     </div>
                     <select value={"-"} onChange={e => setView({ ...view, statusFilter: [...view.statusFilter, e.currentTarget.value]})} id="statusFilter" className={styles.input}>
                         <option value="-">-</option>
                         {(statusFilters ?? []).map((x, index) => <option key={index} value={x}>{x}</option>)}
-                    </select>
+                    </select> */}
                 </Field>
                 <Field label="Filter" htmlFor="filter">
                     <input type={"text"} id="filter" className={styles.input}/>

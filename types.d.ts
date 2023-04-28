@@ -238,6 +238,8 @@ interface Transaction {
     serverNodeId?: string
     createdBy?: string
     createdById?: string
+    createdForID?: string
+    createdFor?: string
 }
 
 interface V2RayDb {
@@ -333,6 +335,7 @@ interface SystemAcls {
 		changeMaxConnections?: boolean
 		changeBandwidth?: boolean
         otherNodes?: boolean
+        traffics?: boolean
 	};
 	config?: { list?: boolean; edit?: boolean };
 	home?: {
@@ -354,6 +357,7 @@ interface SystemUser {
     mobile?: string
     acls?: SystemAcls
     pricing?: SystemPricing
+    subUsers?: string[]
 }
 
 interface SystemPricing {

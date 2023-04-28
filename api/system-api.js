@@ -1,17 +1,26 @@
 // @ts-check
-const { httpAction, db } = require('../lib/util');
+const { httpAction, db, applyFieldSelector } = require('../lib/util');
 const { createHash, randomUUID } = require('crypto');
 
 const router = require('express').Router();
 
 // Users list
 router.get('/system/users', httpAction(async (req, res) => {
+    /** @type {SystemUser} */
+    let systemUser = res.locals?.user;
 
     /** @type {SystemUser[]} */
     let users = await db('system-users') ?? [];
 
+    if (!systemUser?.acls?.isAdmin) {
+        users = users.filter(x => x.username && systemUser?.subUsers?.includes(x.username));
+    }
+
+    users = applyFieldSelector(req, users);
+
     return users.map(({ password, ...user }) => user);
 }));
+
 
 // New User
 router.post('/system/users', httpAction(async (req, res) => {
