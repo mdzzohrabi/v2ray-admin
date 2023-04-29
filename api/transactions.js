@@ -9,7 +9,7 @@ router.get('/transactions', httpAction(async (req, res) => {
     let admin = res.locals.user;
     let transactions = await getTransactions();
     if (!admin.acls?.isAdmin) {
-        transactions = transactions.filter(x => x.createdFor == admin.username || x.createdBy == admin.username || (x.createdFor && admin.subUsers?.includes(x.createdFor)));
+        transactions = transactions.filter(x => x.createdFor == admin.username || x.createdBy == admin.username || (x.createdBy && admin?.subUsers?.includes(x.createdBy)) || (x.createdFor && admin.subUsers?.includes(x.createdFor)));
     }
     res.json(transactions);
 }));
