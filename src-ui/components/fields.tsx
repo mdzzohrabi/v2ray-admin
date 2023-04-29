@@ -3,6 +3,7 @@ import React, { ChangeEvent, createContext, createElement, useCallback, useConte
 import { useArrayDelete, useArrayInsert, useArrayUpdate, useCounter, useObjectCRUD } from "../lib/hooks";
 import { styles } from "../lib/styles";
 import { MultiSelect } from "./multi-select";
+import { Select } from "./select";
 
 export interface FieldContext<T> {
 	horizontal?: boolean,
@@ -123,7 +124,7 @@ export function Field({ label, children, className = '', horizontal = undefined,
 
 	childs = childs.map((child, index) => {
 		if (dataSetter) {
-			if (child?.type?.name == 'MultiSelect' || child?.type?.name == 'Select' || child?.type == 'input' || child?.type == 'select' || child?.type == 'textarea') {
+			if (child?.type == MultiSelect || child?.type == Select || child?.type == 'input' || child?.type == 'select' || child?.type == 'textarea') {
 
 				let valueProp = 'value';
 				if (child.props.type == 'checkbox') valueProp = 'checked';
