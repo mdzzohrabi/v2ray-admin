@@ -121,7 +121,7 @@ export default function ServerConfig() {
                     <div className="flex flex-row gap-x-2 items-center text-sm">
                         <div className="flex flex-row border-[1px] border-slate-300 rounded-xl overflow-hidden text-slate-900 text-xs">
                             <span onClick={() => setServer({ ...server, mode: 'login' })} className={classNames("cursor-pointer px-3 py-1", { 'bg-slate-300': server.mode == 'login' })}>Login</span>
-                            <span onClick={() => setServer({ ...server, mode: 'token' })} className={classNames("cursor-pointer px-3 py-1 border-l-[1px] border-l-slate-300", { 'bg-slate-300': server.mode == 'token' })}>Token</span>
+                            {/* <span onClick={() => setServer({ ...server, mode: 'token' })} className={classNames("cursor-pointer px-3 py-1 border-l-[1px] border-l-slate-300", { 'bg-slate-300': server.mode == 'token' })}>Token</span> */}
                         </div>
                     </div>
                 </div>
