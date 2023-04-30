@@ -81,14 +81,6 @@ interface V2RayConfigInboundStreamSettings {
 }
 
 interface V2RayConfigInbound {
-    /** Client Address (Custom) */
-    address?: string
-    /** Client Config Prefix (Custom) */
-    configPrefix?: string
-    /** Custom */
-    configSNI?: string
-    /** Custom */
-    configHost?: string
     listen?: string
     port?: number | string
     protocol?: string
@@ -99,6 +91,14 @@ interface V2RayConfigInbound {
     allocate?: any
     usersServerNode?: string
     mirrorInbound?: string
+    /** Client Configs (Custom) */
+    clientConfigs?: {
+        prefix?: string
+        address?: string
+        sni?: string
+        host?: string
+        port?: string
+    }[]
 }
 
 interface V2RayConfigInboundSiffingObject {

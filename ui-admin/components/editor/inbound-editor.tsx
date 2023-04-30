@@ -6,6 +6,7 @@ import { Dialog } from "../dialog";
 import { Collection, Field, FieldObject, FieldsGroup } from "../fields";
 import { PopupMenu } from "../popup-menu";
 import { Table } from "../table";
+import { Tabs } from "../tabs";
 
 interface InboundEditorProps {
     inbound: V2RayConfigInbound;
@@ -26,7 +27,9 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }: Inbound
 
     return <Dialog onClose={dissmis} onSubmit={ok} title="Inbound">
         <FieldsGroup data={inbound} dataSetter={setInbound}>
-            <div className="flex flex-row">
+            <Tabs>
+                <Tabs.Tab title="Inbound">
+                <div className="flex flex-row">
                 <Field htmlFor="tag" label="Tag">
                     <input type="text" id="tag" className={styles.input}/>
                 </Field>
@@ -44,20 +47,6 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }: Inbound
                         <option value="shadowsocks">Shadowsocks</option>
                         <option value="dokodemo-door">Dokodemo-door</option>
                     </select>
-                </Field>
-                <Field htmlFor="configPrefix" className="flex-1" label="Client Config Prefix">
-                    <input type="text" id="configPrefix" className={styles.input} placeholder='Config Name Prefix'/>
-                </Field>
-            </div>
-            <div className="flex flex-row">
-                <Field htmlFor="address" className="flex-1" label="Client Address">
-                    <input type="text" id="address" className={styles.input} placeholder='Config Client Address'/>
-                </Field>
-                <Field htmlFor="configHost" className="flex-1" label="Client Host">
-                    <input type="text" id="configHost" className={styles.input} placeholder='Config Host'/>
-                </Field>
-                <Field htmlFor="configSNI" className="flex-1" label="SNI">
-                    <input type="text" id="configSNI" className={styles.input} placeholder='Config SNI'/>
                 </Field>
             </div>
             {inbound?.protocol == 'http' ?
@@ -293,9 +282,32 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }: Inbound
                     </div> : null}
                     </FieldObject>
             </div>
-            </FieldsGroup>
-            <div className="pt-3 border-t-[1px] mt-3 flex justify-end">
-                <button onClick={ok} className={styles.button}>Edit Inbound</button>
-            </div>
+                </Tabs.Tab>
+                <Tabs.Tab title="Client Config">
+                    <Collection>
+                    
+                    </Collection>
+                    <div className="flex flex-row">
+                        <Field htmlFor="configPrefix" className="flex-1" label="Client Config Prefix">
+                            <input type="text" id="configPrefix" className={styles.input} placeholder='Config Name Prefix'/>
+                        </Field>
+                        <Field htmlFor="address" className="flex-1" label="Client Address">
+                            <input type="text" id="address" className={styles.input} placeholder='Config Client Address'/>
+                        </Field>
+                    </div>
+                    <div className="flex flex-row">
+                        <Field htmlFor="configHost" className="flex-1" label="Client Host">
+                            <input type="text" id="configHost" className={styles.input} placeholder='Config Host'/>
+                        </Field>
+                        <Field htmlFor="configSNI" className="flex-1" label="SNI">
+                            <input type="text" id="configSNI" className={styles.input} placeholder='Config SNI'/>
+                        </Field>
+                    </div>
+                </Tabs.Tab>
+            </Tabs>           
+        </FieldsGroup>
+        <div className="pt-3 border-t-[1px] mt-3 flex justify-end">
+            <button onClick={ok} className={styles.button}>Edit Inbound</button>
+        </div>
     </Dialog>
 }
