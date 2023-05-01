@@ -3,16 +3,16 @@ import classNames from "classnames";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import React from "react";
-import { Container } from "../components/container";
-import { DateView } from "../components/date-view";
-import { Info, Infos } from "../components/info";
-import { Loading } from "../components/loading";
-import { Price } from "../components/price";
-import { Progress, ProgressColors } from "../components/progress";
-import { Size } from "../components/size";
-import { useContextSWR, useStoredState } from "../lib/hooks";
-import { styles } from '../lib/styles';
-import { queryString } from "../lib/util";
+import { Container } from "../../components/container";
+import { DateView } from "../../components/date-view";
+import { Info, Infos } from "../../components/info";
+import { Loading } from "../../components/loading";
+import { Price } from "../../components/price";
+import { Progress, ProgressColors } from "../../components/progress";
+import { Size } from "../../components/size";
+import { useContextSWR, useStoredState } from "../../lib/hooks";
+import { styles } from '../../lib/styles';
+import { queryString } from "../../lib/util";
 
 export default function HomePage() {
 

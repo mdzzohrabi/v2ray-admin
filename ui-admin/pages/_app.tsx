@@ -1,25 +1,10 @@
-import { Toaster } from 'react-hot-toast';
-import { SWRConfig } from 'swr';
-import { AppContextContainer } from '../components/app-context';
-import { CheckConfig } from '../components/check-config';
-import { DialogsContainer } from '../components/dialog';
-import { clearCounter } from '../lib/hooks';
 import '../styles/globals.scss';
+import { useRouter } from 'next/router';
+import AdminApp from './admin/_adminApp';
+import ClientApp from './_clientApp';
 
-function MyApp({ Component, pageProps }) {
-
-  clearCounter();
-
-  return <AppContextContainer>
-        <SWRConfig value={{ revalidateOnFocus: false }}>
-        <DialogsContainer>
-          <CheckConfig>
-            <Component {...pageProps} />
-          </CheckConfig>
-          <Toaster/>
-      </DialogsContainer>
-      </SWRConfig>
-  </AppContextContainer> 
+export default function App({ ...props }) {
+  const router = useRouter();
+  // @ts-ignore
+  return router.pathname.startsWith('/admin') ? <AdminApp {...props}/> : <ClientApp {...props}/>;
 }
-
-export default MyApp

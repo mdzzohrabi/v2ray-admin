@@ -1,14 +1,14 @@
 import { ArrowPathIcon, BoltIcon, BoltSlashIcon, PencilIcon, PlusIcon, TrashIcon, UsersIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
-import { Container } from "../../components/container";
-import { useDialog } from "../../components/dialog";
-import { SystemUserDialog } from "../../components/dialog/system-user-dialog";
-import { SystemUserSessionsDialog } from "../../components/dialog/system-user-sessions-dialog";
-import { FieldsGroup } from "../../components/fields";
-import { PopupMenu } from "../../components/popup-menu";
-import { Table } from "../../components/table";
-import { useCRUD, usePrompt } from "../../lib/hooks";
-import { styles } from "../../lib/styles";
+import { Container } from "../../../components/container";
+import { useDialog } from "../../../components/dialog";
+import { SystemUserDialog } from "../../../components/dialog/system-user-dialog";
+import { SystemUserSessionsDialog } from "../../../components/dialog/system-user-sessions-dialog";
+import { FieldsGroup } from "../../../components/fields";
+import { PopupMenu } from "../../../components/popup-menu";
+import { Table } from "../../../components/table";
+import { useCRUD, usePrompt } from "../../../lib/hooks";
+import { styles } from "../../../lib/styles";
 
 
 export default function SystemUsersPage() {
