@@ -6,7 +6,7 @@ pm2 start web.js --name=v2ray-api
 pm2 start cron/index.js --name=v2ray-cron
 
 if [[ $UI -ne 0 ]]; then
-    cd src-ui & pm2 start npm --name=v2ray-ui -- run start
+    cd ui/admin & pm2 start npm --name=v2ray-ui -- run start
 fi
 
 pm2 save
