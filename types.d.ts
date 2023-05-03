@@ -93,6 +93,7 @@ interface V2RayConfigInbound {
     mirrorInbound?: string
     /** Client Configs (Custom) */
     clientConfigs?: {
+        description?: string
         prefix?: string
         address?: string
         sni?: string

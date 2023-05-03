@@ -12,16 +12,54 @@ router.get('/monitor/test-file', httpAction(async (req, res) => {
     let { size } = req.query;
     size = Number(size ?? 100 * (1024 ** 2)); // Default 100Mb
     if (size > 200 * (1024 ** 2))
-        throw Error('Size cannot be more than 200mb');
+    throw Error('Size cannot be more than 200mb');
     let fileContents = Buffer.alloc(size, '0');  
     res.set('Content-disposition', 'attachment; filename=fake.bin');
     res.set('Content-Type', 'text/plain');  
+    console.log('Test', fileContents.length);
     res.end(fileContents);
+}));
+
+/**
+ * @typedef {{
+ *    id: number
+ *    path: string
+ *    downloaded: number 
+ *    total: number
+ *    status: string
+ *    downloader?: http.ClientRequest
+ *    avgSpeed: number
+ *    minSpeed: number, maxSpeed: number, speed: number, nDownloaded: number, tStart: number, tEnd: number, tConnect: number
+ *    statusCode?: number
+ * }} DownloadRequest
+ *
+ * @type {DownloadRequest[]}
+ */
+const downloadQueue = [];
+
+router.get('/monitor/download-test', httpAction(async (req, res) => {
+    const requestId = req.query.id;
+    if (!requestId)
+        throw Error('Invalid Request');
+
+    let request = downloadQueue.find(x => x.id == requestId);
+
+    if (!request)
+        throw Error('Request not fuond');
+
+    let {downloader, ...result} = request;
+
+    res.json(result);
 }));
 
 // Download Test
 router.post('/monitor/download-test', httpAction(async (req, res) => {
-    const {nodeId, path, time} = req.body;
+    const {nodeId, path: requestPath, time} = req.body;
+
+    if (downloadQueue.filter(x => !!x.downloader).length > 5) throw Error(`Queue is full`);
+
+    let path = requestPath;
+    let auth = '';
 
     // Download test a node
     if (nodeId) {
@@ -30,21 +68,42 @@ router.post('/monitor/download-test', httpAction(async (req, res) => {
         const node = nodes.find(x => x.id == nodeId);
         if (!node)
             throw Error('Node not found');
-        const path = node.address + '/monitor/test-file?size=' + 50 * 1024 * 1024;        
+        path = node.address + '/monitor/test-file?size=' + 50 * 1024 * 1024;
+        auth = 'Bearer ' + Buffer.from(node.apiKey).toString('base64');
     }
 
     if (path) {
         let tStart = Date.now();
         let tConnect, tFirstChunk = null;
-        let avgSpeed, minSpeed, maxSpeed, speed = 0;
+        let avgSpeed = 0, minSpeed = 0, maxSpeed = 0, speed = 0;
         let nDownloaded = 0;
         let abortController = new AbortController();
         let timeout = time ? setTimeout(() => abortController.abort(), Number(time ?? 5000)) : null;
 
+        /** @type {DownloadRequest} */
+        let request = {
+            id: Math.round(Math.random() * 100000),
+            path,
+            downloaded: 0,
+            status: 'Queue',
+            total: 0,
+            avgSpeed, minSpeed, maxSpeed, speed, nDownloaded, tStart, tEnd: 0, tConnect: 0
+        }
+
         // Downloader
-        let downloader = https.get(path, res => {
+        let downloader = (String(path).startsWith('https') ? https : http).get(path, {
+            headers: {
+                Authorization: auth
+            },
+            timeout: Number(time ?? 5000)
+        }, res => {
+            console.log('Tsss');
             tConnect = Date.now();
             let tLastChunk = Date.now();
+            request.tConnect = tConnect;
+            request.total = Number(res.headers['content-length']);
+            request.status = 'Connected';
+            request.statusCode = res.statusCode;
             res.on('data', (/** @type {Buffer} */ buffer) => {
                 if (!tFirstChunk) tFirstChunk = Date.now();
                 let nSize = buffer.length;
@@ -53,29 +112,47 @@ router.post('/monitor/download-test', httpAction(async (req, res) => {
                 maxSpeed = Math.max(maxSpeed, speed);
                 avgSpeed = (avgSpeed + speed) / 2
                 nDownloaded += nSize;
+                request.downloaded = nDownloaded;
+                request.maxSpeed = maxSpeed;
+                request.minSpeed = minSpeed;
+                request.speed = speed;
+                request.avgSpeed = avgSpeed;
+                request.status = 'Downloading';
             });
         });
+
+        request.downloader = downloader;
 
         // Timeout
         abortController.signal.addEventListener('abort', () => {
             downloader.destroy(Error(`Timeout`));
         });
 
-        downloader.on('connect', () => tConnect = Date.now());
+        downloader.on('connect', () => {
+            console.log('Connected');
+            tConnect = Date.now()
+            request.tConnect = tConnect;
+        });
         downloader.once('finish', () => {
+            console.log('Finish', downloader.getHeaders());
+            request.status = 'Complete';
             timeout && clearTimeout(timeout);
             let tEnd = Date.now();
-            res.json({
-                path,
-                avgSpeed, minSpeed, maxSpeed, speed, nDownloaded, tStart, tEnd, tConnect
-            })
+            request.tEnd = tEnd;
+            request.downloader = undefined;
+            downloader?.destroy();
         });
         downloader.once('error', err => {
-            res.json({
-                error: err?.message,
-                ok: false
-            })
+            console.log(err);
+            request.status = 'Error: ' + err?.message;
+            request.downloader = undefined;
+            downloader?.destroy();
         });
+
+        let { downloader: _, ...result } = request;
+        downloadQueue.push(request);
+
+        res.json(result)
     }
     else {
         throw Error('Invalid request');
