@@ -40,6 +40,7 @@ router.get('/client/configs/:id', async (req, res) => {
 router.get('/client/info/:id', async (req, res) => {
     let {id} = req.params;
     if (!id) return res.json({ ok: false, error: 'Invalid id' });
+    id = decodeURIComponent(id);
 
     let {configPath, accessLogPath} = getPaths();
     let config = readConfig(configPath);

@@ -1,6 +1,7 @@
 import { Copy } from "@common/components/copy";
 import { DateView } from "@common/components/date-view";
 import { Info, Infos } from "@common/components/info";
+import { Progress } from "@common/components/progress";
 import { QRCode } from "@common/components/qrcode";
 import { Size } from "@common/components/size";
 import { styles } from "@common/lib/styles";
@@ -56,14 +57,14 @@ export default function Index() {
 
     const login = useCallback((e?: FormEvent) => {
         e?.preventDefault();
-        router.push('/?id=' + accountId);
+        router.push('/?id=' + encodeURIComponent(accountId) + '&t=' + Math.round(Math.random() * 1000));
     }, [accountId]);
 
     useEffect(() => {
         if (!!qAccountId) {
             getAccount(qAccountId);
         }
-    }, [qAccountId, getAccount]);
+    }, [qAccountId, getAccount, router.query.t]);
 
     const downloadCard = <div className={className.card}>
         <h1 className={className.cardTitle}>
@@ -98,11 +99,22 @@ export default function Index() {
             <Info label={"Status"} className="py-2">
                 <span className={classNames("px-3 rounded-lg", {'bg-red-300': !!account?.user?.deActiveDate, 'bg-green-200': !account?.user?.deActiveDate})}>{account?.user?.deActiveDate ? 'De-Active' : 'Active'}</span>
             </Info>
+            <Info label={"Account ID"} className="py-2">
+                <Copy data={account?.user?.id}>{account?.user?.id}</Copy>
+            </Info>
             <Info label={"First Connect"} className="py-2">
                 <DateView precision={true} full={false} popup={false} className="text-sm" date={account?.user?.firstConnect}/>
             </Info>
             <Info label={"Quota Usage"} className="py-2">
-                <Size size={account.user['quotaUsageAfterBilling']}></Size>
+                {/* <Size size={account.user['quotaUsageAfterBilling']}></Size>
+                /
+                {account?.user?.quotaLimit ? <Size size={account.user?.quotaLimit}></Size> : '∞'} */}
+                <Progress className="flex-1" total={account?.user?.quotaLimit ?? account?.user['quotaUsageAfterBilling']} bars={[
+                    {
+                        title: 'Traffic Usage',
+                        value: account?.user['quotaUsageAfterBilling']
+                    }
+                ]} renderValue={x => <Size size={x}/>}/>
             </Info>
             <Info label={"Last Connect"} className="py-2">
                 <DateView precision={true} full={false} popup={false} className="text-sm" date={account.user['lastConnect']}/>
@@ -120,17 +132,14 @@ export default function Index() {
                 {account?.user?.deActiveReason}
             </Info>
         </Infos>
-        <h1 className="font-semibold pt-3 mt-3 border-t-2 border-t-gray-200">Client Config</h1>
+        <h1 className="font-semibold pt-3 mt-3 border-t-2 border-t-gray-200">Subscription URL</h1>
         <div className="flex flex-col md:flex-row">
             <Infos className="flex-1">
-                <Info label={'Subscribe Name'} className={'py-2 items-center'}>
-                    iNetwork
-                </Info>
-                <Info label={'Subscribe Url'} className={'py-2 items-center'}>
+                <Info label={'Url'} className={'py-2 items-center'}>
                     <Copy data={`${location.protocol}//${location.host}/api/configs/${account?.user?.id}`}>
-                        Click to Copy
+                        <button className={styles.buttonPrimary}>Copy</button>
                     </Copy>
-                    <a className="mx-2 px-2 border-2" target={'_blank'} href={`${location.protocol}//${location.host}/api/configs/${account?.user?.id}`}>Open</a>
+                    <a className={styles.button} target={'_blank'} href={`${location.protocol}//${location.host}/api/configs/${account?.user?.id}`}>Open</a>
                 </Info>
             </Infos>
             <div className="text-center flex justify-center items-center">
@@ -164,7 +173,7 @@ export default function Index() {
                     <UserIcon className="w-5"/>
                     Account Information
                 </h1>
-                {loginForm}
+                {qAccountId ? 'Please Wait...' : loginForm}
             </div>            
             {downloadCard}
         </div>:

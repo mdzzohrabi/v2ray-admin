@@ -3,12 +3,6 @@ git pull
 pm2 stop all
 npm i
 if [[ $UI -ne 0 ]]; then
-    cd ui/admin
-    npm i
-    npm run build
-    cd ../../
-    cd ui/client
-    npm i
-    npm run build
+    bash build-ui
 fi
 pm2 start all

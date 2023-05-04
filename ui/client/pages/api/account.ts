@@ -4,9 +4,7 @@ export default async function accountApi(req: NextApiRequest, res: NextApiRespon
     try {
         let { id } = req.body;
         if (!id) throw Error(`Invalid Request`);
-        console.log((process.env.V2RAY_SERVER) + '/client/info/' + id);
-        
-        let result = await fetch((process.env.V2RAY_SERVER) + '/client/info/' + id, {
+        let result = await fetch((process.env.V2RAY_SERVER) + '/client/info/' + encodeURIComponent(id), {
             headers: { 'Content-Type': 'application/json' }
         });
         return res.json(await result.json());

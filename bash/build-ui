@@ -1,0 +1,9 @@
+scriptPath="$(realpath $0)"
+basePath="$(dirname $scriptPath)"
+basePath="$(dirname $basePath)"
+cd $basePath
+cd ui/common && npm i
+cd $basePath
+cd ui/admin && npm i && npm run build
+cd $basePath
+cd ui/client && npm i && npm run build
