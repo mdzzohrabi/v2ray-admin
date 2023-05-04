@@ -96,7 +96,7 @@ export function Field({ label, children, className = '', horizontal = undefined,
 	let setData = useCallback((e: ChangeEvent<HTMLInputElement>) => {
 		let target = e.currentTarget;
 		let value: any = target.value;
-
+		
 		if (target.tagName?.toLowerCase() == 'select' && target.multiple) {
 			let selectedValues = [...target.querySelectorAll('option')].filter(x => x.selected).map(x => x.value);
 			value = selectedValues;
@@ -107,7 +107,7 @@ export function Field({ label, children, className = '', horizontal = undefined,
 		else if (target.type == 'number') {
 			value = value ? Number(value) : value;
 		}
-
+		
 		if (typeof data == 'object' && htmlFor) {
 			if (!value && unsetEmpty) {
 				data = {...data};

@@ -1,15 +1,16 @@
 import { useContextSWR } from "../lib/hooks";
 import { styles } from "@common/lib/styles";
 import { Field, FieldProps } from "@common/components/fields";
+import { Select } from "@common/components/select";
 
 export function FieldServerNodes({ ...props }: FieldProps) {
     let {data: nodes} = useContextSWR<ServerNode[]>('/nodes');
 
     return <Field label="Node" htmlFor="serverNode" {...props}>
-        <select id={props.htmlFor ?? "serverNode"} className={styles.input}>
-            <option value="">All</option>
-            <option value="local">local</option>
-            {nodes?.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}
-        </select>
+        <Select id={props.htmlFor ?? "serverNode"} className={styles.input} items={[
+            { id: 'local', name: 'Local' },
+            ...(nodes ?? [])
+        ]} valueMember='id' displayMember='name' allowNull={true} nullText='All Server Nodes'>
+        </Select>
     </Field>
 }

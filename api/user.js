@@ -240,7 +240,7 @@ router.post('/inbounds', httpAction(async (req, res) => {
 
     let {configPath, accessLogPath} = getPaths();
     let {view, private} = req.body;
-    let {sortColumn, sortAsc, filter, statusFilter, serverNode, showId, fullTime, precision, page = 1, limit = 20} = view;
+    let {sortColumn, sortAsc, filter, statusFilter, serverNode, showId, fullTime, precision, page = 1, limit = 20, createdBy} = view;
 
     let config = readConfig(configPath);
 
@@ -302,6 +302,10 @@ router.post('/inbounds', httpAction(async (req, res) => {
                     if (u.createdById != user.id) return false;
                 }
                 return true;
+            })
+            .filter(u => {
+                if (!createdBy) return true;
+                return u.createdBy == createdBy;
             })
             .filter(u => {
                 if (!filter) return true;

@@ -8,6 +8,7 @@ import { Loading } from "@common/components/loading";
 import { MultiSelect } from "@common/components/multi-select";
 import { Popup } from "@common/components/popup";
 import { PopupMenu } from "@common/components/popup-menu";
+import { Select } from "@common/components/select";
 import { Size } from "@common/components/size";
 import { usePrompt, useStoredState } from "@common/lib/hooks";
 import { DateUtil } from "@common/lib/util";
@@ -16,7 +17,7 @@ import classNames from "classnames";
 import ExportJsonExcel from 'js-export-excel';
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { Fragment, useCallback, useContext, useMemo, useState } from 'react';
+import { Fragment, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import toast from "react-hot-toast";
 import { AddUser } from "../components/add-user";
 import { AppContext } from "../components/app-context";
@@ -232,9 +233,11 @@ export default function UsersPage() {
 
     let addUserDialog = useDialog((onClose?: Function) => <AddUser horizontal={false} onClose={onClose} onRefresh={refreshInbounds} disabled={isLoading} inbounds={inbounds ?? []}/>);
 
+    const { data: admins } = useContextSWR<SystemUser[]>('/system/users?fields=username');
+
     const userNodesDialog = useDialog((user: V2RayConfigInboundClient, onClose?: Function) => <UserNodesDialog user={user} onClose={onClose}/>);
 
-    return <Container>
+return <Container>
         <Head>
             <title>Users</title>
         </Head>
@@ -242,23 +245,13 @@ export default function UsersPage() {
             <div className="flex flex-row">
                 <FieldServerNodes/>
                 <Field label="Inbounds" htmlFor="inbounds">
-                    <div className="flex gap-1 mb-1">
-                        {view.inbounds?.map((filter, index) => <span key={index} onClick={() => setView({ ...view, inbounds: view.inbounds.filter(x => x != filter)})} className={classNames("whitespace-nowrap bg-slate-200 px-3 py-1 rounded-3xl cursor-pointer hover:bg-slate-700 hover:text-white")}>{filter}</span> )}
-                    </div>
-                    <select value={"-"} onChange={e => setView({ ...view, inbounds: [...(view.inbounds ?? []), e.currentTarget.value]})} id="inbounds" className={styles.input}>
-                        <option value="-">-</option>
-                        {(inbounds ?? []).map((x, index) => <option key={index} value={x.tag}>{x.tag} ({x.protocol})</option>)}
-                    </select>
+                    <MultiSelect id="inbounds" className={styles.input} valueMember='tag' displayMember={x => `${x.tag} (${x.protocol})`} items={inbounds ?? []}/>
                 </Field>
                 <Field label="Status" htmlFor="statusFilter">
-                    <MultiSelect items={statusFilters}/>
-                    {/* <div className="flex gap-1 mb-1">
-                        {view.statusFilter?.map((filter, index) => <span key={index} onClick={() => setView({ ...view, statusFilter: view.statusFilter.filter(x => x != filter)})} className={classNames("whitespace-nowrap bg-slate-200 px-3 py-1 rounded-3xl cursor-pointer hover:bg-slate-700 hover:text-white")}>{filter}</span> )}
-                    </div>
-                    <select value={"-"} onChange={e => setView({ ...view, statusFilter: [...view.statusFilter, e.currentTarget.value]})} id="statusFilter" className={styles.input}>
-                        <option value="-">-</option>
-                        {(statusFilters ?? []).map((x, index) => <option key={index} value={x}>{x}</option>)}
-                    </select> */}
+                    <MultiSelect items={statusFilters} id={'statusFilter'}/>
+                </Field>
+                <Field label="Created By" htmlFor="createdBy">
+                    <Select allowNull={true} nullText={'All Admins'} items={admins} displayMember='username' valueMember='username' id={'createdBy'}/>
                 </Field>
                 <Field label="Filter" htmlFor="filter">
                     <input type={"text"} id="filter" className={styles.input}/>
@@ -421,6 +414,9 @@ export default function UsersPage() {
                                         </Info>
                                         <Info label={'Last Connect Node'}>
                                             <ServerNode serverId={u['lastConnectNode']}/>
+                                        </Info>
+                                        <Info label={'Created By'}>
+                                            {u.createdBy ?? '-'}
                                         </Info>
                                     </Infos>
                                 </td>
