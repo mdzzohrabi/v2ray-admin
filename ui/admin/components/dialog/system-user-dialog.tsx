@@ -8,6 +8,7 @@ import { Dialog } from "@common/components/dialog";
 import { FieldsGroup, Field, FieldObject } from "@common/components/fields";
 import { MultiSelect } from "@common/components/multi-select";
 import { Tabs } from "@common/components/tabs";
+import { Select } from "@common/components/select";
 
 export function SystemUserDialog({ user: userProp, onClose, onDone }: { user?: SystemUser, onDone?: (user: SystemUser) => any, onClose?: Function }) {
     const [user, setUser] = useState(userProp ?? {});
@@ -56,6 +57,9 @@ export function SystemUserDialog({ user: userProp, onClose, onDone }: { user?: S
                     </div>
                 </Tabs.Tab>
                 <Tabs.Tab title="Pricing">
+                    <Field htmlFor="createBillsFor" label="Create Bills For">
+                        <Select id="createBillsFor" items={users?.filter(x => x.username != user?.username)} valueMember='username' displayMember='username'/>
+                    </Field>
                     <FieldObject path={'pricing'}>
                         <Field htmlFor="newUserCost" label="New User Cost">
                             <input type="number" id="newUserCost" placeholder="0" className={styles.input}/>

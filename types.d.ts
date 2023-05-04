@@ -92,6 +92,7 @@ interface V2RayConfigInbound {
     usersServerNode?: string
     mirrorInbound?: string
     /** Client Configs (Custom) */
+    clientPanelUrl?: string
     clientConfigs?: {
         description?: string
         prefix?: string
@@ -359,6 +360,7 @@ interface SystemUser {
     acls?: SystemAcls
     pricing?: SystemPricing
     subUsers?: string[]
+    createBillsFor?: string
 }
 
 interface SystemPricing {

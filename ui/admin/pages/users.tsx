@@ -11,7 +11,7 @@ import { PopupMenu } from "@common/components/popup-menu";
 import { Size } from "@common/components/size";
 import { usePrompt, useStoredState } from "@common/lib/hooks";
 import { DateUtil } from "@common/lib/util";
-import { ArrowPathIcon, ArrowsUpDownIcon, ArrowUpTrayIcon, BoltIcon, BoltSlashIcon, CalendarDaysIcon, ClockIcon, CurrencyDollarIcon, DevicePhoneMobileIcon, DocumentDuplicateIcon, DocumentPlusIcon, DocumentTextIcon, EyeIcon, EyeSlashIcon, FireIcon, FolderMinusIcon, FolderPlusIcon, PlusIcon, QrCodeIcon, RssIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, ArrowsUpDownIcon, ArrowUpTrayIcon, BoltIcon, BoltSlashIcon, CalendarDaysIcon, ClockIcon, CurrencyDollarIcon, DevicePhoneMobileIcon, DocumentDuplicateIcon, DocumentPlusIcon, DocumentTextIcon, EyeIcon, EyeSlashIcon, FireIcon, FolderMinusIcon, FolderPlusIcon, PlusIcon, QrCodeIcon, RssIcon, TrashIcon, UserCircleIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import ExportJsonExcel from 'js-export-excel';
 import Head from "next/head";
@@ -458,11 +458,14 @@ export default function UsersPage() {
                                 </td>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3">
                                     <PopupMenu>
-                                        <PopupMenu.Item visible={access('users', 'subscribeUrl')} icon={<RssIcon className="w-4"/>}>
-                                            <Copy className="block text-inherit" notifyText={`User "${u.email}" subscription url copied`} data={process.env.NEXT_PUBLIC_CLIENT_URL + `/api/configs/${u.id}`}>
+                                        <PopupMenu.Item action={() => window.open(i.clientPanelUrl + '?id=' + u.id)} visible={!!i.clientPanelUrl && access('users', 'subscribeUrl')} icon={<UserCircleIcon className="w-4"/>}>
+                                            Open Client Panel
+                                        </PopupMenu.Item> 
+                                        <PopupMenu.Item visible={!!i.clientPanelUrl && access('users', 'subscribeUrl')} icon={<RssIcon className="w-4"/>}>
+                                            <Copy className="block text-inherit" notifyText={`User "${u.email}" subscription url copied`} data={i.clientPanelUrl + `/api/configs/${u.id}`}>
                                                 Copy Subscription Url
                                             </Copy>
-                                        </PopupMenu.Item>
+                                        </PopupMenu.Item> 
                                         <PopupMenu.Item visible={access('users', 'clientConfig')} icon={<DevicePhoneMobileIcon className="w-4"/>} action={() => clientConfigDialog.show(u, i.tag)}>
                                             Client Config
                                         </PopupMenu.Item>

@@ -1,11 +1,12 @@
 import { Copy } from "@common/components/copy";
 import { DateView } from "@common/components/date-view";
+import { Dialog, useDialog } from "@common/components/dialog";
 import { Info, Infos } from "@common/components/info";
 import { Progress } from "@common/components/progress";
 import { QRCode } from "@common/components/qrcode";
 import { Size } from "@common/components/size";
 import { styles } from "@common/lib/styles";
-import { ArrowDownTrayIcon, Squares2X2Icon, UserIcon } from "@heroicons/react/24/outline";
+import { ArrowDownTrayIcon, ArrowLeftOnRectangleIcon, ClipboardDocumentIcon, ClipboardIcon, ExclamationTriangleIcon, LinkIcon, QrCodeIcon, Squares2X2Icon, UserIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import Head from "next/head";
 import { useRouter } from "next/router";
@@ -15,13 +16,13 @@ import toast from "react-hot-toast";
 interface AccountInfoResponse {
      ok?: boolean
      error?: string
-     configs?: string[]
+     configs?: any[]
      user?: V2RayConfigInboundClient
 }
 
 const className = {
     itemDownload: 'pointer hover:shadow-md px-3 py-3 rounded-lg border-[1px] hover:text-blue-700 hover:border-blue-500 duration-150 flex gap-x-2',
-    card: "bg-white px-6 py-3 rounded-lg self-center min-w-[90%] lg:min-w-[50%] w-full sm:w-auto sm:px-3",
+    card: "bg-white px-6 py-3 rounded-md self-center min-w-[90%] lg:min-w-[50%] w-full sm:w-auto sm:px-3 shadow-md",
     cardTitle: "flex gap-x-2 font-semibold pb-3 mb-3 border-b-[1px] border-b-gray-200"
 }
 
@@ -60,9 +61,19 @@ export default function Index() {
         router.push('/?id=' + encodeURIComponent(accountId) + '&t=' + Math.round(Math.random() * 1000));
     }, [accountId]);
 
+    const qrCodeDialog = useDialog((title: string, data: any, onClose?: Function) => {
+        return <Dialog title={title} onClose={onClose} className='items-center justify-center flex'>
+            <QRCode data={data}/>
+        </Dialog>
+    })
+
     useEffect(() => {
         if (!!qAccountId) {
             getAccount(qAccountId);
+        }
+        else {
+            setAccountId('');
+            setAccount({});
         }
     }, [qAccountId, getAccount, router.query.t]);
 
@@ -92,41 +103,44 @@ export default function Index() {
     const isLogin = !!account?.user?.email;
 
     const userInfo = isLogin ? <div>
-        <Infos>
+        <Infos className="grid lg:grid-cols-2 gap-x-4">
             <Info label={"Username"}>
                 {account.user?.email}
             </Info>
             <Info label={"Status"} className="py-2">
                 <span className={classNames("px-3 rounded-lg", {'bg-red-300': !!account?.user?.deActiveDate, 'bg-green-200': !account?.user?.deActiveDate})}>{account?.user?.deActiveDate ? 'De-Active' : 'Active'}</span>
             </Info>
+            <Info label={"Expire Date"} className="py-2 font-bold">
+                <DateView precision={true} full={false} popup={false} className="text-xs" date={account?.user['expireDate']}/>
+            </Info>
             <Info label={"Account ID"} className="py-2">
-                <Copy data={account?.user?.id}>{account?.user?.id}</Copy>
+                <Copy className="text-xs self-center" data={account?.user?.id}>{account?.user?.id}</Copy>
             </Info>
             <Info label={"First Connect"} className="py-2">
-                <DateView precision={true} full={false} popup={false} className="text-sm" date={account?.user?.firstConnect}/>
+                <DateView precision={true} full={false} popup={false} className="text-xs" date={account?.user?.firstConnect}/>
             </Info>
-            <Info label={"Quota Usage"} className="py-2">
-                {/* <Size size={account.user['quotaUsageAfterBilling']}></Size>
-                /
-                {account?.user?.quotaLimit ? <Size size={account.user?.quotaLimit}></Size> : '∞'} */}
-                <Progress className="flex-1" total={account?.user?.quotaLimit ?? account?.user['quotaUsageAfterBilling']} bars={[
+            <Info label={"Quota Usage"} className="py-2 font-bold">
+                {account?.user?.quotaLimit > 0 ?
+                <Progress className="flex-1" total={account?.user?.quotaLimit > 0 ? account?.user?.quotaLimit : account?.user['quotaUsageAfterBilling']} bars={[
                     {
                         title: 'Traffic Usage',
                         value: account?.user['quotaUsageAfterBilling']
                     }
-                ]} renderValue={x => <Size size={x}/>}/>
+                ]} renderValue={x => <Size size={x}/>}/> :
+                <>
+                    <Size size={account.user['quotaUsageAfterBilling']}></Size>
+                    /
+                    {account?.user?.quotaLimit ? <Size size={account.user?.quotaLimit}></Size> : '∞'}
+                </>}
             </Info>
             <Info label={"Last Connect"} className="py-2">
-                <DateView precision={true} full={false} popup={false} className="text-sm" date={account.user['lastConnect']}/>
+                <DateView precision={true} full={false} popup={false} className="text-xs" date={account.user['lastConnect']}/>
             </Info>
             <Info label={"Last Connect IP"} className="py-2">
                 {account.user['lastConnectIP']}
             </Info>
-            <Info label={"Expire Date"} className="py-2">
-                <DateView precision={true} full={false} popup={false} className="text-sm" date={account?.user['expireDate']}/>
-            </Info>
             <Info label={"De-active Date"} className="py-2">
-                <DateView precision={true} full={false} popup={false} className="text-sm" date={account?.user?.deActiveDate}/>
+                <DateView precision={true} full={false} popup={false} className="text-xs" date={account?.user?.deActiveDate}/>
             </Info>
             <Info label={"De-active Reason"} className="py-2">
                 {account?.user?.deActiveReason}
@@ -136,18 +150,64 @@ export default function Index() {
         <div className="flex flex-col md:flex-row">
             <Infos className="flex-1">
                 <Info label={'Url'} className={'py-2 items-center'}>
-                    <Copy data={`${location.protocol}//${location.host}/api/configs/${account?.user?.id}`}>
-                        <button className={styles.buttonPrimary}>Copy</button>
-                    </Copy>
-                    <a className={styles.button} target={'_blank'} href={`${location.protocol}//${location.host}/api/configs/${account?.user?.id}`}>Open</a>
+                    <div className="flex text-xs md:text-sm">
+                        <Copy data={`${location.protocol}//${location.host}/api/configs/${account?.user?.id}`}>{(copy, isCopied, isLoading) =>
+                            <button className={styles.buttonItem} onClick={() => copy()}>
+                                <ClipboardDocumentIcon className="w-4"/>
+                                {isLoading ? 'Wait ...' : isCopied ? 'Copied !' : 'Copy'}
+                            </button>
+                        }</Copy>
+                        <a className={styles.buttonItem} target={'_blank'} href={`${location.protocol}//${location.host}/api/configs/${account?.user?.id}`}>
+                            <LinkIcon className="w-4"/>
+                            Open
+                        </a>
+                        <button className={styles.buttonItem} onClick={() => qrCodeDialog.show('Subscription Url', `${location.protocol}//${location.host}/api/configs/${account?.user?.id}`)}>
+                            <QrCodeIcon className="w-4"/>
+                            QR Code
+                        </button>
+                    </div>
                 </Info>
             </Infos>
-            <div className="text-center flex justify-center items-center">
-                <QRCode data={`${location.protocol}//${location.host}/api/configs/${account?.user?.id}`}/>
+        </div>
+        <h1 className="font-semibold pt-3 mt-3 border-t-2 border-t-gray-200 items-center">
+            <span className="whitespace-nowrap mb-3 text-xs flex items-center bg-yellow-100 px-2 py-1 rounded-xl text-yellow-900">
+                <ExclamationTriangleIcon className="w-5 mr-1"/>
+                Please use subscription instead of copy configs directly
+            </span>
+            <div className="flex">
+                <span className="flex-1">Configs</span>
+                <div>
+                    <Copy data={account?.configs?.map(x => x.strConfig)?.join('\n')}>{(copy, isCopied) => <button onClick={() => copy()} className={classNames(styles.buttonItem, 'text-xs md:text-md')}>
+                        <ClipboardIcon className="w-4"/>
+                        {isCopied ? 'Copied !' : 'Copy All'}
+                    </button>}</Copy>
+                </div>
             </div>
+        </h1>
+        <div className="flex flex-col md:flex-row">
+            <Infos className="flex-1">
+                {account?.configs?.map(x => 
+                <Info label={x.description ?? x.ps} className={'py-2 items-center'}>
+                    <div className="flex text-xs md:text-sm">
+                        <Copy data={x.strConfig}>{(copy, isCopied, isLoading) =>
+                            <button className={styles.buttonItem} onClick={() => copy()}>
+                                <ClipboardDocumentIcon className="w-4"/>
+                                {isLoading ? 'Wait ...' : isCopied ? 'Copied !' : 'Copy'}
+                            </button>
+                        }</Copy>
+                        <button className={styles.buttonItem} onClick={() => qrCodeDialog.show('Config - ' + x.ps, x.strConfig)}>
+                            <QrCodeIcon className="w-4"/>
+                            QR Code
+                        </button>
+                    </div>
+                </Info>)}
+            </Infos>
         </div>
         <div className="mt-2 pt-2 border-t-2">
-            <button className="bg-slate-200 rounded-lg px-8 py-2 hover:bg-blue-200 duration-150" onClick={() => { setAccountId(''); setAccount({}); }}>Log out</button>
+            <button className={styles.buttonItem} onClick={() => router.push('/')}>
+                <ArrowLeftOnRectangleIcon className="w-4"/>
+                Log out
+            </button>
         </div>
     </div> : null;
 
@@ -162,12 +222,12 @@ export default function Index() {
     </form>;
 
 
-    return <div>
+    return <div className="text-sm">
         <Head>
             <title>My Account</title>
         </Head>
         {!isLogin?
-        <div className="flex flex-col items-center content-center justify-center h-screen w-screen gap-y-5 overflow-scroll">
+        <div className="flex flex-col items-center content-center justify-center h-screen w-screen gap-y-5">
             <div className={className.card}>
                 <h1 className={className.cardTitle}>
                     <UserIcon className="w-5"/>
@@ -177,7 +237,7 @@ export default function Index() {
             </div>            
             {downloadCard}
         </div>:
-            <div className="grid grid-cols-1 py-4 px-4 gap-5 sm:px-[5%] md:px-[10%] xl:px-[25%]">
+            <div className="grid grid-cols-1 py-4 px-0 gap-5 sm:px-[5%] md:px-[10%] 2xl:px-[25%]">
                 <div className={className.card}>
                     <h1 className={className.cardTitle}>
                         <UserIcon className="w-5"/>

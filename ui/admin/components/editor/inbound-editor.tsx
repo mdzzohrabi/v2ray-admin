@@ -291,6 +291,9 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }: Inbound
                 </Tabs.Tab>
                 : null}
                 <Tabs.Tab title="Client Config">
+                    <Field htmlFor="clientPanelUrl" label="Client Panel Url">
+                        <input type="text" className={styles.input} placeholder={'http://'} id='clientPanelUrl' />
+                    </Field>
                     <Collection data={inbound?.clientConfigs ?? []} dataSetter={clientConfigs => setInbound({
                             ...inbound,
                             clientConfigs
@@ -300,6 +303,7 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }: Inbound
                                 <h3 className="font-semibold flex-1">Client Configs</h3>
                                 <button type={"button"} onClick={() => configs.addItem(null, {})} className={styles.addButtonSmall}>+ Add Config</button>
                             </div>
+                            {configs?.items?.length == 0 ? <div className="text-gray-400 px-4 py-2 text-center text-xs">No Config</div> : null}
                             {configs.items?.map(config =>
                                 <FieldsGroup data={config} dataSetter={newConfig => configs.updateItem(config, newConfig)}>
                                 <div className="border-b-2 pb-2 text-sm flex">

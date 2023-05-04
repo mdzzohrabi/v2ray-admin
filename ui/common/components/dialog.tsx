@@ -57,7 +57,7 @@ interface DialogProps extends HTMLProps<HTMLDivElement> {
 
 export function Dialog({ children, title = undefined, onClose = undefined, onSubmit = undefined, className, ...props }: DialogProps) {
 
-    let elDialog = <div className="bg-white rounded-xl p-2 min-w-[30rem] flex flex-col max-h-[90vh] text-xs md:text-sm lg:text-base">
+    let elDialog = <div className="bg-white rounded-xl p-2 md:min-w-[30rem] flex flex-col max-h-[90vh] text-xs md:text-sm lg:text-base">
         <div className="flex flex-row px-1 pb-2">
             <span className="flex-1 font-bold">{title}</span>
             <div>

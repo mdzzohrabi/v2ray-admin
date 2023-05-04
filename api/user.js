@@ -368,7 +368,8 @@ router.post('/user', async (req, res) => {
                 amount: Number(user?.pricing?.newUserCost ?? env.CREATE_COST ?? 50000),
                 remark: `Create user ${email}`,
                 createdBy: user?.username,
-                createdById: user?.id
+                createdById: user?.id,
+                createdFor: user?.createBillsFor ?? user?.username
             });
         }
         res.json({ ok: true, id: result.id });
@@ -467,7 +468,8 @@ router.post('/add_days', async (req, res) => {
                 user: email,
                 remark: `Add ${days} days (${days/30} months)`,
                 createdBy: systemUser?.username,
-                createdById: systemUser?.id
+                createdById: systemUser?.id,
+                createdFor: systemUser?.createBillsFor ?? systemUser?.username
             });
         }
 

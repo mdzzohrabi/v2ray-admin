@@ -3,7 +3,15 @@ import { useState } from "react";
 import { useCallback } from "react"
 import toast from "react-hot-toast";
 
-export function Copy({ data, children, copiedText = 'Copied !', notifyText = 'Config copied to clipboard', className = '' }) {
+export interface CopyProps {
+    data?: any | (() => any)
+    children?: any | ((copy: Function, isCopied: boolean, isLoading: boolean) => any)
+    copiedText?: string
+    notifyText?: string
+    className?: string
+}
+
+export function Copy({ data, children, copiedText = 'Copied !', notifyText = 'Config copied to clipboard', className = '' }: CopyProps) {
     const [copied, setCopied] = useState(false);
     const [loading, setLoading] = useState(false);
     const copyData = useCallback(async () => {
@@ -24,5 +32,10 @@ export function Copy({ data, children, copiedText = 'Copied !', notifyText = 'Co
         toast.success(notifyText);
         setTimeout(() => setCopied(false), 2000);
     }, [data]);
+
+    if (typeof children == 'function') {
+        return children(copyData, copied, loading);
+    }
+
     return <span className={classNames("cursor-pointer text-blue-600", className)} onClick={copyData}>{ loading ? 'Loading ...' : copied ? copiedText : children }</span>
 }

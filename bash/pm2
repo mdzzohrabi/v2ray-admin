@@ -1,12 +1,17 @@
 pm2 stop v2ray-api
 pm2 stop v2ray-ui
 pm2 stop v2ray-cron
+pm2 stop v2ray-ui-admin
+pm2 stop v2ray-ui-client
 
 pm2 start web.js --name=v2ray-api
 pm2 start cron/index.js --name=v2ray-cron
 
 if [[ $UI -ne 0 ]]; then
-    cd ui/admin & pm2 start npm --name=v2ray-ui -- run start
+    cd ui/admin & pm2 start npm --name=v2ray-ui-admin -- run start
+    cd ../../
+    cd ui/client & pm2 start npm --name=v2ray-ui-client -- run start
+    cd ../../
 fi
 
 pm2 save

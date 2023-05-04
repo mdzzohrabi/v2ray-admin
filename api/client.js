@@ -52,14 +52,14 @@ router.get('/client/info/:id', async (req, res) => {
 
     let inbounds = config?.inbounds?.filter(x => !!x?.settings?.clients?.find(x => x.id == user?.id))?.map(x => x.tag) ?? [];
 
-    let clientConfigs = inbounds.map(async tag => {
+    let clientConfigs = inbounds.flatMap(async tag => {
         // @ts-ignore
-        return (await getUserConfig(user, tag)).strClientConfig;
+        return (await getUserConfig(user, tag)).clientConfigs;
     });
 
     let usages = await readLogFile(accessLogPath);
 
-    let configs = await Promise.all(clientConfigs);
+    let configs = (await Promise.all(clientConfigs)).flatMap(x => x);
 
     let usage = usages[user.email ?? ''];
     user.firstConnect = user.firstConnect ?? usage?.firstConnect;

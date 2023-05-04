@@ -11,8 +11,16 @@ interface PopupMenuItemProps {
     action?: (setVisible: React.Dispatch<React.SetStateAction<boolean>>) => any
 }
 
-function PopupMenuItem({ children, action }: PopupMenuItemProps) {
-    return <div></div>;
+function PopupMenuItem({ children, action, icon, visible }: PopupMenuItemProps) {
+
+    if (typeof visible != 'undefined' && !visible) return null;
+
+    return <div className="py-1 px-2 border-b-[1px] border-b-gray-200 last:border-b-0 hover:bg-cyan-100 cursor-pointer" onClick={() => { action?.call(this) }}>
+        <div className="flex flex-row gap-x-2">
+            {icon}
+            <span>{children}</span>
+        </div>
+    </div>
 }
 
 interface PopupMenuProps {
@@ -39,14 +47,7 @@ export function PopupMenu({ visible = false, text = 'Actions', emptyText = '-', 
         <span onClick={() => setVisible(!isVisible)} className={classNames(styles.link, { 'bg-slate-200': isVisible })}>{text}</span>
         {isVisible ? 
         <div ref={refPopup} className="min-w-[10rem] absolute z-50 right-0 top-full bg-white shadow-lg ring-1 ring-black ring-opacity-10 px-2 py-2 rounded-lg">
-            {visibleItems.map((item, index) => {
-                return <div key={index} className="py-1 px-2 border-b-[1px] border-b-gray-200 last:border-b-0 hover:bg-cyan-100 cursor-pointer" onClick={() => { item.props.action?.call(this, setVisible) }}>
-                    <div className="flex flex-row gap-x-2">
-                        {item.props.icon}
-                        <span>{item.props.children}</span>
-                    </div>
-                </div>
-            })}
+            {children}
         </div> : null }
     </div>
 }
