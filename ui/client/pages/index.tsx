@@ -119,20 +119,6 @@ export default function Index() {
             <Info label={"First Connect"} className="py-2">
                 <DateView precision={true} full={false} popup={false} className="text-xs" date={account?.user?.firstConnect}/>
             </Info>
-            <Info label={"Quota Usage"} className="py-2 font-bold">
-                {account?.user?.quotaLimit > 0 ?
-                <Progress className="flex-1" total={account?.user?.quotaLimit > 0 ? account?.user?.quotaLimit : account?.user['quotaUsageAfterBilling']} bars={[
-                    {
-                        title: 'Traffic Usage',
-                        value: account?.user['quotaUsageAfterBilling']
-                    }
-                ]} renderValue={x => <Size size={x}/>}/> :
-                <>
-                    <Size size={account.user['quotaUsageAfterBilling']}></Size>
-                    /
-                    {account?.user?.quotaLimit ? <Size size={account.user?.quotaLimit}></Size> : '∞'}
-                </>}
-            </Info>
             <Info label={"Last Connect"} className="py-2">
                 <DateView precision={true} full={false} popup={false} className="text-xs" date={account.user['lastConnect']}/>
             </Info>
@@ -144,6 +130,24 @@ export default function Index() {
             </Info>
             <Info label={"De-active Reason"} className="py-2">
                 {account?.user?.deActiveReason}
+            </Info>
+            <Info label={"Quota Usage"} className="py-2 font-bold">
+                {account?.user?.quotaLimit > 0 ?
+                <Progress title={<>
+                    <Size size={account.user['quotaUsageAfterBilling']}/>/
+                    <Size size={account?.user?.quotaLimit}/>
+                </>
+            } className="flex-1" total={account?.user?.quotaLimit > 0 ? account?.user?.quotaLimit : account?.user['quotaUsageAfterBilling']} bars={[
+                    {
+                        title: 'Traffic Usage',
+                        value: account?.user['quotaUsageAfterBilling']
+                    }
+                ]} renderValue={x => <Size size={x}/>}/> :
+                <>
+                    <Size size={account.user['quotaUsageAfterBilling']}></Size>
+                    /
+                    {account?.user?.quotaLimit ? <Size size={account.user?.quotaLimit}></Size> : '∞'}
+                </>}
             </Info>
         </Infos>
         <h1 className="font-semibold pt-3 mt-3 border-t-2 border-t-gray-200">Subscription URL</h1>
