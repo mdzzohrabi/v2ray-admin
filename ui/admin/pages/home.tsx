@@ -12,12 +12,13 @@ import { ArrowPathIcon, HomeIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useContextSWR } from "../lib/hooks";
+import { useContextSWR, useUser } from "../lib/hooks";
 
 export default function HomePage() {
 
     let router = useRouter();
     let showAll = router.query.all == '1';
+    let { access } = useUser();
 
     let {data, isValidating: isLoading, mutate: refreshData} = useContextSWR('/summary' + queryString({ showAll }));
     let colors = ProgressColors;
@@ -42,8 +43,10 @@ export default function HomePage() {
             </button>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 px-3 gap-3">
+            {access('home','users') || access('home', 'traffics') ?
             <div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-3">
+                    {access('home', 'users')?
                     <div className="bg-white shadow-md rounded-md px-4 py-3">
                         <h1 className="text-lg mb-2 pb-2 border-b-2">Users</h1>
                         <div className="pb-4 pt-2 px-0">
@@ -76,6 +79,8 @@ export default function HomePage() {
                             <Info className={'py-2'} label={"Disconnected Users (1 day)"}>{data?.users?.Not_Connected_1_Day}</Info>
                         </Infos>
                     </div>
+                    :null}
+                    {access('home', 'traffics')?
                     <div className="bg-white shadow-md rounded-md py-3 px-4">
                     <h1 className="text-lg mb-2 pb-2 border-b-2">Traffic (Month)</h1>
                     <div className="py-4 px-0">
@@ -116,11 +121,12 @@ export default function HomePage() {
                             </Info>
                         })}
                     </Infos>
+                    </div> : null}
                 </div>
-                </div>
-            </div>
+            </div> : null }
             <div className="col-span-1 xl:col-span-2">
                 <div className={classNames("grid grid-cols-1  gap-3", { 'xl:grid-cols-2': !!view.serversDetail })}>
+                    {access('home', 'servers') ?
                     <div>
                         <div className="bg-white shadow-md rounded-md py-3 px-4">
                             <h1 className="text-lg mb-2 pb-2 border-b-2">Servers</h1>
@@ -172,6 +178,8 @@ export default function HomePage() {
                             </> : <span className={styles.link} onClick={() => setView({ ...view, serversDetail: true })}>Show Details ...</span> }
                         </div>
                     </div>
+                    :null}
+                    {access('home', 'transactions')?
                     <div>
                         <div className="bg-white shadow-md rounded-md py-3 px-4">
                             <h1 className="text-lg mb-2 pb-2 border-b-2">Transactions (Month)</h1>
@@ -226,7 +234,7 @@ export default function HomePage() {
                                 </Info>
                             </Infos>
                         </div>
-                    </div>
+                    </div>: null}
                 </div>
             </div>
         </div>

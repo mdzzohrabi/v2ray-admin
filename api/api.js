@@ -4,6 +4,7 @@ const { env } = require('process');
 const { getTransactions } = require('../lib/db');
 const { getPaths, readConfig, applyChanges, writeConfig, readLogFile, getUserConfig, restartService, DateUtil, db, createLogger, httpAction } = require('../lib/util');
 const { statusFilters } = require('./common');
+const { filterTransactionsForUser } = require('./transactions');
 const router = require('express').Router();
 
 let {showInfo, showError} = createLogger();
@@ -57,7 +58,7 @@ router.get('/summary', async (req, res) => {
         let nodes = await db('server-nodes') ?? [];
         /** @type {TrafficUsages} */
         let traffics = await db('traffic-usages') ?? {};
-        let transactions = await getTransactions();
+        let transactions = systemUser ? filterTransactionsForUser(await getTransactions(), systemUser) : [];
 
         /** @type {V2RayConfigInboundClient[]} */
         let users = config?.inbounds
@@ -110,9 +111,9 @@ router.get('/summary', async (req, res) => {
                 totalPaidMonth: Math.abs(transactionsThisMonth.filter(x => (Number(x.amount) || 0) < 0).reduce((s, t) => s + (Number(t.amount) || 0), 0)),
             },
             traffics: {
-                totalMonth: trafficMonth.filter(x => x.type == 'outbound').reduce((s, t) => s + (t.traffic ?? 0), 0),
-                totalSendMonth: trafficMonth.filter(x => x.type == 'outbound' && x.direction == 'uplink').reduce((s, t) => s + t.traffic, 0),
-                totalReceiveMonth: trafficMonth.filter(x => x.type == 'outbound' && x.direction == 'downlink').reduce((s, t) => s + t.traffic, 0),
+                totalMonth: trafficMonth.filter(x => (systemUser?.acls?.isAdmin || systemUser?.acls?.allowedInbounds?.includes(x.name)) && x.type == 'inbound').reduce((s, t) => s + (t.traffic ?? 0), 0),
+                totalSendMonth: trafficMonth.filter(x => (systemUser?.acls?.isAdmin || systemUser?.acls?.allowedInbounds?.includes(x.name)) && x.type == 'inbound' && x.direction == 'uplink').reduce((s, t) => s + t.traffic, 0),
+                totalReceiveMonth: trafficMonth.filter(x => (systemUser?.acls?.isAdmin || systemUser?.acls?.allowedInbounds?.includes(x.name)) && x.type == 'inbound' && x.direction == 'downlink').reduce((s, t) => s + t.traffic, 0),
                 top10usageUsers: trafficMonth
                 .filter(x => x.type == 'user' && usersMap[x.name])
                 .reduce((/** @type {{ user: string, traffic: number }[]} */ a, t) => {
@@ -132,6 +133,9 @@ router.get('/summary', async (req, res) => {
                 x['connectedClients'] = users.filter(u => statusFilters['Connected (1 Hour)'](u) && u['lastConnectNode'] == x.id).length;
                 x['monthlyTrafficUsage'] = trafficMonth.filter(t => t.server == x.id && t.type == 'outbound').reduce((s, t) => s + t.traffic, 0);
                 return x;
+            }).filter(x => {
+                if (systemUser?.acls?.isAdmin) return true;
+                return x['connectedClients'] > 0;
             })
         });
     }

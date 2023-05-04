@@ -4,13 +4,22 @@ const { httpAction } = require('../lib/util');
 
 const router = require('express').Router();
 
+/**
+ * 
+ * @param {Transaction[]} transactions 
+ * @param {SystemUser} admin
+ */
+function filterTransactionsForUser(transactions, admin) {
+    if (!admin.acls?.isAdmin) {
+        return transactions.filter(x => x.createdFor == admin.username || x.createdBy == admin.username || (x.createdBy && admin?.subUsers?.includes(x.createdBy)) || (x.createdFor && admin.subUsers?.includes(x.createdFor)));
+    }
+    return transactions;
+}
+
 router.get('/transactions', httpAction(async (req, res) => {
     /** @type {SystemUser} */
     let admin = res.locals.user;
-    let transactions = await getTransactions();
-    if (!admin.acls?.isAdmin) {
-        transactions = transactions.filter(x => x.createdFor == admin.username || x.createdBy == admin.username || (x.createdBy && admin?.subUsers?.includes(x.createdBy)) || (x.createdFor && admin.subUsers?.includes(x.createdFor)));
-    }
+    let transactions = filterTransactionsForUser(await getTransactions(), admin);
     res.json(transactions);
 }));
 
@@ -55,4 +64,4 @@ router.post('/edit_transaction', async (req, res) => {
     }
 });
 
-module.exports = { router };
+module.exports = { router, filterTransactionsForUser };
