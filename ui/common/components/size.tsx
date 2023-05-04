@@ -1,3 +1,5 @@
+import React from "react";
+
 /**
  * Size
  * @param {{ size: number }} param0 

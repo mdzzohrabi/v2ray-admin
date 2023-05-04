@@ -1,7 +1,6 @@
 import classNames from "classnames";
-import { useState } from "react";
-import { useCallback } from "react"
-import toast from "react-hot-toast";
+import React, { useCallback, useState } from "react";
+import { toast } from "../lib/hooks";
 
 export interface CopyProps {
     data?: any | (() => any)

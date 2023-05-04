@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import React, { ChangeEvent, createContext, createElement, useCallback, useContext, useMemo } from "react";
+import React, { ChangeEvent, createContext, createElement, useCallback, useContext } from "react";
 import { useArrayDelete, useArrayInsert, useArrayUpdate, useCounter, useObjectCRUD } from "../lib/hooks";
 import { styles } from "../lib/styles";
 import { MultiSelect } from "./multi-select";

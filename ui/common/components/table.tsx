@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import { Fragment, ReactElement } from "react";
+import React, { Fragment, ReactElement } from "react";
 import { styles } from "../lib/styles";
 
 export interface TableProps<T, G, C extends string> {
@@ -25,7 +25,7 @@ function isReactNode(value: any): value is ReactElement {
 export function Table<T, G, C extends string>({ columns, rows, cells, loading, rowContainer, index: indexGetter, groupBy, group, groupFooter, footer, className, cellMerge }: TableProps<T, G, C>) {
 
     let prevGroup = null;
-    let groupItems = [];
+    let groupItems: any[] = [];
     let mergedCells: { [cellIndex: number]: number } = {};
 
     let renderedRows = rows?.map((row, index) => {

@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import { createElement, Fragment, HTMLProps, useState } from "react";
+import React, { createElement, Fragment, HTMLProps, useState } from "react";
 import { ChildOf } from "../types";
 
 interface TabProps extends HTMLProps<HTMLDivElement> {

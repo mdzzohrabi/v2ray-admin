@@ -1,6 +1,18 @@
+import React from "react";
 import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import toast from "react-hot-toast";
 import { deepCopy, store, stored } from "./util";
+import type { toast as Toaster } from 'react-hot-toast';
+
+
+export let toast: typeof Toaster;
+
+export function setToast(_toast: typeof Toaster) {
+	toast = _toast;
+}
+
+export function getToast() {
+	return toast;
+}
 
 export function useOutsideAlerter(ref, callback) {
 	useEffect(() => {

@@ -1,6 +1,6 @@
 import { ChevronUpDownIcon, MagnifyingGlassIcon, XCircleIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
-import { HTMLProps, KeyboardEvent, MouseEventHandler, useCallback, useEffect, useRef, useState } from "react";
+import React, { HTMLProps, KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useOutsideAlerter } from "../lib/hooks";
 import { styles } from "../lib/styles";
 
@@ -43,10 +43,10 @@ export function Select<T>({items, value, onChange, nullText = 'No item selected'
         setShowPopup(false);
     });
 
-    useEffect(() => showPopup ? refSearch?.current?.focus() : null, [showPopup]);
+    useEffect(() => { showPopup ? refSearch?.current?.focus() : null }, [showPopup]);
     useEffect(() => setFocusIndex(0), [filter]);
 
-    const visibleItems = items?.filter(x => !filter || String(getValue(x)).includes(filter));
+    const visibleItems = items?.filter(x => !filter || String(getValue(x)).includes(filter)) ?? [];
 
     const onKeyDown = useCallback((e: KeyboardEvent) => {
         if (e?.code == 'ArrowUp') {
