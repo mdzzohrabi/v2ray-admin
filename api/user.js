@@ -357,7 +357,7 @@ router.post('/user', async (req, res) => {
         if (!tag) return res.json({ error: 'Tag not entered' });
         let {configPath} = getPaths();
         if (quotaLimit) quotaLimit = Number(quotaLimit);
-        let result = await addUser(configPath, email, 'vmess', tag, {
+        let result = await addUser(configPath, email, '', tag, {
             fullName, mobile, emailAddress, private, free, quotaLimit,
             createdBy: user?.username,
             createdById: user?.id
