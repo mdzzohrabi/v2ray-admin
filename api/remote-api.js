@@ -8,6 +8,12 @@ let router = express.Router();
  */
 router.use(async (req, res, next) => {
     let serverNode = req.headers['server-node'];
+    /** @type {SystemUser} */
+    let admin = res.locals.user;
+    if (admin) {
+        let { password, ...adminWithoutPassword } = admin;
+        admin = adminWithoutPassword;
+    }
     if (serverNode) {
         /**
          * @type {ServerNode[]}
@@ -29,7 +35,8 @@ router.use(async (req, res, next) => {
                 method: req.method,
                 headers: {
                     Authorization: 'Bearer ' + Buffer.from(node.apiKey).toString('base64'),
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-User': Buffer.from(JSON.stringify(admin)).toString('base64')
                 }
             });
 
