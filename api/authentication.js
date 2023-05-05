@@ -98,6 +98,7 @@ router.use(async (req, res, next) => {
         // Remote user information
         if (req.headers['x-user']) {
             res.locals.user = JSON.parse(Buffer.from(String(req.headers['x-user']), 'base64').toString('utf-8'));
+            console.log(res.locals.user);
         }
 
         // Remote Api Authentication
