@@ -95,10 +95,11 @@ router.use(async (req, res, next) => {
         if (!serverNode)
             return res.status(401).json({ error: 'Api Authentication failed' });
 
+            console.log(req.headers);
+
         // Remote user information
         if (req.headers['x-user']) {
             res.locals.user = JSON.parse(Buffer.from(String(req.headers['x-user']), 'base64').toString('utf-8'));
-            console.log(res.locals.user);
         }
 
         // Remote Api Authentication
