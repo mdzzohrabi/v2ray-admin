@@ -384,6 +384,10 @@ router.post('/user', async (req, res) => {
 });
 
 router.get('/user/nodes', httpAction(async (req, res) => {
+
+    /** @type {SystemUser} */
+    const admin = res.locals.user;
+
     /** @type {ServerNode[]} */
     const nodes = await db('server-nodes') ?? [];
 
@@ -418,7 +422,8 @@ router.get('/user/nodes', httpAction(async (req, res) => {
                 method: 'post',
                 headers: {
                     Authorization: 'Bearer ' + Buffer.from(node.apiKey).toString('base64'),
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-User': Buffer.from(JSON.stringify({ ...admin, password: undefined })).toString('base64')
                 }
             });
 
