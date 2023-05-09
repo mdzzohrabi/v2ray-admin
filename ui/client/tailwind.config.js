@@ -8,7 +8,7 @@ module.exports = {
     ],
     theme: {
       fontFamily: {
-        sans: ['SegoeUI', 'system-ui', 'segoe-ui', '"PT Sans"', 'sans-serif']
+        sans: ['IRANSansX', 'SegoeUI', 'system-ui', 'segoe-ui', '"PT Sans"', 'sans-serif']
       }
     //   extend: {
     //     colors: {

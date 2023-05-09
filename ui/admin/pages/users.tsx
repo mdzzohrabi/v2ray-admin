@@ -454,7 +454,7 @@ return <Container>
                                 </td>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3">
                                     <PopupMenu>
-                                        <PopupMenu.Item action={() => window.open(i.clientPanelUrl + '?id=' + u.id)} visible={!!i.clientPanelUrl && access('users', 'subscribeUrl')} icon={<UserCircleIcon className="w-4"/>}>
+                                        <PopupMenu.Item action={() => window.open(i.clientPanelUrl + '/account/' + u.id)} visible={!!i.clientPanelUrl && access('users', 'subscribeUrl')} icon={<UserCircleIcon className="w-4"/>}>
                                             Open Client Panel
                                         </PopupMenu.Item> 
                                         <PopupMenu.Item visible={!!i.clientPanelUrl && access('users', 'subscribeUrl')} icon={<RssIcon className="w-4"/>}>

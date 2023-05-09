@@ -1,17 +1,18 @@
 import { Copy } from "@common/components/copy";
 import { DateView } from "@common/components/date-view";
 import { Dialog, useDialog } from "@common/components/dialog";
-import { Info, Infos } from "@common/components/info";
+import { Info, Infos, setInfoLocaleFn } from "@common/components/info";
 import { Progress } from "@common/components/progress";
 import { QRCode } from "@common/components/qrcode";
 import { Size } from "@common/components/size";
 import { styles } from "@common/lib/styles";
-import { ArrowDownTrayIcon, ArrowLeftOnRectangleIcon, ClipboardDocumentIcon, ClipboardIcon, ExclamationTriangleIcon, LinkIcon, QrCodeIcon, Squares2X2Icon, UserIcon } from "@heroicons/react/24/outline";
+import { ArrowDownTrayIcon, ArrowLeftOnRectangleIcon, ClipboardDocumentIcon, ClipboardIcon, ExclamationTriangleIcon, LinkIcon, QrCodeIcon, QuestionMarkCircleIcon, Squares2X2Icon, UserIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { __ } from "../locale";
 
 interface AccountInfoResponse {
      ok?: boolean
@@ -26,14 +27,16 @@ const className = {
     cardTitle: "flex gap-x-2 font-semibold pb-3 mb-3 border-b-[1px] border-b-gray-200"
 }
 
-export default function Index() {
+setInfoLocaleFn(__);
+
+export default function Index({ accountId: pAccountId }: { accountId?: string }) {
     const router = useRouter();
-    const qAccountId = router.query.id ? String(router.query.id) : '';
+    const qAccountId = pAccountId ?? (router.query.id ? String(router.query.id) : '');
     let [account, setAccount] = useState<AccountInfoResponse>({});
     let [accountId, setAccountId] = useState<string>();
 
     let getAccount = useCallback(async (accountId?: string) => {
-        let toastId = toast.loading(`Get account information ...`);
+        let toastId = toast.loading(__(`Get account information ...`));
         try {
             let result = await fetch('/api/account', {
                 body: JSON.stringify({
@@ -50,6 +53,7 @@ export default function Index() {
         }
         catch (err) {
             toast.error(err.message);
+            router.push('/');
         }
         finally {
             toast.dismiss(toastId);
@@ -58,7 +62,7 @@ export default function Index() {
 
     const login = useCallback((e?: FormEvent) => {
         e?.preventDefault();
-        router.push('/?id=' + encodeURIComponent(accountId) + '&t=' + Math.round(Math.random() * 1000));
+        router.push('/account/' + encodeURIComponent(accountId) + '?t=' + Math.round(Math.random() * 1000));
     }, [accountId]);
 
     const qrCodeDialog = useDialog((title: string, data: any, onClose?: Function) => {
@@ -80,21 +84,21 @@ export default function Index() {
     const downloadCard = <div className={className.card}>
         <h1 className={className.cardTitle}>
             <Squares2X2Icon className="w-5"/>
-            Download Applications
+            {__('Download Applications')}
         </h1>
         <div className="flex">
             <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-2">
                 <a href="https://github.com/2dust/v2rayNG/releases/download/1.7.38/v2rayNG_1.7.38.apk" className={className.itemDownload}>
                     <ArrowDownTrayIcon className="w-5"/>
-                    Download V2RayNG for <b>Android</b>
+                    <span dangerouslySetInnerHTML={{ __html: __('Download V2RayNG for <b>Android</b>')}}/>
                 </a>
                 <a href="https://apps.apple.com/us/app/napsternetv/id1629465476" className={className.itemDownload}>
                     <ArrowDownTrayIcon className="w-5"/>
-                    Download NapsternetV for <b>iOS</b>
+                    <span dangerouslySetInnerHTML={{ __html: __('Download NapsternetV for <b>iOS</b>')}}/>
                 </a>
                 <a href="https://apps.apple.com/us/app/fair-vpn/id1533873488" className={className.itemDownload}>
                     <ArrowDownTrayIcon className="w-5"/>
-                    Download FairVPN for <b>iOS</b>
+                    <span dangerouslySetInnerHTML={{ __html: __('Download FairVPN for <b>iOS</b>')}}/>
                 </a>
             </div>
         </div>
@@ -104,11 +108,11 @@ export default function Index() {
 
     const userInfo = isLogin ? <div>
         <Infos className="grid lg:grid-cols-2 gap-x-4">
-            <Info label={"Username"}>
+            <Info label={"Username"} className='py-2'>
                 {account.user?.email}
             </Info>
             <Info label={"Status"} className="py-2">
-                <span className={classNames("px-3 rounded-lg", {'bg-red-300': !!account?.user?.deActiveDate, 'bg-green-200': !account?.user?.deActiveDate})}>{account?.user?.deActiveDate ? 'De-Active' : 'Active'}</span>
+                <span className={classNames("px-3 rounded-lg", {'bg-red-300': !!account?.user?.deActiveDate, 'bg-green-200': !account?.user?.deActiveDate})}>{__(account?.user?.deActiveDate ? 'De-Active' : 'Active')}</span>
             </Info>
             <Info label={"Expire Date"} className="py-2 font-bold">
                 <DateView precision={true} full={false} popup={false} className="text-xs" date={account?.user['expireDate']}/>
@@ -133,13 +137,13 @@ export default function Index() {
             </Info>
             <Info label={"Quota Usage"} className="py-2 font-bold">
                 {account?.user?.quotaLimit > 0 ?
-                <Progress title={<>
+                <Progress title={<div style={{ direction: 'ltr' }}>
                     <Size size={account.user['quotaUsageAfterBilling']}/>/
                     <Size size={account?.user?.quotaLimit}/>
-                </>
+                </div>
             } className="flex-1" total={account?.user?.quotaLimit > 0 ? account?.user?.quotaLimit : account?.user['quotaUsageAfterBilling']} bars={[
                     {
-                        title: 'Traffic Usage',
+                        title: __('Traffic Usage'),
                         value: account?.user['quotaUsageAfterBilling']
                     }
                 ]} renderValue={x => <Size size={x}/>}/> :
@@ -150,40 +154,40 @@ export default function Index() {
                 </>}
             </Info>
         </Infos>
-        <h1 className="font-semibold pt-3 mt-3 border-t-2 border-t-gray-200">Subscription URL</h1>
+        <h1 className="font-semibold pt-3 mt-3 border-t-2 border-t-gray-200">{__('Subscription URL')}</h1>
         <div className="flex flex-col md:flex-row">
             <Infos className="flex-1">
                 <Info label={'Url'} className={'py-2 items-center'}>
                     <div className="flex text-xs md:text-sm">
                         <Copy data={`${location.protocol}//${location.host}/api/configs/${account?.user?.id}`}>{(copy, isCopied, isLoading) =>
-                            <button className={styles.buttonItem} onClick={() => copy()}>
+                            <button className={classNames(styles.buttonItem)} onClick={() => copy()}>
                                 <ClipboardDocumentIcon className="w-4"/>
-                                {isLoading ? 'Wait ...' : isCopied ? 'Copied !' : 'Copy'}
+                                {__(isLoading ? 'Wait ...' : isCopied ? 'Copied !' : 'Copy')}
                             </button>
                         }</Copy>
                         <a className={styles.buttonItem} target={'_blank'} href={`${location.protocol}//${location.host}/api/configs/${account?.user?.id}`}>
                             <LinkIcon className="w-4"/>
-                            Open
+                            {__('Open')}
                         </a>
                         <button className={styles.buttonItem} onClick={() => qrCodeDialog.show('Subscription Url', `${location.protocol}//${location.host}/api/configs/${account?.user?.id}`)}>
                             <QrCodeIcon className="w-4"/>
-                            QR Code
+                            {__('QR Code')}
                         </button>
                     </div>
                 </Info>
             </Infos>
         </div>
         <h1 className="font-semibold pt-3 mt-3 border-t-2 border-t-gray-200 items-center">
-            <span className="whitespace-nowrap mb-3 text-xs flex items-center bg-yellow-100 px-2 py-1 rounded-xl text-yellow-900">
-                <ExclamationTriangleIcon className="w-5 mr-1"/>
-                Please use subscription instead of copy configs directly
+            <span className="whitespace-nowrap mb-3 gap-x-2 text-xs flex items-center bg-yellow-100 px-4 py-2 rounded-xl text-yellow-900">
+                <ExclamationTriangleIcon className="w-5"/>
+                {__('Please use subscription instead of copy configs directly')}
             </span>
             <div className="flex">
-                <span className="flex-1">Configs</span>
+                <span className="flex-1">{__('Configs')}</span>
                 <div>
                     <Copy data={account?.configs?.map(x => x.strConfig)?.join('\n')}>{(copy, isCopied) => <button onClick={() => copy()} className={classNames(styles.buttonItem, 'text-xs md:text-md')}>
                         <ClipboardIcon className="w-4"/>
-                        {isCopied ? 'Copied !' : 'Copy All'}
+                        {__(isCopied ? 'Copied !' : 'Copy All')}
                     </button>}</Copy>
                 </div>
             </div>
@@ -196,48 +200,43 @@ export default function Index() {
                         <Copy data={x.strConfig}>{(copy, isCopied, isLoading) =>
                             <button className={styles.buttonItem} onClick={() => copy()}>
                                 <ClipboardDocumentIcon className="w-4"/>
-                                {isLoading ? 'Wait ...' : isCopied ? 'Copied !' : 'Copy'}
+                                {__(isLoading ? 'Wait ...' : isCopied ? 'Copied !' : 'Copy')}
                             </button>
                         }</Copy>
                         <button className={styles.buttonItem} onClick={() => qrCodeDialog.show('Config - ' + x.ps, x.strConfig)}>
                             <QrCodeIcon className="w-4"/>
-                            QR Code
+                            {__('QR Code')}
                         </button>
                     </div>
                 </Info>)}
             </Infos>
         </div>
-        <div className="mt-2 pt-2 border-t-2">
-            <button className={styles.buttonItem} onClick={() => router.push('/')}>
-                <ArrowLeftOnRectangleIcon className="w-4"/>
-                Log out
-            </button>
-        </div>
+        
     </div> : null;
 
     const loginForm = <form onSubmit={login}>
         <div className="items-center flex justify-center">
             <div className="flex flex-col flex-1">
-                <label htmlFor="accountId" className={classNames(styles.label, 'px-1')}>Account ID</label>
-                <input value={accountId} onChange={e => setAccountId(e.currentTarget.value)} className={classNames("px-2 py-2 rounded-lg border-2 focus:outline-blue-500")} type="text" id="accountId" placeholder="Account ID"/>
-                <button type="submit" className="px-3 py-2 rounded-lg bg-slate-200 mt-2 duration-150 hover:shadow-md">Login</button>
+                <label htmlFor="accountId" className={classNames(styles.label, 'px-1')}>{__('Account ID')}</label>
+                <input value={accountId} onChange={e => setAccountId(e.currentTarget.value)} className={classNames("px-2 text-center py-2 rounded-lg border-2 focus:outline-blue-500")} type="text" id="accountId" placeholder={__("Account ID")}/>
+                <button type="submit" className="px-3 py-2 rounded-lg bg-slate-200 mt-2 duration-150 hover:shadow-md">{__('Login')}</button>
             </div>
         </div>
     </form>;
 
 
-    return <div className="text-sm">
+    return <div className="text-sm" style={{ direction: __('direction') }}>
         <Head>
-            <title>My Account</title>
+            <title>{__('My Account')}</title>
         </Head>
         {!isLogin?
         <div className="flex flex-col items-center content-center justify-center h-screen w-screen gap-y-5">
             <div className={className.card}>
                 <h1 className={className.cardTitle}>
                     <UserIcon className="w-5"/>
-                    Account Information
+                    {__('Account Information')}
                 </h1>
-                {qAccountId ? 'Please Wait...' : loginForm}
+                {qAccountId ? __('Please Wait...') : loginForm}
             </div>            
             {downloadCard}
         </div>:
@@ -245,8 +244,24 @@ export default function Index() {
                 <div className={className.card}>
                     <h1 className={className.cardTitle}>
                         <UserIcon className="w-5"/>
-                        Account Information
+                        {__('Account Information')}
                     </h1>
+                    <div className="mb-4 pb-2 border-b-[1px] flex flex-row text-xs">
+                        <Copy data={`${location.protocol}//${location.host}/api/configs/${account?.user?.id}`}>{(copy, isCopied, isLoading) =>
+                            <button className={classNames(styles.buttonItem)} onClick={() => copy()}>
+                                <ClipboardDocumentIcon className="w-4"/>
+                                {__(isLoading ? 'Wait ...' : isCopied ? 'Copied !' : 'Copy Subscription Url')}
+                            </button>
+                        }</Copy>
+                        <button className={styles.buttonItem} onClick={() => router.push('/how-to-use')}>
+                            <QuestionMarkCircleIcon className="w-4"/>
+                            {__('How to use')}
+                        </button>
+                        <button className={styles.buttonItem} onClick={() => router.push('/')}>
+                            <ArrowLeftOnRectangleIcon className="w-4"/>
+                            {__('Log out')}
+                        </button>
+                    </div>
                     {userInfo}
                 </div>
                 {downloadCard}

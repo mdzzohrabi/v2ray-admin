@@ -1,3 +1,4 @@
+import { DatePicker } from "@common/components/date-picker";
 import { Field, FieldsGroup } from "@common/components/fields";
 import { Size } from "@common/components/size";
 import { Table } from "@common/components/table";
@@ -28,7 +29,7 @@ export default function TrafficUsagePage() {
         day: intl.formatToParts(date).find(x => x.type == 'day')?.value,
     });
 
-    let [view, setView] = useStoredState('usages-traffic-view', {
+    let [view, setView] = useStoredState('usages-traffic-view-' + (email ?? 'all'), {
         showDetail: access('isAdmin') ? true : false,
         sortColumn: 'type',
         sortAsc: true,
@@ -46,7 +47,8 @@ export default function TrafficUsagePage() {
 
     // Filter by user
     useEffect(() => {
-        setView({ ...view, filter: `=${email}`, type: 'user' });
+        if (email)
+            setView({ ...view, filter: `=${email}`, type: 'user' });
     }, [email]);
 
     let {data: usages, mutate: refreshUsages, isValidating: isLoading} = useContextSWR<any>('/traffic' + queryString({ email }));
@@ -56,9 +58,9 @@ export default function TrafficUsagePage() {
 
     let [years, months, days] = useMemo(() => {
         return [
-            [...new Set(dates.map(d => new Intl.DateTimeFormat(dateLocale, { year: 'numeric' }).format(d)))],
-            [...new Set(dates.map(d => new Intl.DateTimeFormat(dateLocale, { month: 'numeric' }).format(d)))],
-            [...new Set(dates.map(d => new Intl.DateTimeFormat(dateLocale, { day: 'numeric' }).format(d)))]
+            [...new Set(dates.map(d => new Intl.DateTimeFormat(dateLocale, { year: 'numeric' }).format(d)))].sort((a, b) => Number(a) > Number(b) ? 1 : -1),
+            [...new Set(dates.map(d => new Intl.DateTimeFormat(dateLocale, { month: 'numeric' }).format(d)))].sort((a, b) => Number(a) > Number(b) ? 1 : -1),
+            [...new Set(dates.map(d => new Intl.DateTimeFormat(dateLocale, { day: 'numeric' }).format(d)))].sort((a, b) => Number(a) > Number(b) ? 1 : -1)
         ];
 
     }, [dates]);
@@ -67,24 +69,25 @@ export default function TrafficUsagePage() {
         <Head>
             <title>Traffic Usages</title>
         </Head>
-        <FieldsGroup title={"Daily Traffic Usages"} data={view} dataSetter={setView} horizontal>
+        <FieldsGroup title={"Daily Traffic Usages"} data={view} dataSetter={setView} className='items-center'>
             { email ? <Field label="User" className="border-x-[1px] px-3 mr-2">
                 <span className="text-gray-800 py-1 px-2 rounded-lg bg-yellow-100">{email}</span>
             </Field> : null }
             <FieldServerNodes/>
+            {/* <DatePicker/> */}
             <Field label="Year" htmlFor="dateYear">
                 <select id="dateYear" className={styles.input}>
                     <option value="">-</option>
                     {years.map(date => <option key={date} value={date}>{date}</option>)}
                 </select>
             </Field>
-            <Field label="/" htmlFor="dateMonth">
+            <Field label="Month" htmlFor="dateMonth">
                 <select id="dateMonth" className={styles.input}>
                     <option value="">-</option>
                     {months.map(date => <option key={date} value={date}>{date}</option>)}
                 </select>
             </Field>
-            <Field label="/" htmlFor="dateDay">
+            <Field label="Day" htmlFor="dateDay">
                 <select id="dateDay" className={styles.input}>
                     <option value="">-</option>
                     {days.map(date => <option key={date} value={date}>{date}</option>)}
@@ -141,7 +144,7 @@ export default function TrafficUsagePage() {
                     {(statusFilters ?? []).map((x, index) => <option key={index} value={x}>{x}</option>)}
                 </select>
             </Field> */}
-            <div className="flex flex-row">
+            <div className="flex flex-row items-center">
                 {access('isAdmin') ? <button className={styles.button} onClick={() => refreshUsages()}>Reload</button> : null }
             </div>
         </FieldsGroup>

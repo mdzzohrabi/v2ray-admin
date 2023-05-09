@@ -11,8 +11,8 @@ const { promisify } = require('util');
 router.get('/monitor/test-file', httpAction(async (req, res) => {
     let { size } = req.query;
     size = Number(size ?? 100 * (1024 ** 2)); // Default 100Mb
-    if (size > 200 * (1024 ** 2))
-    throw Error('Size cannot be more than 200mb');
+    if (size > 1024 * (1024 ** 2))
+    throw Error('Size cannot be more than 1024mb');
     let fileContents = Buffer.alloc(size, '0');  
     res.set('Content-disposition', 'attachment; filename=fake.bin');
     res.set('Content-Type', 'text/plain');  
@@ -31,6 +31,7 @@ router.get('/monitor/test-file', httpAction(async (req, res) => {
  *    avgSpeed: number
  *    minSpeed: number, maxSpeed: number, speed: number, nDownloaded: number, tStart: number, tEnd: number, tConnect: number
  *    statusCode?: number
+ *    headers?: any
  * }} DownloadRequest
  *
  * @type {DownloadRequest[]}
@@ -54,7 +55,7 @@ router.get('/monitor/download-test', httpAction(async (req, res) => {
 
 // Download Test
 router.post('/monitor/download-test', httpAction(async (req, res) => {
-    const {nodeId, path: requestPath, time} = req.body;
+    const {nodeId, path: requestPath, time, size} = req.body;
 
     if (downloadQueue.filter(x => !!x.downloader).length > 5) throw Error(`Queue is full`);
 
@@ -68,7 +69,7 @@ router.post('/monitor/download-test', httpAction(async (req, res) => {
         const node = nodes.find(x => x.id == nodeId);
         if (!node)
             throw Error('Node not found');
-        path = node.address + '/monitor/test-file?size=' + 50 * 1024 * 1024;
+        path = node.address + '/monitor/test-file?size=' + Number(size ?? 50) * 1024 * 1024;
         auth = 'Bearer ' + Buffer.from(node.apiKey).toString('base64');
     }
 
@@ -87,28 +88,40 @@ router.post('/monitor/download-test', httpAction(async (req, res) => {
             downloaded: 0,
             status: 'Queue',
             total: 0,
-            avgSpeed, minSpeed, maxSpeed, speed, nDownloaded, tStart, tEnd: 0, tConnect: 0
+            avgSpeed, minSpeed, maxSpeed, speed, nDownloaded, tStart, tEnd: 0, tConnect: 0, headers: {}
         }
 
-        // Downloader
-        let downloader = (String(path).startsWith('https') ? https : http).get(path, {
+        let {default: fetch} = await import('node-fetch');
+        let microS = () => {
+            let hrTime = process.hrtime();
+            return hrTime[0] * 1000000 + hrTime[1] / 1000;
+        } 
+
+        let downloader = fetch(path, {
+            signal: abortController.signal,
             headers: {
                 Authorization: auth
-            },
-            timeout: Number(time ?? 5000)
-        }, res => {
-            console.log('Tsss');
+            }
+        }).then(res => {
+            console.log('OK', res.headers, Number(res.headers.get('content-length')));
             tConnect = Date.now();
-            let tLastChunk = Date.now();
+            let tLastChunk = microS();
             request.tConnect = tConnect;
-            request.total = Number(res.headers['content-length']);
+            request.total = Number(res.headers.get('content-length'));
             request.status = 'Connected';
-            request.statusCode = res.statusCode;
-            res.on('data', (/** @type {Buffer} */ buffer) => {
+            request.statusCode = 200;
+            request.headers = {};
+            res.headers.forEach((v, k) => {
+                request.headers[k] = v;
+            });
+            // request.downloader = downloader;
+            res.body?.on('data', (/** @type {Buffer} */ data) => {
                 if (!tFirstChunk) tFirstChunk = Date.now();
-                let nSize = buffer.length;
-                speed = nSize / Date.now() - tLastChunk;
-                minSpeed = Math.min(minSpeed, speed);
+                let nSize = data.length;
+                let tDiff = microS() - tLastChunk;
+                let scale = 1000000 / tDiff;
+                speed = (nSize / tDiff) * scale;
+                minSpeed = !minSpeed ? speed : Math.min(minSpeed, speed);
                 maxSpeed = Math.max(maxSpeed, speed);
                 avgSpeed = (avgSpeed + speed) / 2
                 nDownloaded += nSize;
@@ -118,35 +131,26 @@ router.post('/monitor/download-test', httpAction(async (req, res) => {
                 request.speed = speed;
                 request.avgSpeed = avgSpeed;
                 request.status = 'Downloading';
+                tLastChunk = microS();
             });
-        });
 
-        request.downloader = downloader;
+            res.body?.on('error', err => {
+                console.log('ERRRR');
+                request.status = 'Error: ' + err?.message;
+                request.downloader = undefined;    
+            });
 
-        // Timeout
-        abortController.signal.addEventListener('abort', () => {
-            downloader.destroy(Error(`Timeout`));
-        });
-
-        downloader.on('connect', () => {
-            console.log('Connected');
-            tConnect = Date.now()
-            request.tConnect = tConnect;
-        });
-        downloader.once('finish', () => {
-            console.log('Finish', downloader.getHeaders());
-            request.status = 'Complete';
-            timeout && clearTimeout(timeout);
-            let tEnd = Date.now();
-            request.tEnd = tEnd;
-            request.downloader = undefined;
-            downloader?.destroy();
-        });
-        downloader.once('error', err => {
-            console.log(err);
+            res.body?.on('close', () => {
+                console.log('Finish');
+                request.status = 'Complete';
+                timeout && clearTimeout(timeout);
+                let tEnd = Date.now();
+                request.tEnd = tEnd;
+                request.downloader = undefined;
+            });
+        }).catch(err => {
             request.status = 'Error: ' + err?.message;
             request.downloader = undefined;
-            downloader?.destroy();
         });
 
         let { downloader: _, ...result } = request;

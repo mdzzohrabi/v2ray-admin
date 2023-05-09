@@ -20,10 +20,10 @@ router.get('/client/configs/:id', async (req, res) => {
 
     let clientConfigs = inbounds.map(async tag => {
         // @ts-ignore
-        return (await getUserConfig(user, tag)).strClientConfig;
+        return (await getUserConfig(user, tag)).strConfigs.join('\n\n');
     });
 
-    res.end((await Promise.all(clientConfigs)).join('\n'));
+    res.end((await Promise.all(clientConfigs)).join('\n\n'));
 
     let subscribers = await db('subscribers') ?? {};
 

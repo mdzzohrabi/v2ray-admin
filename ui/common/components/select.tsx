@@ -12,12 +12,12 @@ export interface SelectProps<T> extends HTMLProps<HTMLSelectElement> {
     allowNull?: boolean
 }
 
-export function Select<T>({items, value, onChange, nullText = 'No item selected', valueMember, displayMember, allowNull = true, ...props}: SelectProps<T>) {
+export function Select<T>({items, value, onChange, nullText = 'No item selected', valueMember, displayMember, allowNull = true, className, ...props}: SelectProps<T>) {
 
     let [showPopup, setShowPopup] = useState(false);
     const [filter, setFilter] = useState('');
-    const refPopup = useRef<HTMLDivElement>();
-    const refSearch = useRef<HTMLInputElement>();
+    const refPopup = useRef<HTMLDivElement>(null);
+    const refSearch = useRef<HTMLInputElement>(null);
     const [focusIndex, setFocusIndex] = useState(0);
 
     const onClick = useCallback((e: any) => {
@@ -69,12 +69,14 @@ export function Select<T>({items, value, onChange, nullText = 'No item selected'
     }, [focusIndex, visibleItems]);
 
     return <div className={classNames("flex relative")}>
-        <div onClick={onClick} className={classNames(styles.input, 'select-none flex flex-row items-center gap-x-2')}>
-            {selectedItem ? getDisplay(selectedItem) : <span className="text-gray-400 italic">{nullText}</span>}
+        <div onClick={onClick} className={classNames(styles.input, 'select-none flex flex-row items-center gap-x-2 whitespace-nowrap w-full', className)}>
+            <span className="flex-1">
+                {selectedItem ? getDisplay(selectedItem) : <span className="text-gray-400 italic">{nullText}</span>}
+            </span>
             <ChevronUpDownIcon className="w-4"/>
         </div>
         {showPopup ?
-        <div ref={refPopup} className="absolute top-0 z-[1000] bg-white rounded-md shadow-lg ring-1 ring-gray-300 overflow-hidden">
+        <div ref={refPopup} className="absolute top-0 min-w-full z-[1000] bg-white rounded-md shadow-lg ring-1 ring-gray-300 overflow-hidden">
             <div className="border-b-2 flex flex-row items-center min-w-[150px]">
                 <MagnifyingGlassIcon className="w-6 ml-2"/>
                 <input ref={refSearch} onKeyDown={onKeyDown} value={filter} onChange={e => setFilter(e?.currentTarget?.value)} type="text" placeholder="Search ..." className="w-full px-3 py-2 outline-none"/>

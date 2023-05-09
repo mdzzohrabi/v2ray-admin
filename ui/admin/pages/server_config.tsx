@@ -29,7 +29,7 @@ export default function ServerConfig() {
             return toast.error(`Server url not entered`);
 
         // Login (try to get token)
-        if (mode == 'login') {
+        if (mode == 'login' || true) {
             if (!username || !password)
                 return toast.error('Username or password is empty');
 

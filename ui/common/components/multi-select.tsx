@@ -1,5 +1,5 @@
 import classNames from "classnames"
-import { ChangeEvent, HTMLProps, useCallback, useState } from "react"
+import React, { ChangeEvent, HTMLProps, useCallback, useState } from "react"
 import { styles } from "../lib/styles"
 import { Select } from "./select"
 
