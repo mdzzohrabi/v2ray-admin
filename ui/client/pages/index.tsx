@@ -92,6 +92,10 @@ export default function Index({ accountId: pAccountId }: { accountId?: string })
                     <ArrowDownTrayIcon className="w-5"/>
                     <span dangerouslySetInnerHTML={{ __html: __('Download V2RayNG for <b>Android</b>')}}/>
                 </a>
+                <a href="https://play.google.com/store/apps/details?id=com.github.kr328.clash&hl=en_US" className={className.itemDownload}>
+                    <ArrowDownTrayIcon className="w-5"/>
+                    <span dangerouslySetInnerHTML={{ __html: __('Download Clash for <b>Android</b>')}}/>
+                </a>
                 <a href="https://apps.apple.com/us/app/napsternetv/id1629465476" className={className.itemDownload}>
                     <ArrowDownTrayIcon className="w-5"/>
                     <span dangerouslySetInnerHTML={{ __html: __('Download NapsternetV for <b>iOS</b>')}}/>
@@ -195,17 +199,26 @@ export default function Index({ accountId: pAccountId }: { accountId?: string })
         <div className="flex flex-col md:flex-row">
             <Infos className="flex-1">
                 {account?.configs?.map(x => 
-                <Info label={x.description ?? x.ps} className={'py-2 items-center'}>
+                <Info label={<div className="flex flex-col">
+                    <div className="flex gap-x-2">
+                        <span className="text-gray-700">{x.ps}</span>
+                        <div className="flex gap-x-1">
+                            <span className="rounded-lg bg-gray-200 text-black px-2 text-xs text-center items-center flex uppercase">{x.strConfig?.split(':')[0]}</span>
+                            {x.tls == 'tls' ? <span className="rounded-lg bg-green-200 text-black px-2 text-xs text-center items-center flex">TLS</span> : null }
+                        </div>
+                    </div>
+                    <span className="italic text-gray-400">{x.description ?? '-'}</span>
+                </div>} className={'py-2 items-center'}>
                     <div className="flex text-xs md:text-sm">
                         <Copy data={x.strConfig}>{(copy, isCopied, isLoading) =>
                             <button className={styles.buttonItem} onClick={() => copy()}>
                                 <ClipboardDocumentIcon className="w-4"/>
-                                {__(isLoading ? 'Wait ...' : isCopied ? 'Copied !' : 'Copy')}
+                                <span className="hidden sm:block">{__(isLoading ? 'Wait ...' : isCopied ? 'Copied !' : 'Copy')}</span>
                             </button>
                         }</Copy>
                         <button className={styles.buttonItem} onClick={() => qrCodeDialog.show('Config - ' + x.ps, x.strConfig)}>
                             <QrCodeIcon className="w-4"/>
-                            {__('QR Code')}
+                            <span className="hidden sm:block">{__('QR Code')}</span>
                         </button>
                     </div>
                 </Info>)}
@@ -243,10 +256,18 @@ export default function Index({ accountId: pAccountId }: { accountId?: string })
             <div className="grid grid-cols-1 py-4 px-0 gap-5 sm:px-[5%] md:px-[10%] 2xl:px-[25%]">
                 <div className={className.card}>
                     <h1 className={className.cardTitle}>
-                        <UserIcon className="w-5"/>
-                        {__('Account Information')}
+                        <div className="flex flex-1 items-center gap-x-2">
+                            <UserIcon className="w-5"/>
+                            {__('Account Information')}
+                        </div>
+                        <div className="flex text-xs">
+                            <button className={styles.buttonItem} onClick={() => router.push('/')}>
+                                <ArrowLeftOnRectangleIcon className="w-4"/>
+                                {__('Log out')}
+                            </button>
+                        </div>
                     </h1>
-                    <div className="mb-4 pb-2 border-b-[1px] flex flex-row text-xs">
+                    <div className="mb-4 pb-2 border-b-[1px] flex flex-row text-sm">
                         <Copy data={`${location.protocol}//${location.host}/api/configs/${account?.user?.id}`}>{(copy, isCopied, isLoading) =>
                             <button className={classNames(styles.buttonItem)} onClick={() => copy()}>
                                 <ClipboardDocumentIcon className="w-4"/>
@@ -256,10 +277,6 @@ export default function Index({ accountId: pAccountId }: { accountId?: string })
                         <button className={styles.buttonItem} onClick={() => router.push('/how-to-use')}>
                             <QuestionMarkCircleIcon className="w-4"/>
                             {__('How to use')}
-                        </button>
-                        <button className={styles.buttonItem} onClick={() => router.push('/')}>
-                            <ArrowLeftOnRectangleIcon className="w-4"/>
-                            {__('Log out')}
                         </button>
                     </div>
                     {userInfo}
