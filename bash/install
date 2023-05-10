@@ -115,6 +115,13 @@ if [ ! -z $API_KEY ]; then
     pm2 restart all
 fi
 
+# Speed Test file
+# mkdir /home/www-speed-test
+# cd /home/www-speed-test
+# wget https://speed.hetzner.de/100MB.bin
+# npm i -g http-server
+# pm2 start http-server --name=speed-test-server -- -p 8080
+
 # Install Bandwidth Monitor tools
 apt install vnstat
 
