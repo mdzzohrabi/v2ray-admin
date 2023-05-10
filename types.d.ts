@@ -384,3 +384,13 @@ interface LoginSession {
 }
 
 type AsyncGeneratorType<T extends AsyncGenerator<any>> = T extends AsyncGenerator<infer R> ? R : any;
+
+interface SubscriberRecord {
+    firstUpdate?: string
+    lastUpdate?: string
+    clientIP?: string
+}
+
+interface Subscribers {
+    [username: string]: SubscriberRecord
+}

@@ -105,7 +105,7 @@ router.use(async (req, res, next) => {
 
         if (ui != 'true') {
             serverNode.lastConnectDate = new Date().toLocaleString();
-            serverNode.lastConnectIP = req.ip;
+            serverNode.lastConnectIP = String(req.headers['x-forwarded-for'] ?? req.ip);
             await db('server-nodes', serverNodes);
         }
 

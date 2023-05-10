@@ -23,7 +23,7 @@ router.get('/client/configs/:id', async (req, res) => {
         return (await getUserConfig(user, tag)).strConfigs.join('\n\n');
     });
 
-    res.end((await Promise.all(clientConfigs)).join('\n\n'));
+    res.end( Buffer.from((await Promise.all(clientConfigs)).join('\n')).toString('base64'));
 
     let subscribers = await db('subscribers') ?? {};
 
@@ -31,7 +31,7 @@ router.get('/client/configs/:id', async (req, res) => {
         firstUpdate: new Date().toISOString()
     }
 
-    subscriber.clientIP = req.headers['X-Client-IP'] ?? req.headers['x-client-ip'] ?? req.socket.remoteAddress;
+    subscriber.clientIP = req.headers['X-Forwarded-For'] ?? req.headers['x-forwarded-for'] ?? req.headers['X-Client-IP'] ?? req.headers['x-client-ip'] ?? req.socket.remoteAddress;
     subscriber.lastUpdate = new Date().toISOString();
 
     await db('subscribers', subscribers);

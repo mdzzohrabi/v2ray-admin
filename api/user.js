@@ -273,6 +273,9 @@ router.post('/inbounds', httpAction(async (req, res) => {
 
     let skip = (page * limit) - limit;
 
+    /** @type {Subscribers} */
+    let subscibers = await db('subscribers') ?? {};
+
     for (let inbound of inbounds) {
         let users = (inbound.settings?.clients ?? []).filter(u => (filters.showPrivate || !u.private) && (filters.showFree || !u.free));
         let total = users.length;
@@ -290,6 +293,7 @@ router.post('/inbounds', httpAction(async (req, res) => {
             user.maxConnections = user.maxConnections || Number(env.V2RAY_MAX_CONNECTIONS) || 3;
             user.billingStartDate = user.billingStartDate ?? user.firstConnect;
             user['expireDate'] = DateUtil.addDays(user.billingStartDate, user.expireDays ?? 30);
+            user['subscription'] = subscibers[user.email ?? ''] ?? {};
             let clientNumber = Number(user.email?.match(/[0-9]+/));
             if (clientNumber && clientNumber > maxClientNumber)
                 maxClientNumber = clientNumber;

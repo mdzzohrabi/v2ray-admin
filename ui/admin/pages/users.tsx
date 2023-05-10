@@ -422,7 +422,7 @@ return <Container>
                                 </td>
                                 <td className="whitespace-nowrap border-b-2 py-1 px-3">
                                     <div className="flex flex-col xl:flex-row">
-                                        <Infos className="flex-1">
+                                        <Infos className="flex-1 grid md:grid-cols-2 gap-x-4">
                                             <Info label={'Create'}>
                                                 <DateView precision={precision} full={fullTime} date={u.createDate}/>
                                             </Info>
@@ -435,8 +435,6 @@ return <Container>
                                             <Info label={'Until Expire'}>
                                                 <DateView precision={precision} full={fullTime} date={u['expireDate']}/>
                                             </Info>
-                                        </Infos>
-                                        <Infos className="flex-1 xl:ml-2">
                                             <Info label={'Expired'}>
                                                 <DateView precision={precision} full={fullTime} date={u.expiredDate}/>
                                             </Info>
@@ -449,6 +447,12 @@ return <Container>
                                             {u['quotaUsageUpdate'] ? <Info label={'Bandwidth Update'}>
                                                 <DateView precision={precision} full={fullTime} date={u['quotaUsageUpdate']}/>
                                             </Info> : null }
+                                            <Info label={'First Subscription Update'}>
+                                                <DateView precision={precision} full={fullTime} date={u['subscription']?.firstUpdate}/>
+                                            </Info>
+                                            <Info label={'Last Subscription Update'}>
+                                                <DateView precision={precision} full={fullTime} date={u['subscription']?.lastUpdate}/>
+                                            </Info>
                                         </Infos>
                                     </div>
                                 </td>
