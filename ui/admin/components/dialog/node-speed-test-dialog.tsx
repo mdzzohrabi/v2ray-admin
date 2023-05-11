@@ -45,7 +45,7 @@ export function NodeSpeedTestDialog({ onClose, node }: { node: ServerNode, onClo
             let result = await serverRequest({ ...server, node: node.id }, '/monitor/download-test?id=' + downloadId);
             setDownload(result);
             if (result.status != 'Complete' && !String(result.status).startsWith('Error')) {
-                setTimeout(() => updateStatus(downloadId), 1000);
+                setUpdateTimer(setTimeout(() => updateStatus(downloadId), 1000));
             }
         } catch (err) {
             toast.error(err?.message);
@@ -55,6 +55,12 @@ export function NodeSpeedTestDialog({ onClose, node }: { node: ServerNode, onClo
 
     const startDownload = useCallback(async () => {
         try {
+
+            if (download?.id) {
+                await serverRequest({ ...server, node: node.id }, '/monitor/download-abort?id=' + download?.id);
+                clearInterval(updateTimer);
+            }
+
             let result = await serverRequest({ ...server, node: node.id }, '/monitor/download-test', {
                 nodeId: form.type == 'node' ? form.serverNode : undefined,
                 path: form.type == 'path' ? form.path : undefined,
@@ -73,7 +79,7 @@ export function NodeSpeedTestDialog({ onClose, node }: { node: ServerNode, onClo
             toast.error(err?.message);
             console.error(err);
         }
-    }, [node, server, form, toast, updateStatus, download, setUpdateTimer]);
+    }, [node, server, form, toast, updateStatus, download, updateTimer]);
 
     return <Dialog title={"Speed Test - " + node.name} onClose={onClose} className="text-sm">
         <FieldsGroup data={form} dataSetter={setForm}>

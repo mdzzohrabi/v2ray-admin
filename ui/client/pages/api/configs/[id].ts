@@ -6,7 +6,8 @@ export default async function configsSubscriptionApi(req: NextApiRequest, res: N
         if (!id) throw Error(`Invalid request`)
         let result = await fetch((process.env.V2RAY_SERVER) + '/client/configs/' + id, {
             headers: {
-                'X-Client-IP': String(req.headers['x-forwarded-for'] ?? req.socket.remoteAddress)
+                'X-Client-IP': String(req.headers['x-forwarded-for'] ?? req.socket.remoteAddress),
+                'User-Agent': req.headers["user-agent"]
             }
         });
         return res.end(await result.text());

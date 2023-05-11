@@ -9,8 +9,8 @@ const { createSocketServer } = require('./api/socket');
 const routers = [
     require('./api/client').router,
     require('./api/authentication').router,
-    require('./api/monitor').router,
     require('./api/remote-api').router,
+    require('./api/monitor').router,
     require('./api/system-api').router,
     require('./api/node-api').router,
     require('./api/api').router,
