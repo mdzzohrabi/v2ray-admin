@@ -31,6 +31,7 @@ export default {
     'Url': 'لینک',
     'Copy All': 'کپی کردن همه',
     'Download V2RayNG for <b>Android</b>': 'دانلود V2RayNG برای <b>اندروید</b>',
+    'Download Clash for <b>Android</b>': 'دانلود Clash برای <b>اندروید</b>',
     'Download NapsternetV for <b>iOS</b>': 'دانلود NapsternetV برای <b>iOS</b>',
     'Download FairVPN for <b>iOS</b>': 'دانلود FairVPN برای <b>iOS</b>',
     'Copy Subscription Url': 'لینک Subscription',
