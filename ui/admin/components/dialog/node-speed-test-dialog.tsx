@@ -57,7 +57,7 @@ export function NodeSpeedTestDialog({ onClose, node }: { node: ServerNode, onClo
         try {
 
             if (download?.id) {
-                await serverRequest({ ...server, node: node.id }, '/monitor/download-abort?id=' + download?.id);
+                serverRequest({ ...server, node: node.id }, '/monitor/download-abort?id=' + download?.id).catch(console.error);
                 clearInterval(updateTimer);
             }
 

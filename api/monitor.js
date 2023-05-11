@@ -16,7 +16,6 @@ router.get('/monitor/test-file', httpAction(async (req, res) => {
     let fileContents = Buffer.alloc(size, '0');  
     res.set('Content-disposition', 'attachment; filename=fake.bin');
     res.set('Content-Type', 'text/plain');  
-    console.log('Test', fileContents.length);
     res.end(fileContents);
 }));
 
@@ -122,7 +121,6 @@ router.post('/monitor/download-test', httpAction(async (req, res) => {
                 Authorization: auth
             }
         }).then(res => {
-            console.log('OK', res.headers, Number(res.headers.get('content-length')));
             tConnect = Date.now();
             let tLastChunk = microS();
             request.downloader = res;
@@ -155,13 +153,11 @@ router.post('/monitor/download-test', httpAction(async (req, res) => {
             });
 
             res.body?.on('error', err => {
-                console.log('ERRRR');
                 request.status = 'Error: ' + err?.message;
                 request.downloader = undefined;    
             });
 
             res.body?.on('close', () => {
-                console.log('Finish');
                 request.status = 'Complete';
                 timeout && clearTimeout(timeout);
                 let tEnd = Date.now();

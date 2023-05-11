@@ -8,6 +8,7 @@ import { useStoredState, usePrompt } from "@common/lib/hooks";
 import { ArrowPathIcon, BoltIcon, CloudIcon, ComputerDesktopIcon, PencilIcon, PlusIcon, ServerIcon, TrashIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import { FormEvent, useCallback, useContext, useEffect, useState } from 'react';
+import { toast } from "react-hot-toast";
 import { AppContext } from "../components/app-context";
 import { Container } from "../components/container";
 import { NodeSpeedTestDialog } from "../components/dialog/node-speed-test-dialog";
@@ -92,16 +93,16 @@ function ServerNodeDialog({ onEdit, onClose, node: nodeProp }: ServerNodeDialogP
 
 export default function NodesPage() {
 
-    let {server} = useContext(AppContext);
-    let [isPinging, setIsPinging] = useState(false);
+    const {server} = useContext(AppContext);
+    const [isPinging, setIsPinging] = useState(false);
     
-    let [nodes, setNodes] = useState<(ServerNode & { ping?: number | string })[]>([]);
+    const [nodes, setNodes] = useState<(ServerNode & { ping?: number | string, commit?: string, commitDate?: string })[]>([]);
 
-    let { insert: addNode, edit: editNode, remove: deleteNode, items: nodesResponse, refreshItems: refreshNodes, isItemsLoading, isLoading } = useCRUD<ServerNode>('/nodes', {
+    const { insert: addNode, edit: editNode, remove: deleteNode, items: nodesResponse, refreshItems: refreshNodes, isItemsLoading, isLoading } = useCRUD<ServerNode>('/nodes', {
         listUrl: '/nodes?all=1'
     })
 
-    let [view, setView] = useStoredState('nodes', {
+    const [view, setView] = useStoredState('nodes', {
         onlyActive: true
     });
     
@@ -113,6 +114,35 @@ export default function NodesPage() {
         setNodes(result);        
         setIsPinging(false);
     }, [server]);
+
+    const getAppVersions = useCallback(async () => {
+        toast.promise(Promise.allSettled(nodes.map(async node => {
+            let result = await serverRequest<{ commit?: string, commitDate?: string }>({ ...server, node: node.id }, '/system/commit');
+            if (result?.commit) {
+                let newNodes = [...nodes];
+                let newNode = newNodes.find(x => x.id == node.id);
+                if (newNode) {
+                    newNode.commit = result.commit;
+                    newNode.commitDate = result.commitDate;
+                }
+                setNodes(newNodes);
+            }
+        })), {
+            loading: 'Get nodes app versions',
+            error: 'Error', success: 'Complete'
+        })
+    }, [nodes, server]);
+
+    const requestUpdate = useCallback(async (node: ServerNode) => {
+        let pUpdate = serverRequest<ServerNode[]>({ ...server, node: node.id }, '/system/update');
+        toast.promise(pUpdate, {
+            loading: 'Requesting update to server ' + node.name,
+            error: 'Update request error',
+            success: 'Update request submitted'
+        });
+    }, [server]);
+
+    
 
     let serverNodeDialog = useDialog((node: Partial<ServerNode> = {}, onEdit: ((node: Partial<ServerNode>) => any), onClose?: Function) => <ServerNodeDialog
         onClose={onClose}
@@ -141,6 +171,10 @@ export default function NodesPage() {
                 </FieldsGroup>
             </div>
             <div className="flex flex-row">
+                <button type={"button"} onClick={() => getAppVersions()} className={classNames(styles.buttonItem)}>
+                    <BoltIcon className="w-4"/>
+                    Get App Versions
+                </button>
                 <button type={"button"} onClick={() => pingNodes()} className={classNames(styles.buttonItem)}>
                     <BoltIcon className="w-4"/>
                     Ping Servers
@@ -189,6 +223,9 @@ export default function NodesPage() {
                             <Info label={'Date'}><DateView locale="en" date={row.lastConnectDate}/></Info>
                         </Infos>,
                         <PopupMenu>
+                            {row.type=='client' ? <PopupMenu.Item icon={<PencilIcon className='w-4'/>} action={() => requestUpdate(row)}>
+                                Update App
+                            </PopupMenu.Item> : null}
                             {row.type=='client' ? <PopupMenu.Item icon={<PencilIcon className='w-4'/>} action={() => nodeSpeedTestDialog.show(row)}>
                                 Download Speed Test
                             </PopupMenu.Item> : null}
