@@ -7,7 +7,7 @@ import { Size } from "@common/components/size";
 import { Tabs } from "@common/components/tabs";
 import { useStoredState } from "@common/lib/hooks";
 import { dateDiff } from "@common/lib/util";
-import { useCallback, useContext, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { styles } from "../../lib/styles";
 import { serverRequest } from "../../lib/util";
@@ -80,6 +80,17 @@ export function NodeSpeedTestDialog({ onClose, node }: { node: ServerNode, onClo
             console.error(err);
         }
     }, [node, server, form, toast, updateStatus, download, updateTimer]);
+
+    useEffect(() => {
+
+        return function destroy() {
+            if (download?.id) {
+                serverRequest({ ...server, node: node.id }, '/monitor/download-abort?id=' + download?.id).catch(console.error);
+                clearInterval(updateTimer);
+            }
+        }
+
+    }, [download, updateTimer]);
 
     return <Dialog title={"Speed Test - " + node.name} onClose={onClose} className="text-sm">
         <FieldsGroup data={form} dataSetter={setForm}>
