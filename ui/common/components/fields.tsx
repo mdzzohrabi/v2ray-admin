@@ -50,7 +50,7 @@ export function FieldsGroup({ title, children, className, titleClassName, horizo
 	</div>
 }
 
-export function FieldObject({ children, path }) {
+export function FieldObject({ children, path, defaults = {} }) {
 	let context = useContext(FieldContext);
 	
 	let setData = useCallback(data => {
@@ -65,7 +65,7 @@ export function FieldObject({ children, path }) {
 		}
 	}, [context.data, context.dataSetter]);
 
-	let data = context.data && context.data[path] ? context.data[path] : {};
+	let data = context.data && context.data[path] ? context.data[path] : defaults;
 
 	return <FieldContext.Provider value={{ ...context, dataSetter: setData, data }}>{children}</FieldContext.Provider>;
 }
@@ -162,8 +162,9 @@ export function Field({ label, children, className = '', horizontal = undefined,
 }
 
 interface CollectionProps<T> {
-	data: T[],
-	dataSetter: (value: T[]) => any,
+	path?: string
+	data?: T[],
+	dataSetter?: (value: T[]) => any,
 	children: (props: {
 		items: T[],
 		addItem: (_: any, item: T) => any,
@@ -176,7 +177,19 @@ interface CollectionProps<T> {
 /**
  * Field Collection
  */
-export function Collection<T>({ data, dataSetter, children }: CollectionProps<T>) {
+export function Collection<T>({ data, dataSetter, path, children }: CollectionProps<T>) {
+
+	if (path) {
+		return <FieldObject path={path} defaults={[]}>
+			<Collection children={children}/>
+		</FieldObject>
+	}
+
+	let context = useContext(FieldContext);
+	
+	data = data ?? context.data;
+	dataSetter = dataSetter ?? context.dataSetter;
+
 	let addItem = useArrayInsert(data, dataSetter);
 	let deleteItem = useArrayDelete(data, dataSetter);
 	let updateItem = useArrayUpdate(data, dataSetter);

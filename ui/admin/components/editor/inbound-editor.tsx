@@ -230,7 +230,7 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }: Inbound
                             <FieldObject path={'realitySettings'}>
                                 <div className="flex flex-row items-center">
                                     <Field label="Dest" htmlFor="dest" className="flex-1">
-                                        <input type="text" id="dest" placeholder="www.google-analytics.com:443" className={styles.input}/>
+                                        <input type="atext" id="dest" placeholder="www.google-analytics.com:443" className={styles.input}/>
                                     </Field>
                                     <Field htmlFor="xver" label="xver">
                                         <input type="number" id="xver" placeholder="0" className={styles.input}/>
@@ -240,7 +240,7 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }: Inbound
                                     </Field>
                                 </div>
                                 <Field label="Private Key" htmlFor="privateKey">
-                                    <input type="text" className={styles.input} />
+                                    <input type="text" id="privateKey" className={styles.input} />
                                 </Field>
                                 <div className="flex flex-row items-center">
                                     <Field label="Min Client Ver" htmlFor="minClientVer">
@@ -253,6 +253,26 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }: Inbound
                                         <input type="text" id="maxTimeDiff" placeholder="0" className={styles.input} />
                                     </Field>
                                 </div>
+                                <Collection path="serverNames">
+                                {serverNames => <>
+                                    <div className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 flex flex-row">
+                                        <h3 className="font-semibold flex-1">Server Names</h3>
+                                        <button type={"button"} onClick={() => serverNames.addItem(null, '')} className={styles.addButtonSmall}>+ Add</button>
+                                    </div>
+                                    <Table
+                                    rows={serverNames.items ?? []}
+                                    columns={[ 'Server Name', 'Action' ]}
+                                    cells={(serverName, index) => [
+                                        // Certificate
+                                        <Field data={serverName} dataSetter={newServerName => serverNames.updateItem(serverName, newServerName)}><input type="text" className={styles.input} placeholder={"google.com"}/></Field>,
+                                        // Actions
+                                        <PopupMenu>
+                                            <PopupMenu.Item action={() => serverNames.deleteItem(serverName)} >Delete</PopupMenu.Item>
+                                        </PopupMenu>
+                                    ]}
+                                />       
+                                </>}
+                                </Collection>
                             </FieldObject>
                         </FieldObject>
                     </Tabs.Tab>
