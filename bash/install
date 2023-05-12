@@ -58,8 +58,8 @@ timedatectl set-timezone Asia/Tehran
 # Update APT
 apt update
 
-# Install V2Fly
-bash <(curl -L https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh)
+# Install XRay
+bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install
 
 # Insall NVM
 wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
@@ -94,7 +94,7 @@ sh bash/pm2
 # Copy configuration
 if [ ! -z $CLONE_CONFIG ]; then
     # Copy config
-    scp $CLONE_CONFIG_USER@$CLONE_CONFIG:/usr/local/etc/v2ray/config.json /usr/local/etc/v2ray/config.json
+    scp $CLONE_CONFIG_USER@$CLONE_CONFIG:/usr/local/etc/v2ray/config.json /usr/local/etc/xray/config.json
 
     # Copy certs
     scp -r $CLONE_CONFIG_USER@$CLONE_CONFIG:/home/certs /home/certs
@@ -126,4 +126,4 @@ fi
 apt install vnstat
 
 # Start v2ray server
-service v2ray restart
+service xray restart
