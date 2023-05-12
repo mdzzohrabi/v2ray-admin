@@ -150,9 +150,11 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }: Inbound
                     </Field>
                 </FieldObject>
             </div> : null }
-            <div className="flex flex-col">
+            </Tabs.Tab>
+            <Tabs.Tab title="Stream Settings">
+                <div className="flex flex-col">
                 <FieldObject path={"streamSettings"}>
-                <h3 className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 font-smibold">Stream settings</h3>
+                {/* <h3 className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 font-bold bg-slate-100 mt-2 rounded-tl-md rounded-tr-md">Stream settings</h3> */}
                 <div className="flex flex-row">
                     <Field label="Network" htmlFor="network" className="flex-1">
                         <select className={styles.input} id="network">
@@ -169,6 +171,7 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }: Inbound
                         <select className={styles.input} id="security">
                             <option value="none">None</option>
                             <option value="tls">TLS</option>
+                            <option value="reality">Reality</option>
                         </select>
                     </Field>
                 </div>
@@ -221,6 +224,39 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }: Inbound
                     </FieldObject>
             </div>
                 </Tabs.Tab>
+                {inbound?.streamSettings?.security=='reality'? 
+                    <Tabs.Tab title="REALITY">
+                        <FieldObject path={'streamSettings'}>
+                            <FieldObject path={'realitySettings'}>
+                                <div className="flex flex-row items-center">
+                                    <Field label="Dest" htmlFor="dest" className="flex-1">
+                                        <input type="text" id="dest" placeholder="www.google-analytics.com:443" className={styles.input}/>
+                                    </Field>
+                                    <Field htmlFor="xver" label="xver">
+                                        <input type="number" id="xver" placeholder="0" className={styles.input}/>
+                                    </Field>
+                                    <Field htmlFor="show" label="Show">
+                                        <input type="checkbox" id="show"/>
+                                    </Field>
+                                </div>
+                                <Field label="Private Key" htmlFor="privateKey">
+                                    <input type="text" className={styles.input} />
+                                </Field>
+                                <div className="flex flex-row items-center">
+                                    <Field label="Min Client Ver" htmlFor="minClientVer">
+                                        <input type="text" placeholder="1.8.0" id="minClientVer" className={styles.input} />
+                                    </Field>
+                                    <Field label="Max Client Ver" htmlFor="maxClientVer">
+                                        <input type="text" placeholder="1.8.0" id="maxClientVer" className={styles.input} />
+                                    </Field>
+                                    <Field label="Max Time Diff" htmlFor="maxTimeDiff">
+                                        <input type="text" id="maxTimeDiff" placeholder="0" className={styles.input} />
+                                    </Field>
+                                </div>
+                            </FieldObject>
+                        </FieldObject>
+                    </Tabs.Tab>
+                : null}
                 {inbound?.streamSettings?.security=='tls'? 
                 <Tabs.Tab title="TLS">
                     <FieldObject path={'streamSettings'}>

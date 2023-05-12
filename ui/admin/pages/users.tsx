@@ -372,14 +372,26 @@ return <Container>
                                                 {u.free?<span className="ml-2 text-xs px-2 py-0 rounded-lg bg-green-100 text-green-500 cursor-default">Free</span>:null}
                                             </div>
                                             <Editable editable={access('users', 'edit')} className="text-gray-600 inline-block" onEdit={value => setInfo(i.tag, u, 'fullName', value)} value={u.fullName}>{u.fullName ?? '-'}</Editable>
-                                            {showId?<Info className="ml-3" label={"ID"}>
-                                                <Editable editable={access('users', 'regenerateId')} onEdit={newId => setInfo(i.tag, u, 'id', newId)} value={u.id}>{u.id}</Editable>
-                                            </Info>:null}
-                                            <Info label={u.deActiveReason ? "De-active reason" : null} className="ml-2">
-                                                <Popup popup={u.deActiveReason?.length ?? 0 > 30 ? u.deActiveReason : null}>
-                                                    <Editable onEdit={value => setInfo(i.tag, u, 'deActiveReason', value)} value={u.deActiveReason}>{(u.deActiveReason?.length ?? 0) > 30 ? u.deActiveReason?.substring(0,30) + '...' : (u.deActiveReason ? u.deActiveReason : '-')}</Editable>
-                                                </Popup>
-                                            </Info>
+                                            <Infos className="mt-2">
+                                                {showId? <>
+                                                    <Info className="ml-3" label={"ID"}>
+                                                        <Editable editable={access('users', 'regenerateId')} onEdit={newId => setInfo(i.tag, u, 'id', newId)} value={u.id}>{u.id}</Editable>
+                                                    </Info>
+                                                    <Info className="ml-3" label={"Flow"}>
+                                                        <Editable editable={access('users', 'edit')} editor={(value, onChange) => <Select value={value} onChange={e => onChange(e)} items={[
+                                                            'none',
+                                                            'xtls-rprx-vision'
+                                                        ]}>
+                                                        </Select>} onEdit={flow => setInfo(i.tag, u, 'flow', flow)} value={u.flow}>{u.flow ?? '-'}</Editable>
+                                                    </Info>
+                                                </>
+                                                :null}
+                                                <Info label={u.deActiveReason ? "De-active reason" : null} className="ml-2">
+                                                    <Popup popup={u.deActiveReason?.length ?? 0 > 30 ? u.deActiveReason : null}>
+                                                        <Editable onEdit={value => setInfo(i.tag, u, 'deActiveReason', value)} value={u.deActiveReason}>{(u.deActiveReason?.length ?? 0) > 30 ? u.deActiveReason?.substring(0,30) + '...' : (u.deActiveReason ? u.deActiveReason : '-')}</Editable>
+                                                    </Popup>
+                                                </Info>
+                                            </Infos>
                                         </div>
                                     </div>
                                 </td>

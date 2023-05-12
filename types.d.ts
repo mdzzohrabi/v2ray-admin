@@ -35,10 +35,13 @@ interface V2RayConfigPolicyLevel {
     bufferSize?: number
 }
 
+export type V2RayConfigInboundFlow = "none" | "xtls-rprx-vision"
+
 interface V2RayConfigInboundClient {
     id?: string
     email?: string
     level?: number
+    flow:? V2RayConfigInboundFlow
     /** Custom fields */
     deActiveDate?: string
     maxConnections?: number
@@ -68,8 +71,8 @@ interface V2RayConfigInboundSettings {
 }
 
 interface V2RayConfigInboundStreamSettings {
-    network?: string
-    security?: string
+    network?: "tcp" | "ws" | ""
+    security?: "tls" | "reality" | "" | "none"
     tcpSettings?: any
     tlsSettings?: {
         alpn?: string[]
@@ -78,6 +81,23 @@ interface V2RayConfigInboundStreamSettings {
             keyFile?: string
         }[]
     }
+    realitySettings?: {
+        show?: boolean
+        dest?: string
+        xver?: number
+        serverNames?: string[]
+        privateKey?: string
+        minClientVer?: string
+        maxClientVer?: string
+        maxTimerDiff?: number
+        shortIds?: string[]
+    }
+}
+
+interface V2RayConfigInboundAllocate {
+    strategy?: "always" | "random"
+    refresh?: number
+    concurrency?: number
 }
 
 interface V2RayConfigInbound {
@@ -130,7 +150,7 @@ interface V2RayConfigOutboundSettings {
 interface V2RayConfigOutboundSettingsServerVNext {
     address?: string
     port?: number
-    users?: { id?: string, security?: string }[]
+    users?: { id?: string, security?: string, flow?: V2RayConfigInboundFlow, encryption?: string }[]
 }
 
 interface V2RayConfigOutboundSettingsServer {
@@ -156,6 +176,14 @@ interface V2RayConfigStream {
   securitySettings: any
   network?: 'tcp' | 'kcp' | 'ws' | 'http' | 'domainsocket' | 'quic'
   tcpSettings?: HttpHeaderObject
+  realitySettings?: {
+    show?: boolean
+    fingerprint?: string
+    serverName?: string
+    publicKey?: string
+    shortId?: string
+    spiderX?: string
+  }
 }
 
 interface HttpHeaderObject {
