@@ -184,10 +184,10 @@ export default function ConfigurationPage() {
                     </select>
                 </Field>
                 <Field label="Access Log" htmlFor="access" className="flex-1 mt-1">
-                    <input type="text" className={styles.input} placeholder="/var/log/v2ray/access.log" />
+                    <input type="text" className={styles.input} placeholder="/var/log/xray/access.log" />
                 </Field>
                 <Field label="Error Log" htmlFor="error" className="flex-1 mt-1">
-                    <input type="text" className={styles.input} placeholder="/var/log/v2ray/error.log" />
+                    <input type="text" className={styles.input} placeholder="/var/log/xray/error.log" />
                 </Field>
             </div>
         </FieldsGroup>

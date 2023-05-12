@@ -63,7 +63,7 @@ function ServerNodeDialog({ onEdit, onClose, node: nodeProp }: ServerNodeDialogP
                     <Field label="Sync Database" htmlFor="sync" horizontal hint={'Sync database with the server'}>
                         <input type="checkbox" id="sync" className={styles.input}/>
                     </Field>
-                    <Field label="Sync V2Ray Config" htmlFor="syncConfig" horizontal hint={'Copy V2Ray config from server only if its defined also in the server'}>
+                    <Field label="Sync XRay Config" htmlFor="syncConfig" horizontal hint={'Copy Xray config from server only if its defined also in the server'}>
                         <input type="checkbox" id="syncConfig" className={styles.input}/>
                     </Field>
                 </div>
