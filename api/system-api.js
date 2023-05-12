@@ -1,6 +1,7 @@
 // @ts-check
 const { httpAction, db, applyFieldSelector } = require('../lib/util');
 const { createHash, randomUUID } = require('crypto');
+const { exec } = require('child_process');
 
 const router = require('express').Router();
 
@@ -123,6 +124,18 @@ router.delete('/system/user/:user/sessions', httpAction(async (req, res) => {
     await db('sessions', sessions);
 
     return { ok: true, message: 'Session removed successful' };
+}));
+
+router.post('/system/update', httpAction((req, res) => {
+    exec('bash "' + __dirname + '/../bash/update"');
+    return { ok: true };
+}));
+
+router.get('/system/commit', httpAction(async (req, res) => {
+    let execAsync = require('util').promisify(exec);
+    let { stdout: commit } = await execAsync('git rev-parse HEAD');
+    let { stdout: commitDate } = await execAsync('git --no-pager log -1 --format="%ai"');
+    return { ok: true, commit, commitDate };
 }));
 
 module.exports = { router };

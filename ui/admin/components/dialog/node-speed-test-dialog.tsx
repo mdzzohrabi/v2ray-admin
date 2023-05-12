@@ -7,7 +7,7 @@ import { Size } from "@common/components/size";
 import { Tabs } from "@common/components/tabs";
 import { useStoredState } from "@common/lib/hooks";
 import { dateDiff } from "@common/lib/util";
-import { useCallback, useContext, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { styles } from "../../lib/styles";
 import { serverRequest } from "../../lib/util";
@@ -45,7 +45,7 @@ export function NodeSpeedTestDialog({ onClose, node }: { node: ServerNode, onClo
             let result = await serverRequest({ ...server, node: node.id }, '/monitor/download-test?id=' + downloadId);
             setDownload(result);
             if (result.status != 'Complete' && !String(result.status).startsWith('Error')) {
-                setTimeout(() => updateStatus(downloadId), 1000);
+                setUpdateTimer(setTimeout(() => updateStatus(downloadId), 1000));
             }
         } catch (err) {
             toast.error(err?.message);
@@ -55,6 +55,12 @@ export function NodeSpeedTestDialog({ onClose, node }: { node: ServerNode, onClo
 
     const startDownload = useCallback(async () => {
         try {
+
+            if (download?.id) {
+                serverRequest({ ...server, node: node.id }, '/monitor/download-abort?id=' + download?.id).catch(console.error);
+                clearInterval(updateTimer);
+            }
+
             let result = await serverRequest({ ...server, node: node.id }, '/monitor/download-test', {
                 nodeId: form.type == 'node' ? form.serverNode : undefined,
                 path: form.type == 'path' ? form.path : undefined,
@@ -73,7 +79,18 @@ export function NodeSpeedTestDialog({ onClose, node }: { node: ServerNode, onClo
             toast.error(err?.message);
             console.error(err);
         }
-    }, [node, server, form, toast, updateStatus, download, setUpdateTimer]);
+    }, [node, server, form, toast, updateStatus, download, updateTimer]);
+
+    useEffect(() => {
+
+        return function destroy() {
+            if (download?.id) {
+                serverRequest({ ...server, node: node.id }, '/monitor/download-abort?id=' + download?.id).catch(console.error);
+                clearInterval(updateTimer);
+            }
+        }
+
+    }, [download, updateTimer]);
 
     return <Dialog title={"Speed Test - " + node.name} onClose={onClose} className="text-sm">
         <FieldsGroup data={form} dataSetter={setForm}>

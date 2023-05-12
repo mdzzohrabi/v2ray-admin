@@ -26,7 +26,7 @@ router.use(async (req, res, next) => {
             return res.json({ ok: false, message: 'Server node not found' });
         }
 
-        let path = req.path;
+        let path = req.url;
         let fetch = (await import('node-fetch')).default;
 
         try {

@@ -16,7 +16,6 @@ router.get('/monitor/test-file', httpAction(async (req, res) => {
     let fileContents = Buffer.alloc(size, '0');  
     res.set('Content-disposition', 'attachment; filename=fake.bin');
     res.set('Content-Type', 'text/plain');  
-    console.log('Test', fileContents.length);
     res.end(fileContents);
 }));
 
@@ -27,7 +26,8 @@ router.get('/monitor/test-file', httpAction(async (req, res) => {
  *    downloaded: number 
  *    total: number
  *    status: string
- *    downloader?: http.ClientRequest
+ *    downloader?: import('node-fetch').Response
+ *    abort?: AbortController
  *    avgSpeed: number
  *    minSpeed: number, maxSpeed: number, speed: number, nDownloaded: number, tStart: number, tEnd: number, tConnect: number
  *    statusCode?: number
@@ -36,7 +36,7 @@ router.get('/monitor/test-file', httpAction(async (req, res) => {
  *
  * @type {DownloadRequest[]}
  */
-const downloadQueue = [];
+let downloadQueue = [];
 
 router.get('/monitor/download-test', httpAction(async (req, res) => {
     const requestId = req.query.id;
@@ -51,6 +51,22 @@ router.get('/monitor/download-test', httpAction(async (req, res) => {
     let {downloader, ...result} = request;
 
     res.json(result);
+}));
+
+router.get('/monitor/download-abort', httpAction(async (req, res) => {
+    const requestId = req.query.id;
+    if (!requestId)
+        throw Error('Invalid Request');
+
+    let request = downloadQueue.find(x => x.id == requestId);
+
+    if (!request)
+        throw Error('Request not fuond');
+
+    request?.abort?.abort();
+    downloadQueue = downloadQueue.filter(x => x != request);
+
+    res.json({ ok: true });
 }));
 
 // Download Test
@@ -97,15 +113,17 @@ router.post('/monitor/download-test', httpAction(async (req, res) => {
             return hrTime[0] * 1000000 + hrTime[1] / 1000;
         } 
 
-        let downloader = fetch(path, {
+        request.abort = abortController;
+
+        fetch(path, {
             signal: abortController.signal,
             headers: {
                 Authorization: auth
             }
         }).then(res => {
-            console.log('OK', res.headers, Number(res.headers.get('content-length')));
             tConnect = Date.now();
             let tLastChunk = microS();
+            request.downloader = res;
             request.tConnect = tConnect;
             request.total = Number(res.headers.get('content-length'));
             request.status = 'Connected';
@@ -135,13 +153,11 @@ router.post('/monitor/download-test', httpAction(async (req, res) => {
             });
 
             res.body?.on('error', err => {
-                console.log('ERRRR');
                 request.status = 'Error: ' + err?.message;
                 request.downloader = undefined;    
             });
 
             res.body?.on('close', () => {
-                console.log('Finish');
                 request.status = 'Complete';
                 timeout && clearTimeout(timeout);
                 let tEnd = Date.now();
