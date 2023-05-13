@@ -1,5 +1,5 @@
 restoreDir=__restored
-configDir=/usr/local/etc/v2ray
+configDir=/usr/local/etc/xray
 
 while getopts h:f:c:r: flag; do
     case $flag in

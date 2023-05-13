@@ -1,3 +1,3 @@
-echo "" > /var/log/v2ray/access.log
-ehco "" > /var/log/v2ray/error.log
+echo "" > /var/log/xray/access.log
+ehco "" > /var/log/xray/error.log
 rm var/*bytes*

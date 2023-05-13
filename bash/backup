@@ -1,4 +1,4 @@
-cd /usr/local/etc/v2ray
+cd /usr/local/etc/xray
 cp /home/v2ray-admin/db/* db
 git add db/*
 git add config.json
