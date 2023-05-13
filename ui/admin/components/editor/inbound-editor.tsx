@@ -280,7 +280,7 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }: Inbound
                                         <input type="text" placeholder="1.8.0" id="maxClientVer" className={styles.input} />
                                     </Field>
                                     <Field label="Max Time Diff" htmlFor="maxTimeDiff">
-                                        <input type="text" id="maxTimeDiff" placeholder="0" className={styles.input} />
+                                        <input type="number" id="maxTimeDiff" placeholder="0" className={styles.input} />
                                     </Field>
                                 </div>
                                 <Collection path="serverNames">
