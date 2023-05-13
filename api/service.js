@@ -10,7 +10,7 @@ router.get('/service/generate_public_private_key', httpAction(async (req, res) =
     let {stderr, stdout} = await execAsync('xray x25519');
     let [line1, line2] = stdout?.split('\n');
     let privateKey = line1.startsWith('Private key: ') ? line1.replace('Private key: ', '') : '';
-    let publicKey = line1.startsWith('Public key: ') ? line2.replace('Public key: ', '') : '';
+    let publicKey = line2.startsWith('Public key: ') ? line2.replace('Public key: ', '') : '';
     return {privateKey, publicKey};
 }))
 
