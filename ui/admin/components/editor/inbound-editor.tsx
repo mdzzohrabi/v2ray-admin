@@ -273,6 +273,26 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }: Inbound
                                 />       
                                 </>}
                                 </Collection>
+                                <Collection path="shortIds">
+                                {shortIds => <>
+                                    <div className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 flex flex-row">
+                                        <h3 className="font-semibold flex-1">Short Ids</h3>
+                                        <button type={"button"} onClick={() => shortIds.addItem(null, '')} className={styles.addButtonSmall}>+ Add</button>
+                                    </div>
+                                    <Table
+                                    rows={shortIds.items ?? []}
+                                    columns={[ 'Short Id', 'Action' ]}
+                                    cells={(shortId, index) => [
+                                        // Certificate
+                                        <Field data={shortId} dataSetter={newShortId => shortIds.updateItem(shortId, newShortId)}><input type="text" className={styles.input} placeholder={"google.com"}/></Field>,
+                                        // Actions
+                                        <PopupMenu>
+                                            <PopupMenu.Item action={() => shortIds.deleteItem(shortId)} >Delete</PopupMenu.Item>
+                                        </PopupMenu>
+                                    ]}
+                                />       
+                                </>}
+                                </Collection>
                             </FieldObject>
                         </FieldObject>
                     </Tabs.Tab>
