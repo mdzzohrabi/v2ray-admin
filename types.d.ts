@@ -87,6 +87,7 @@ interface V2RayConfigInboundStreamSettings {
         xver?: number
         serverNames?: string[]
         privateKey?: string
+        publicKey?: string /** Custom */
         minClientVer?: string
         maxClientVer?: string
         maxTimerDiff?: number
@@ -172,7 +173,7 @@ interface V2RayConfigMux {
 interface V2RayConfigStream {  
   transport: "tcp" | "udp",
   transportSettings: any,
-  security: "none" | "auto" | 'tls',
+  security: "none" | "auto" | 'tls' | 'reality',
   securitySettings: any
   network?: 'tcp' | 'kcp' | 'ws' | 'http' | 'domainsocket' | 'quic'
   tcpSettings?: HttpHeaderObject

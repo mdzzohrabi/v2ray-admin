@@ -1,6 +1,6 @@
 import classNames from "classnames";
 import { FormEvent, useCallback, useState } from "react";
-import { useContextSWR } from "../../lib/hooks";
+import { useContextSWR, useRequest } from "../../lib/hooks";
 import { styles } from "../../lib/styles";
 import { Dialog } from "@common/components/dialog";
 import { Collection, Field, FieldObject, FieldsGroup } from "@common/components/fields";
@@ -8,6 +8,9 @@ import { PopupMenu } from "@common/components/popup-menu";
 import { Table } from "@common/components/table";
 import { Tabs } from "@common/components/tabs";
 import { moveItemInArray } from "@common/lib/util";
+import KeyIcon from "@heroicons/react/24/outline/KeyIcon";
+import { toast } from "@common/lib/hooks";
+import { ServerNode, V2RayConfigInbound } from "../../../../types";
 
 interface InboundEditorProps {
     inbound: V2RayConfigInbound;
@@ -25,6 +28,22 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }: Inbound
     }, [onEdit, inbound, dissmis, inboundProp]);
 
     let {data: nodes} = useContextSWR<ServerNode[]>('/nodes');
+
+    const request = useRequest();
+
+    const generateKey = useCallback(async () => {
+        try {
+            let result = await request<{ publicKey: string, privateKey: string }>('/service/generate_public_private_key');
+            let newInboud = { ...inbound };
+            newInboud.streamSettings = newInboud.streamSettings ?? {};
+            newInboud.streamSettings.realitySettings = newInboud.streamSettings.realitySettings ?? {};
+            newInboud.streamSettings.realitySettings.privateKey = result.privateKey;
+            newInboud.streamSettings.realitySettings.publicKey = result.publicKey;
+            setInbound(newInboud);
+        } catch (err) {
+            toast.error('Cannot generate key');
+        }
+    }, [inbound, request]);
 
     return <Dialog onClose={dissmis} onSubmit={ok} title="Inbound" className="text-sm">
         <FieldsGroup data={inbound} dataSetter={setInbound}>
@@ -239,8 +258,19 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }: Inbound
                                         <input type="checkbox" id="show"/>
                                     </Field>
                                 </div>
-                                <Field label="Private Key" htmlFor="privateKey">
-                                    <input type="text" id="privateKey" className={styles.input} />
+                                <div className="flex items-end">
+                                    <Field label="Private Key" className="flex-1" htmlFor="privateKey">
+                                        <input type="text" id="privateKey" className={styles.input} />
+                                    </Field>
+                                    <div>
+                                        <button type="button" onClick={() => generateKey()} className={classNames(styles.buttonItem, 'text-xs')}>
+                                            <KeyIcon className="w-4"/>
+                                            Generate Key
+                                        </button>
+                                    </div>
+                                </div>
+                                <Field label="Public Key" htmlFor="publicKey">
+                                    <input type="text" id="publicKey" className={styles.input} />
                                 </Field>
                                 <div className="flex flex-row items-center">
                                     <Field label="Min Client Ver" htmlFor="minClientVer">
@@ -284,7 +314,7 @@ export function InboundEditor({ inbound: inboundProp, dissmis, onEdit }: Inbound
                                     columns={[ 'Short Id', 'Action' ]}
                                     cells={(shortId, index) => [
                                         // Certificate
-                                        <Field data={shortId} dataSetter={newShortId => shortIds.updateItem(shortId, newShortId)}><input type="text" className={styles.input} placeholder={"google.com"}/></Field>,
+                                        <Field data={shortId} dataSetter={newShortId => shortIds.updateItem(shortId, newShortId)}><input type="text" className={styles.input} placeholder={""}/></Field>,
                                         // Actions
                                         <PopupMenu>
                                             <PopupMenu.Item action={() => shortIds.deleteItem(shortId)} >Delete</PopupMenu.Item>

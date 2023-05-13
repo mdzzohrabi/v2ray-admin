@@ -4,6 +4,14 @@ import useSWR, { Fetcher, SWRConfiguration } from "swr";
 import { AppContext } from "../components/app-context";
 import { serverRequest } from "./util";
 
+export function useRequest() {
+	const context = useContext(AppContext);
+	let requester: <T>(action: string) => Promise<T> = useMemo(() => {
+		return serverRequest.bind(this, context.server);
+	}, [context]);
+	return requester;
+}
+
 export function useContextSWR<T = any>(key: any, body: any = undefined, config: SWRConfiguration<T, any, Fetcher<T, any>> = undefined) {
 	let context = useContext(AppContext);
 	let [cacheKey, setCacheKey] = useState('');
