@@ -1,8 +1,8 @@
 // @ts-check
 const { randomUUID } = require('crypto');
 const { env } = require('process');
-const { addTransaction } = require('../lib/db');
-const { restartService, getPaths, readConfig, setUserActive, writeConfig, findUser, log, deleteUser, httpAction, readLogFile, DateUtil, addUser, db } = require('../lib/util');
+const { addTransaction, getTransactions, saveDb } = require('../lib/db');
+const { restartService, getPaths, readConfig, setUserActive, writeConfig, findUser, log, deleteUser, httpAction, readLogFile, DateUtil, addUser, db, addUserToRoute } = require('../lib/util');
 const { statusFilters } = require('./common');
 const router = require('express').Router();
 
@@ -499,5 +499,42 @@ router.post('/add_days', async (req, res) => {
         console.error(err);
     }
 });
+
+router.post('/user/cancel', httpAction(async (req, res) => {
+    const {user, deActiveReason, transactionRemark} = req.body;
+    if (!user)
+        throw Error(`Invalid request`);
+
+    /** @type {import('../types').SystemUser} */
+    const admin = res.locals.user;
+
+    if (!admin?.acls?.isAdmin && !admin?.acls?.users?.cancel) {
+        throw Error('Access denied');
+    }
+
+    const {configPath} = getPaths();
+    const config = readConfig(configPath);
+    const transactions = await getTransactions();
+
+    const userTransactions = transactions.filter(x => x.user == user);
+    const inbounds = config?.inbounds?.flatMap(x => x.settings?.clients ?? []).filter(x => x.email == user);
+
+    inbounds?.forEach(x => {
+        x.deActiveDate = new Date().toLocaleString();
+        x.deActiveReason = deActiveReason;
+    })
+
+    if (userTransactions?.length > 0) {
+        let lastTransaction = userTransactions[userTransactions.length-1];
+        lastTransaction.amount = 0;
+        lastTransaction.remark = transactionRemark;
+    }
+
+    addUserToRoute(config, user, 'baduser');
+    writeConfig(configPath, config);
+    await saveDb();
+
+    return { ok: true };
+}));
 
 module.exports = { router };

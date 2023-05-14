@@ -260,6 +260,9 @@ export function SystemUserDialog({ user: userProp, onClose, onDone }: { user?: S
                                     <Field htmlFor="traffics" horizontal label="Traffic Usage">
                                         <input type="checkbox" id="traffics" className={styles.input}/>
                                     </Field>
+                                    <Field htmlFor="cancel" horizontal label="Cancel User">
+                                        <input type="checkbox" id="cancel" className={styles.input}/>
+                                    </Field>
                                 </div>
                             </div>
                         </FieldObject>

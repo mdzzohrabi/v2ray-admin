@@ -6,8 +6,8 @@ const router = require('express').Router();
 
 /**
  * 
- * @param {Transaction[]} transactions 
- * @param {SystemUser} admin
+ * @param {import('../types').Transaction[]} transactions 
+ * @param {import('../types').SystemUser} admin
  */
 function filterTransactionsForUser(transactions, admin) {
     if (!admin.acls?.isAdmin) {
@@ -17,15 +17,21 @@ function filterTransactionsForUser(transactions, admin) {
 }
 
 router.get('/transactions', httpAction(async (req, res) => {
-    /** @type {SystemUser} */
+    /** @type {import('../types').SystemUser} */
     let admin = res.locals.user;
+    
     let transactions = filterTransactionsForUser(await getTransactions(), admin);
+
+    if (req.query.user) {
+        transactions = transactions.filter(x => x.user == req.query.user);
+    }
+
     res.json(transactions);
 }));
 
 
 router.post('/transactions', async (req, res) => {
-    /** @type {SystemUser?} */
+    /** @type {import('../types').SystemUser?} */
     let user = res.locals.user;
     try {
         let result = await addTransaction({ ...req.body, createdBy: user?.username, createdById: user?.id });

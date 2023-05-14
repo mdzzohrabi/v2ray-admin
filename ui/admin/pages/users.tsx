@@ -19,10 +19,12 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { Fragment, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import toast from "react-hot-toast";
+import { V2RayConfigInbound, SystemUser, V2RayConfigInboundClient } from "../../../types";
 import { AddUser } from "../components/add-user";
 import { AppContext } from "../components/app-context";
 import { ClientConfig } from "../components/client-config";
 import { Container } from "../components/container";
+import { ClientCancelDialog } from "../components/dialog/client-cancel-dialog";
 import { UserNodesDialog } from "../components/dialog/user-nodes";
 import { ChangeInboundEditor } from "../components/editor/change-inbound-editor";
 import { CopyUserEditor } from "../components/editor/copy-user";
@@ -175,6 +177,8 @@ export default function UsersPage() {
         user={user}
         tag={tag}
     />)
+
+    const clientCancelDialog = useDialog((user: V2RayConfigInboundClient, onClose?: Function) => <ClientCancelDialog user={user} onClose={onClose}/>)
 
     const exportExcel = useCallback(() => {
         console.log('Export Excel');
@@ -535,6 +539,9 @@ return <Container>
                                         </PopupMenu.Item>
                                         <PopupMenu.Item icon={<DocumentPlusIcon className="w-4"/>} visible={access('users', 'traffics')} action={() => router.push(`/usages/traffic?user=${u.email}`)}>
                                             Traffic Usage
+                                        </PopupMenu.Item>
+                                        <PopupMenu.Item icon={<DocumentPlusIcon className="w-4"/>} visible={access('users', 'cancel')} action={() => clientCancelDialog.show(u)}>
+                                            Cancel and De-active
                                         </PopupMenu.Item>
                                     </PopupMenu>
                                 </td>

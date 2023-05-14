@@ -367,6 +367,7 @@ interface SystemAcls {
 		changeBandwidth?: boolean
         otherNodes?: boolean
         traffics?: boolean
+        cancel?: boolean
 	};
 	config?: { list?: boolean; edit?: boolean };
 	home?: {

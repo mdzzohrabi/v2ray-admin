@@ -1,12 +1,13 @@
 import { useCallback, useContext, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import useSWR, { Fetcher, SWRConfiguration } from "swr";
+import { SystemUser, SystemAcls } from "../../../types";
 import { AppContext } from "../components/app-context";
 import { serverRequest } from "./util";
 
 export function useRequest() {
 	const context = useContext(AppContext);
-	let requester: <T>(action: string) => Promise<T> = useMemo(() => {
+	let requester: <T>(action: string, body?: any) => Promise<T> = useMemo(() => {
 		return serverRequest.bind(this, context.server);
 	}, [context]);
 	return requester;
