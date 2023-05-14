@@ -29,12 +29,12 @@ async function cronTrafficUsage(cron) {
     let {v2ray} = getPaths();
 
     /**
-     * @type {TrafficUsages}
+     * @type {import("../types").TrafficUsages}
      */
     let trafficUsages = await db('traffic-usages') ?? {};
 
     /**
-     * @type {UserUsages}
+     * @type {import("../types").UserUsages}
      */
     let userUsage = await db('user-usages') ?? {};
 
@@ -49,7 +49,7 @@ async function cronTrafficUsage(cron) {
             isNewDate = true;
         }
 
-        let stats = JSON.parse(await execAsync(`${v2ray} api stats -json -reset`));
+        let stats = JSON.parse(await execAsync(`${v2ray} api statsquery -reset`));
         let intlMonth = new Intl.DateTimeFormat('fa-IR', { month: 'numeric' });
         let intlYear = new Intl.DateTimeFormat('fa-IR', { year: 'numeric' });
 
