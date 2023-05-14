@@ -71,6 +71,9 @@ router.post('/set_info', async (req, res) => {
         user[prop] = value;
         await writeConfig(configPath, config);
         res.json({ ok: true });
+        if (prop == 'flow' || prop == 'id') {
+            restartService().catch(console.error);
+        }
     } catch (err) {
         res.json({ error: err.message });
         console.error(err);
@@ -230,7 +233,7 @@ router.get('/inbounds/:key', httpAction(async (req, res) => {
     const config = readConfig(configPath);
     const {key} = req.params;
 
-    /** @type {SystemUser} */
+    /** @type {import('../types').SystemUser} */
     let user = res.locals.user;
     
     return config?.inbounds?.filter(x => !user || user?.acls?.isAdmin || user?.acls?.allowedInbounds?.includes(x.tag ?? '')).map(x => x[key]);
@@ -249,7 +252,7 @@ router.post('/inbounds', httpAction(async (req, res) => {
 
     let inbounds = config.inbounds ?? [];
     
-    /** @type {SystemUser} */
+    /** @type {import('../types').SystemUser} */
     let user = res.locals.user;
     
 
@@ -273,7 +276,7 @@ router.post('/inbounds', httpAction(async (req, res) => {
 
     let skip = (page * limit) - limit;
 
-    /** @type {Subscribers} */
+    /** @type {import('../types').Subscribers} */
     let subscibers = await db('subscribers') ?? {};
 
     for (let inbound of inbounds) {
@@ -359,7 +362,7 @@ router.get('/inbounds_clients', async (req, res) => {
 router.post('/user', async (req, res) => {
     try {
         let {email, tag, fullName, mobile, emailAddress, private, free, quotaLimit} = req.body;
-        /** @type {SystemUser?} */
+        /** @type {import('../types').SystemUser?} */
         let user = res.locals.user;
         if (!email) return res.json({ error: 'Email not entered' });
         if (!tag) return res.json({ error: 'Tag not entered' });
@@ -389,10 +392,10 @@ router.post('/user', async (req, res) => {
 
 router.get('/user/nodes', httpAction(async (req, res) => {
 
-    /** @type {SystemUser} */
+    /** @type {import('../types').SystemUser} */
     const admin = res.locals.user;
 
-    /** @type {ServerNode[]} */
+    /** @type {import('../types').ServerNode[]} */
     const nodes = await db('server-nodes') ?? [];
 
     /** @type {string} */
@@ -406,7 +409,7 @@ router.get('/user/nodes', httpAction(async (req, res) => {
 
     const fetch = (await import('node-fetch')).default;
 
-    /** @type {V2RayConfigInboundClient[]} */
+    /** @type {import('../types').V2RayConfigInboundClient[]} */
     const clients = [];
 
     for (let node of nodes.filter(x => !x.disabled && x.show_in_other_nodes)) {       
@@ -431,7 +434,7 @@ router.get('/user/nodes', httpAction(async (req, res) => {
                 }
             });
 
-            /** @type {V2RayConfigInbound[]} */
+            /** @type {import('../types').V2RayConfigInbound[]} */
             // @ts-ignore
             let inbounds = await result.json();
             if (Array.isArray(inbounds)) {
@@ -451,7 +454,7 @@ router.get('/user/nodes', httpAction(async (req, res) => {
 router.post('/add_days', async (req, res) => {
     try {
         let {email, days, tag} = req.body;
-        /** @type {SystemUser?} */
+        /** @type {import('../types').SystemUser?} */
         let systemUser = res.locals.user;
         if (!email) return res.json({ error: 'Email not entered' });
         let {configPath} = getPaths();
