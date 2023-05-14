@@ -88,7 +88,7 @@ export default function Index({ accountId: pAccountId }: { accountId?: string })
         </h1>
         <div className="flex">
             <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-2">
-                <a href="https://github.com/2dust/v2rayNG/releases/download/1.7.38/v2rayNG_1.7.38.apk" className={className.itemDownload}>
+                <a href="https://github.com/2dust/v2rayNG/releases/download/1.8.5/v2rayNG_1.8.5_arm64-v8a.apk" className={className.itemDownload}>
                     <ArrowDownTrayIcon className="w-5"/>
                     <span dangerouslySetInnerHTML={{ __html: __('Download V2RayNG for <b>Android</b>')}}/>
                 </a>
