@@ -17,7 +17,7 @@ async function cronSync(cron) {
     let {configPath} = getPaths();
     let tempConfig = readConfig(configPath);
 
-    /** @type {ServerNode[]} */
+    /** @type {import("../types").ServerNode[]} */
     let serverNodes = await db('server-nodes') ?? [];
 
     serverNodes = serverNodes.filter(x => !x.disabled);
@@ -39,7 +39,7 @@ async function cronSync(cron) {
         showInfo(`Sync clients for inbound ${inbound.tag} [${inbound.protocol}] from ${serverNode?.name ?? '[n/A]'}`);
         if (serverNode) {
             try {
-                /** @type {{ clients?: V2RayConfigInboundClient[], error?: string }} */
+                /** @type {{ clients?: import("../types").V2RayConfigInboundClient[], error?: string }} */
                 let result = await request(serverNode,'/api/clients?tag=' + mirrorInbound);
 
                 if (!result || result.error) {
@@ -49,7 +49,7 @@ async function cronSync(cron) {
 
                 let clients = result.clients ?? [];
 
-                /** @type {ServerNode[]} */
+                /** @type {import("../types").ServerNode[]} */
                 let serverNodesToUpdate = await db('server-nodes') ?? [];
                 let node = serverNodesToUpdate.find(x => x.id == serverNode?.id);
                 if (node) {
@@ -89,7 +89,7 @@ async function cronSync(cron) {
                             client.serverNodeInbound = inbound.mirrorInbound;
                             localClients[localIndex] = client;
                             // Restart service only if user-id was changed
-                            if (localClient?.id != client?.id) {
+                            if (localClient?.id != client?.id || localClient?.flow != client?.flow) {
                                 cron.needRestartService = true;
                                 showInfo(`Request restart service due to client id change`)
                             }
@@ -158,7 +158,7 @@ async function cronSync(cron) {
 
     /**
      * Update user usages
-     * @type {UserUsages}
+     * @type {import("../types").UserUsages}
      */
     let userUsages = await db('user-usages') ?? {};
     for (let server of syncServers) {
@@ -174,7 +174,7 @@ async function cronSync(cron) {
 
     /**
      * Update traffic usages
-     * @type {TrafficUsages}
+     * @type {import("../types").TrafficUsages}
      */
     let trafficUsages = await db('traffic-usages') ?? {};
 

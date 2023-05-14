@@ -1,9 +1,11 @@
 import { Dialog } from "@common/components/dialog";
 import { FieldsGroup, Field, Collection, FieldObject } from "@common/components/fields";
 import { PopupMenu } from "@common/components/popup-menu";
+import { Select } from "@common/components/select";
 import { Table } from "@common/components/table";
 import classNames from "classnames";
 import { useCallback, useState } from "react";
+import { V2RayConfigOutbound } from "../../../../types";
 import { styles } from "../../lib/styles";
 
 /**
@@ -164,7 +166,9 @@ export function OutboundEditor({ outbound: outboundProp, dissmis, onEdit }) {
                                                     <input type="text" className={styles.input} id="id"/>
                                                 </Field>
                                                 <Field htmlFor="flow" label="Flow">
-                                                    <input type="text" className={styles.input} placeholder='' id="flow"/>
+                                                    <Select id="flow" items={[
+                                                        'none', 'xtls-rprx-vision'
+                                                    ]} allowNull={true} nullText='None'/>
                                                 </Field>
                                                 <Field htmlFor="encryption" label="Encryption">
                                                     <input type="text" className={styles.input} placeholder='none' id="encryption"/>
@@ -247,9 +251,39 @@ export function OutboundEditor({ outbound: outboundProp, dissmis, onEdit }) {
                             <select className={styles.input} id="security">
                                 <option value="none">None</option>
                                 <option value="tls">TLS</option>
+                                <option value="reality">REALITY</option>
                             </select>
                         </Field>
                     </div>
+                    {outbound?.streamSettings?.security == 'reality' ? <>
+                        <h3 className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 font-smibold">
+                            REALITY settings
+                        </h3>
+                        <FieldObject path={'realitySettings'}>
+                        <div className="flex flex-row">
+                            <Field label="Server Name" htmlFor="serverName" className="flex-1">
+                                <input type={'text'} className={styles.input} id="serverName"/>
+                            </Field>
+                            <Field label="Fingerprint" htmlFor="fingerprint">
+                                <input type={'text'} placeholder='chrome' className={styles.input} id="fingerprint"/>
+                            </Field>
+                            <Field label="Show" htmlFor="show" className="py-2 mx-2">
+                                <input type={'checkbox'} className={styles.input} id="show"/>
+                            </Field>
+                        </div>
+                        <Field label="Public Key" htmlFor="publicKey" className="flex-1">
+                            <input type={'text'} className={styles.input} id="publicKey"/>
+                        </Field>
+                        <div className="flex flex-row">
+                            <Field label="Short Id" htmlFor="shortId" className="flex-1">
+                                <input type={'text'} className={styles.input} id="shortId"/>
+                            </Field>
+                            <Field label="SpiderX" htmlFor="spiderX" className="flex-1">
+                                <input type={'text'} className={styles.input} id="spiderX"/>
+                            </Field>
+                        </div>
+                        </FieldObject>
+                    </> : null}
                     {outbound?.streamSettings?.security == 'tls' ? <>
                         <h3 className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 font-smibold">
                             TLS settings
@@ -282,7 +316,11 @@ export function OutboundEditor({ outbound: outboundProp, dissmis, onEdit }) {
                         </div>
                         </FieldObject>
                     </> : null}
-                    {outbound?.streamSettings?.network=='tcp'? <div className="flex flex-row">
+                    {outbound?.streamSettings?.network=='tcp'? <>
+                        <h3 className="border-b-2 border-b-gray-200 px-2 pb-2 pt-2 font-smibold">
+                            TCP settings
+                        </h3>
+                        <div className="flex flex-row">
                         <FieldObject path={'tcpSettings'}>
                             <FieldObject path={'header'}>
                                 <Field label="Header Type" htmlFor="type">
@@ -296,7 +334,7 @@ export function OutboundEditor({ outbound: outboundProp, dissmis, onEdit }) {
                                     <Field label="Request Method" htmlFor="method">
                                         <input type="text" id="method" className={styles.input}/>
                                     </Field>                                    
-                                    <Field label="Request Path" htmlFor="path">
+                                    <Field label="Request Path" className="flex-1" htmlFor="path">
                                         <input type="text" id="method" className={styles.input}/>
                                     </Field>
                                     {/* <ObjectCollection path="headers">{headers => {
@@ -327,7 +365,9 @@ export function OutboundEditor({ outbound: outboundProp, dissmis, onEdit }) {
                                 </FieldObject>
                             </FieldObject>
                         </FieldObject>
-                    </div> : null}
+                    </div> 
+                    </>
+                    : null}
                 </div>                        
             </FieldObject>
             <div className="flex flex-col">
