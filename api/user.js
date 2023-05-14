@@ -520,7 +520,7 @@ router.post('/user/cancel', httpAction(async (req, res) => {
     const inbounds = config?.inbounds?.flatMap(x => x.settings?.clients ?? []).filter(x => x.email == user);
 
     inbounds?.forEach(x => {
-        x.deActiveDate = new Date().toLocaleString();
+        x.deActiveDate = new Date().toString();
         x.deActiveReason = deActiveReason;
     })
 

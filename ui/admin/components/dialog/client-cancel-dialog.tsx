@@ -21,7 +21,7 @@ export function ClientCancelDialog({user, onClose, onDone}: ClientCancelDialogPr
 
     const {data: transactions, isValidating: isLoading} = useContextSWR<Transaction[]>('/transactions?user=' + user.email);
     const [data, setData] = useState({
-        deActiveReason: '',
+        deActiveReason: user?.deActiveReason,
         transactionRemark: ''
     })
 
