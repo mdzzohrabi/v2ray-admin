@@ -3,6 +3,6 @@ git pull
 pm2 stop all
 npm i
 if [[ $UI -ne 0 ]]; then
-    bash build-ui
+    bash ./build-ui
 fi
 pm2 start all
