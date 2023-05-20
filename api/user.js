@@ -282,6 +282,7 @@ router.post('/inbounds', httpAction(async (req, res) => {
     for (let inbound of inbounds) {
         let users = (inbound.settings?.clients ?? []).filter(u => (filters.showPrivate || !u.private) && (filters.showFree || !u.free));
         let total = users.length;
+        let totalActive = users.filter(x => !x.deActiveDate).length;
         let maxClientNumber = 0;
         for (let user of users) {
             let usage = user.email ? usages[user.email] : {};
@@ -338,8 +339,10 @@ router.post('/inbounds', httpAction(async (req, res) => {
         if (inbound.settings) {
             inbound.settings.clients = filtered.slice(skip, skip + limit);
             inbound.settings['totalClients'] = total;
+            inbound.settings['totalActiveClients'] = totalActive;
             inbound.settings['maxClientNumber'] = maxClientNumber;
             inbound.settings['totalFiltered'] = filtered.length;
+            inbound.settings['totalActiveFiltered'] = filtered.filter(x => !x.deActiveDate).length;
             inbound.settings['from'] = skip;
             inbound.settings['to'] = skip + limit;
         }

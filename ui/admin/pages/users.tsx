@@ -337,9 +337,12 @@ return <Container>
             </thead>
             <tbody>
                 {!inbounds ? <tr><td colSpan={10} className="px-3 py-4">Loading ...</td></tr> : inbounds.filter(x => !view.inbounds || view.inbounds?.length == 0 || view.inbounds.includes(x.tag ?? '')).map(i => {
+                    let settings = i.settings ?? {};
                     let users = i.settings?.clients ?? [];
-                    let totalUsers = i.settings ? i.settings['totalClients'] ?? 0 : 0;
+                    let totalUsers = settings['totalClients'] ?? 0;
+                    let totalActiveUsers = settings['totalActiveClients'] ?? 0;
                     let totalFiltered = i.settings ? i.settings['totalFiltered'] ?? 0 : 0;
+                    let totalActiveFiltered = i.settings ? i.settings['totalActiveFiltered'] ?? 0 : 0;
                     let from = i.settings ? i.settings['from'] ?? 0 : 0;
                     let to = i.settings ? i.settings['to'] ?? 0 : 0;
                     let {showId, fullTime, precision} = view;
@@ -347,15 +350,20 @@ return <Container>
                     if (totalFiltered == 0) return null;
                     return <Fragment key={"inbound-" + i.protocol + '-' + i.tag}>
                         <tr>
-                            <td colSpan={5} className="uppercase group bg-slate-100 px-4 py-3 cursor-pointer sticky top-[2.4rem] z-10 border-b-[1px]" onClick={() => setCollapsed({ ...collapsed, [i.tag ?? '']: !isCollapsed })}>
-                                <div className="flex flex-row items-center">
-                                    <span className={classNames("font-bold group-hover:text-gray-600 duration-200 ease-in-out w-6 text-center py-0 mr-2 inline-block rounded-full text-md select-none", {
+                            <td colSpan={5} className="group bg-slate-100 px-4 py-3 cursor-pointer sticky top-[2.4rem] z-10 border-b-[1px]" onClick={() => setCollapsed({ ...collapsed, [i.tag ?? '']: !isCollapsed })}>
+                                <div className="flex flex-row items-center gap-x-2">
+                                    <span className={classNames("font-bold group-hover:text-gray-600 duration-200 ease-in-out w-6 text-center py-0 inline-block rounded-full text-md select-none", {
                                         'text-gray-300': isCollapsed,
                                         'text-gray-600': !isCollapsed
                                     })}>{isCollapsed ? <FolderPlusIcon className="w-6"/> : <FolderMinusIcon className="w-6"/>}</span>
-                                    <span className="font-bold">{i.tag}</span>
-                                    <span className="text-slate-500 pl-2">({i.protocol} - {i.streamSettings?.network}) ( {from}-{to} / {totalFiltered} users ) - <span className="font-bold">Total = {totalUsers} users</span></span>
-                                    <span className="opacity-0 group-hover:opacity-100 ease-in-out duration-200 text-xs ml-2 inline-block px-2 rounded-lg bg-slate-600 text-white">Max Client Number : {i.settings['maxClientNumber']}</span>
+                                    <span className="uppercase font-bold">{i.tag}</span>
+                                    <div className="text-xs gap-x-1 flex">
+                                        <span className="inline-block border-[1px] px-2 rounded-lg border-slate-400 text-slate-500 uppercase">{i.protocol} - {i.streamSettings?.network}</span>
+                                        <span className="ease-in-out duration-200 inline-block px-2 rounded-lg border-[1px] group-hover:bg-stone-600 group-hover:text-white border-stone-600 text-stone-900">From {from} To {to}</span>
+                                        <span className="ease-in-out duration-200 inline-block px-2 rounded-lg border-[1px] border-orange-700 text-orange-900 group-hover:bg-orange-700 group-hover:text-white">Filtered {totalFiltered} / Active {totalActiveFiltered}</span>
+                                        <span className="ease-in-out duration-200 inline-block px-2 rounded-lg group-hover:bg-green-800 group-hover:text-white border-[1px] border-green-800 text-green-900">Total {totalUsers} / Active {totalActiveUsers}</span>
+                                        <span className="opacity-0 group-hover:opacity-100 ease-in-out duration-200 inline-block px-2 rounded-lg bg-slate-600 text-white">Max Client Number : {i.settings['maxClientNumber']}</span>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
