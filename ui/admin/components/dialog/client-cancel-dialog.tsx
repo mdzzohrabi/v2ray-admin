@@ -42,7 +42,7 @@ export function ClientCancelDialog({user, onClose, onDone}: ClientCancelDialogPr
         task.then(() => onClose?.call(this));
     }, [request, data, user]);
 
-    return <Dialog onClose={onClose} title={'Cancel user - ' + user.email}>
+    return <Dialog onClose={onClose} title={'Cancel user - ' + user.email} className="text-sm">
         <FieldsGroup data={data} dataSetter={setData}>
         <Infos>
             <Info label={'Username'} className={'py-2'}>{user.email}</Info>

@@ -3,7 +3,7 @@ import classNames from "classnames";
 let localeFn: Function = null;
 
 export function Info({ label, children, className = '' }) {
-    return <div className={classNames("flex flex-row border-b-[1px] border-b-gray-200 last:border-b-0", className)}>
+    return <div className={classNames("flex flex-row border-b-[1px] border-b-gray-200 last:border-b-0 py-[3px]", className)}>
         <span className="flex-1 text-gray-400 mr-2">{ localeFn ? localeFn(label) : label }</span>
         {children}
     </div>

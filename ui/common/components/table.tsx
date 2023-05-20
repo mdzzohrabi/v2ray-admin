@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import React, { Fragment, ReactElement } from "react";
+import React, { Fragment, ReactElement, useMemo, useState } from "react";
 import { styles } from "../lib/styles";
 
 export interface TableProps<T, G, C extends string> {
@@ -10,7 +10,7 @@ export interface TableProps<T, G, C extends string> {
     rowContainer?: (row: T, children: any, group?: G) => any
     index?: (row: T, index: number) => any
     groupBy?: (row: T, index: number) => G
-    group?: (group: G) => any
+    group?: (group: G, isCollapsed: boolean, setCollapsed?: ((collapsed?: boolean) => any)) => any
     groupFooter?: (group: G, items: T[]) => any
     footer?: (items: T[]) => any
     className?: string
@@ -24,17 +24,20 @@ function isReactNode(value: any): value is ReactElement {
 
 export function Table<T, G, C extends string>({ columns, rows, cells, loading, rowContainer, index: indexGetter, groupBy, group, groupFooter, footer, className, cellMerge }: TableProps<T, G, C>) {
 
-    let prevGroup = null;
     let groupItems: any[] = [];
     let mergedCells: { [cellIndex: number]: number } = {};
 
-    let renderedRows = rows?.map((row, index) => {
-        return cells?.call(this, row, index, rows);
-    });
+    const [collapsedGroups, setCollapsedGroups] = useState<G[]>([]);
 
-    let groups = groupBy ? rows?.map((row, index) => groupBy(row, index)) : [];
+    // Render all rows cells
+    let renderedRows = useMemo(() => rows?.map((row, index) => cells?.call(this, row, index, rows)), [rows, cells]);
 
-    return <table className={classNames("w-full text-xs", className)}>
+    // All rows groups
+    let groups = useMemo(() => {
+        return groupBy ? rows?.map((row, index) => groupBy(row, index)) : [];
+    }, [rows, groupBy]);
+
+    return <table className={classNames("w-full text-xs border-separate border-spacing-0", className)}>
         <thead className="sticky top-0 xl:top-0 bg-white shadow-md z-40">
             <tr className="bg-white">
                 <th className={classNames(styles.tableHead)}>#</th>
@@ -56,6 +59,7 @@ export function Table<T, G, C extends string>({ columns, rows, cells, loading, r
                 let rowGroup = groups[index];
                 let prevGroup = groups[index - 1];
                 let isGroupChanged = rowGroup != prevGroup;
+                let isCollapsed = collapsedGroups.includes(rowGroup);
                 if (rowGroup) {
                     // New Group
                     if (isGroupChanged) {
@@ -64,7 +68,13 @@ export function Table<T, G, C extends string>({ columns, rows, cells, loading, r
                             elGroupFooter = groupFooter(prevGroup, groupItems);
                         }
 
-                        elGroup = group ? group(rowGroup) : null;
+                        let setCollapsed = (value?: boolean) => {
+                            if (value)
+                                setCollapsedGroups([ ...collapsedGroups, rowGroup ]);
+                            else
+                                setCollapsedGroups(collapsedGroups.filter(x => x != rowGroup));
+                        };
+                        elGroup = group ? group(rowGroup, isCollapsed, setCollapsed) : null;
                         groupItems = [];
                     }
                     groupItems.push(row);
@@ -104,7 +114,7 @@ export function Table<T, G, C extends string>({ columns, rows, cells, loading, r
                     }
                 }
 
-                let elRow = <tr className={classNames("bg-white", { "odd:bg-slate-50": !cellMerge })} key={index}>
+                let elRow = isCollapsed ? null : <tr className={classNames("bg-white", { "odd:bg-slate-50": !cellMerge })} key={index}>
                     <td className={classNames(styles.td, {
                         'border-r-[1px]': cellMerge
                     })}>{indexGetter ? indexGetter(row, index) : index}</td>

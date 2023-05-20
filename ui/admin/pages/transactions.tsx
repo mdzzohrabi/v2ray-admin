@@ -16,6 +16,7 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, useContext, useEffect, useState } from 'react';
 import toast from "react-hot-toast";
+import { Transaction, ServerNode } from "../../../types";
 import { AppContext } from "../components/app-context";
 import { Container } from "../components/container";
 import { useContextSWR, useUser } from "../lib/hooks";

@@ -10,9 +10,10 @@ import { Popup } from "@common/components/popup";
 import { PopupMenu } from "@common/components/popup-menu";
 import { Select } from "@common/components/select";
 import { Size } from "@common/components/size";
+import { Table } from "@common/components/table";
 import { usePrompt, useStoredState } from "@common/lib/hooks";
 import { DateUtil } from "@common/lib/util";
-import { ArrowPathIcon, ArrowsUpDownIcon, ArrowUpTrayIcon, BoltIcon, BoltSlashIcon, CalendarDaysIcon, ClockIcon, CurrencyDollarIcon, DevicePhoneMobileIcon, DocumentDuplicateIcon, DocumentPlusIcon, DocumentTextIcon, EyeIcon, EyeSlashIcon, FireIcon, FolderMinusIcon, FolderPlusIcon, PlusIcon, QrCodeIcon, RssIcon, TrashIcon, UserCircleIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, ArrowSmallLeftIcon, ArrowSmallRightIcon, ArrowsUpDownIcon, ArrowUpTrayIcon, BoltIcon, BoltSlashIcon, CalendarDaysIcon, ClockIcon, CurrencyDollarIcon, DevicePhoneMobileIcon, DocumentDuplicateIcon, DocumentPlusIcon, DocumentTextIcon, EyeIcon, EyeSlashIcon, FireIcon, FolderMinusIcon, FolderPlusIcon, PlusIcon, QrCodeIcon, RssIcon, TrashIcon, UserCircleIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import ExportJsonExcel from 'js-export-excel';
 import Head from "next/head";
@@ -325,240 +326,240 @@ return <Container>
         </FieldsGroup>
         <Loading isLoading={isLoading}/>
         <div className="">
-        <table className="w-full border-separate border-spacing-0">
-            <thead className="sticky top-0 xl:top-0 bg-white shadow-md z-40">
-                <tr className="bg-white">
-                    <th className={classNames(headClass)}>#</th>
-                    <th onClick={() => setView({ ...view, sortColumn:'email', sortAsc: !view.sortAsc })} className={classNames(headClass, 'cursor-pointer', {'bg-slate-200': view.sortColumn == 'email'})}>User / FullName</th>
-                    <th className={classNames(headClass, 'cursor-pointer')}>Infos</th>
-                    <th className={classNames(headClass, 'cursor-pointer', {'bg-slate-200': view.sortColumn == 'createDate'})}>Dates</th>
-                    <th className={classNames(headClass)}>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {!inbounds ? <tr><td colSpan={10} className="px-3 py-4">Loading ...</td></tr> : inbounds.filter(x => !view.inbounds || view.inbounds?.length == 0 || view.inbounds.includes(x.tag ?? '')).map(i => {
+            <Table
+                columns={[
+                    'User',
+                    'Infos',
+                    'Dates',
+                    'Actions'
+                ]}
+
+                rows={inbounds?.flatMap(x => {
+                    let clients = (x.settings?.clients ?? []);
+                    return clients.map(u => ({ ...u, inbound: x }));
+                })}
+                groupBy={u => u.inbound ?? {}}
+                group={(i: V2RayConfigInbound, isCollapsed, setCollapsed) => {
+
                     let settings = i.settings ?? {};
-                    let users = i.settings?.clients ?? [];
                     let totalUsers = settings['totalClients'] ?? 0;
                     let totalActiveUsers = settings['totalActiveClients'] ?? 0;
-                    let totalFiltered = i.settings ? i.settings['totalFiltered'] ?? 0 : 0;
-                    let totalActiveFiltered = i.settings ? i.settings['totalActiveFiltered'] ?? 0 : 0;
-                    let from = i.settings ? i.settings['from'] ?? 0 : 0;
-                    let to = i.settings ? i.settings['to'] ?? 0 : 0;
-                    let {showId, fullTime, precision} = view;
-                    let isCollapsed = !!collapsed[i.tag ?? ''];
-                    if (totalFiltered == 0) return null;
-                    return <Fragment key={"inbound-" + i.protocol + '-' + i.tag}>
-                        <tr>
-                            <td colSpan={5} className="group bg-slate-100 px-4 py-3 cursor-pointer sticky top-[2.4rem] z-10 border-b-[1px]" onClick={() => setCollapsed({ ...collapsed, [i.tag ?? '']: !isCollapsed })}>
-                                <div className="flex flex-row items-center gap-x-2">
-                                    <span className={classNames("font-bold group-hover:text-gray-600 duration-200 ease-in-out w-6 text-center py-0 inline-block rounded-full text-md select-none", {
-                                        'text-gray-300': isCollapsed,
-                                        'text-gray-600': !isCollapsed
-                                    })}>{isCollapsed ? <FolderPlusIcon className="w-6"/> : <FolderMinusIcon className="w-6"/>}</span>
-                                    <span className="uppercase font-bold">{i.tag}</span>
-                                    <div className="text-xs gap-x-1 flex">
-                                        <span className="inline-block border-[1px] px-2 rounded-lg border-slate-400 text-slate-500 uppercase">{i.protocol} - {i.streamSettings?.network}</span>
-                                        <span className="ease-in-out duration-200 inline-block px-2 rounded-lg border-[1px] group-hover:bg-stone-600 group-hover:text-white border-stone-600 text-stone-900">From {from} To {to}</span>
-                                        <span className="ease-in-out duration-200 inline-block px-2 rounded-lg border-[1px] border-orange-700 text-orange-900 group-hover:bg-orange-700 group-hover:text-white">Filtered {totalFiltered} / Active {totalActiveFiltered}</span>
-                                        <span className="ease-in-out duration-200 inline-block px-2 rounded-lg group-hover:bg-green-800 group-hover:text-white border-[1px] border-green-800 text-green-900">Total {totalUsers} / Active {totalActiveUsers}</span>
-                                        <span className="opacity-0 group-hover:opacity-100 ease-in-out duration-200 inline-block px-2 rounded-lg bg-slate-600 text-white">Max Client Number : {i.settings['maxClientNumber']}</span>
-                                    </div>
+                    let totalFiltered = settings['totalFiltered'] ?? 0;
+                    let totalActiveFiltered = settings['totalActiveFiltered'] ?? 0;
+                    let from = settings['from'] ?? 0;
+                    let to = settings['to'] ?? 0;
+                    
+                    return <td onClick={() => setCollapsed(!isCollapsed)} colSpan={5} className="uppercase group bg-slate-100 px-4 py-3 cursor-pointer sticky top-[1.9rem] z-10 border-b-[1px]">
+                        <div className="flex flex-row items-center gap-x-2">
+                            <span className={classNames("font-bold group-hover:text-gray-600 duration-200 ease-in-out w-6 text-center py-0 inline-block rounded-full text-md select-none", {
+                                'text-gray-300': isCollapsed,
+                                'text-gray-600': !isCollapsed
+                            })}>{isCollapsed ? <FolderPlusIcon className="w-6"/> : <FolderMinusIcon className="w-6"/>}</span>
+                            <span className="uppercase font-bold">{i.tag}</span>
+                            <div className="text-xs gap-x-1 flex flex-1">
+                                <span className="inline-block border-[1px] px-2 rounded-lg border-slate-400 text-slate-500 uppercase">{i.protocol} - {i.streamSettings?.network}</span>
+                                <span className="ease-in-out duration-200 inline-block px-2 rounded-lg border-[1px] border-orange-700 text-orange-900 group-hover:bg-orange-700 group-hover:text-white">Filtered {totalFiltered} / Active {totalActiveFiltered}</span>
+                                <span className="ease-in-out duration-200 inline-block px-2 rounded-lg group-hover:bg-green-800 group-hover:text-white border-[1px] border-green-800 text-green-900">Total {totalUsers} / Active {totalActiveUsers}</span>
+                                <span className="opacity-0 group-hover:opacity-100 ease-in-out duration-200 inline-block px-2 rounded-lg bg-slate-600 text-white">Max Client Number : {settings['maxClientNumber']}</span>
+                            </div>
+                            <div className="flex gap-x-2 items-center">
+                                <span className="ease-in-out duration-200 inline-block px-2 rounded-lg border-[1px] group-hover:bg-stone-600 group-hover:text-white border-stone-600 text-stone-900">From {from} To {to}</span>
+                                {/* <div className="p-1 rounded-full border-[1px] border-slate-400">
+                                    <ArrowSmallLeftIcon  className="w-4"/>
                                 </div>
-                            </td>
-                        </tr>
-                        {users
-                        .map((u, index) => {
-                            if (isCollapsed) return null;
-                            return <tr key={u.id} className={classNames("text-[0.78rem]",)}>
-                                <td className={classNames("whitespace-nowrap border-b-2 py-1 px-3 border-l-0", { 'border-l-red-700 text-red-900': !!u.deActiveDate })}>{index + 1}</td>
-                                <td className="whitespace-nowrap border-b-2 py-1 px-3">
-                                    <div className="flex flex-row">
-                                        <div className="items-center flex">
-                                            <span className={classNames("rounded-full aspect-square inline-block w-3", { 'bg-red-600': !!u.deActiveDate, 'bg-green-600': !u.deActiveDate })}></span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <div className="flex flex-row">
-                                                <Editable editable={(!u.firstConnect && access('users', 'edit')) || access('isAdmin')} className={"font-semibold inline-block"} onEdit={value => setUsername(i.tag, u, value)} value={u.email}>{u.email}</Editable>
-                                                {u.private?<span className="ml-2 text-xs px-2 py-0 rounded-lg bg-gray-100 text-gray-500 cursor-default">Private</span>:null}
-                                                {u.free?<span className="ml-2 text-xs px-2 py-0 rounded-lg bg-green-100 text-green-500 cursor-default">Free</span>:null}
-                                            </div>
-                                            <Editable editable={access('users', 'edit')} className="text-gray-600 inline-block" onEdit={value => setInfo(i.tag, u, 'fullName', value)} value={u.fullName}>{u.fullName ?? '-'}</Editable>
-                                            <Infos className="mt-2">
-                                                {showId? <>
-                                                    <Info className="ml-3" label={"ID"}>
-                                                        <Editable editable={access('users', 'regenerateId')} onEdit={newId => setInfo(i.tag, u, 'id', newId)} value={u.id}>{u.id}</Editable>
-                                                    </Info>
-                                                    <Info className="ml-3" label={"Flow"}>
-                                                        <Editable editable={access('users', 'edit')} editor={(value, onChange) => <Select value={value} onChange={e => onChange(e)} items={[
-                                                            'none',
-                                                            'xtls-rprx-vision'
-                                                        ]}>
-                                                        </Select>} onEdit={flow => setInfo(i.tag, u, 'flow', flow)} value={u.flow}>{u.flow ?? '-'}</Editable>
-                                                    </Info>
-                                                </>
-                                                :null}
-                                                <Info label={u.deActiveReason ? "De-active reason" : null} className="ml-2">
-                                                    <Popup popup={u.deActiveReason?.length ?? 0 > 30 ? u.deActiveReason : null}>
-                                                        <Editable onEdit={value => setInfo(i.tag, u, 'deActiveReason', value)} value={u.deActiveReason}>{(u.deActiveReason?.length ?? 0) > 30 ? u.deActiveReason?.substring(0,30) + '...' : (u.deActiveReason ? u.deActiveReason : '-')}</Editable>
-                                                    </Popup>
-                                                </Info>
-                                            </Infos>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="whitespace-nowrap border-b-2 py-1 px-3">
-                                    <Infos>
-                                        <Info label={"Mobile"}>
-                                            <Editable editable={access('users', 'edit')} onEdit={value => setInfo(i.tag, u, 'mobile', value)} value={u.mobile}>{u.mobile ?? 'N/A'}</Editable>
+                                <div className="p-1 rounded-full border-[1px] border-slate-400">
+                                    <ArrowSmallRightIcon  className="w-4"/>
+                                </div> */}
+                            </div>
+                        </div>
+                    </td>
+                }}
+                cells={u => {
+
+                    const {showId, precision, fullTime} = view;
+                    const i = u.inbound;
+
+                    return [
+                        // User
+                        <div className="flex flex-row">
+                            <div className="items-center flex">
+                                <span className={classNames("rounded-full aspect-square inline-block w-3", { 'bg-red-600': !!u.deActiveDate, 'bg-green-600': !u.deActiveDate })}></span>
+                            </div>
+                            <div className="flex-1">
+                                <div className="flex flex-row">
+                                    <Editable editable={(!u.firstConnect && access('users', 'edit')) || access('isAdmin')} className={"font-semibold inline-block"} onEdit={value => setUsername(i.tag, u, value)} value={u.email}>{u.email}</Editable>
+                                    {u.private?<span className="ml-2 text-xs px-2 py-0 rounded-lg bg-gray-100 text-gray-500 cursor-default">Private</span>:null}
+                                    {u.free?<span className="ml-2 text-xs px-2 py-0 rounded-lg bg-green-100 text-green-500 cursor-default">Free</span>:null}
+                                </div>
+                                <Editable editable={access('users', 'edit')} className="text-gray-600 inline-block" onEdit={value => setInfo(i.tag, u, 'fullName', value)} value={u.fullName}>{u.fullName ?? '-'}</Editable>
+                                <Infos className="mt-2">
+                                    {showId ? <>
+                                        <Info className="ml-3" label={"ID"}>
+                                            <Editable editable={access('users', 'regenerateId')} onEdit={newId => setInfo(i.tag, u, 'id', newId)} value={u.id}>{u.id}</Editable>
                                         </Info>
-                                        <Info label={"Email"}>
-                                            <Editable editable={access('users', 'edit')} onEdit={value => setInfo(i.tag, u, 'emailAddress', value)} value={u.emailAddress}>{u.emailAddress ?? 'N/A'}</Editable>
+                                        <Info className="ml-3" label={"Flow"}>
+                                            <Editable editable={access('users', 'edit')} editor={(value, onChange) => <Select value={value} onChange={e => onChange(e)} items={[
+                                                'none',
+                                                'xtls-rprx-vision'
+                                            ]}>
+                                            </Select>} onEdit={flow => setInfo(i.tag, u, 'flow', flow)} value={u.flow}>{u.flow ?? '-'}</Editable>
                                         </Info>
-                                        <Info label={'Max Connections'}>
-                                            <Editable editable={access('users', 'changeMaxConnections')} onEdit={value => setMaxConnection(i.tag, u, value)} value={u.maxConnections}>{u.maxConnections}</Editable>
-                                        </Info>
-                                        <Info label={'Expire Days'}>
-                                            <Editable editable={access('users', 'changeExpireDays')} onEdit={value => setExpireDays(i.tag, u, value)} value={u.expireDays}>{u.expireDays}</Editable>
-                                        </Info>
-                                        <Info label={'Bandwidth (This Month)'}>
-                                            <Editable input={{
-                                                type: 'number',
-                                                placeholder: '1'
-                                            }} editable={access('users', 'changeBandwidth')} onEdit={value => setInfo(i.tag, u, 'quotaLimit', value * 1024 * 1024 * 1024)} value={u.quotaLimit} postfix={'GB'}>
-                                                <Size size={u['quotaUsage'] ?? 0}/> / {u.quotaLimit && u.quotaLimit > 0 ? <Size size={u.quotaLimit ?? 0}/> : '∞' }
-                                            </Editable>
-                                        </Info>
-                                        <Info label={'Bandwidth (After Billing Date)'}>
-                                            <Size size={u['quotaUsageAfterBilling'] ?? 0}/>
-                                        </Info>
-                                        <Info label={'Last Connected IP'}>
-                                            {u['lastConnectIP'] ?? '-'}
-                                            {u['lastConnectIP'] ? <a target={'_blank'} className={classNames(styles.link, 'pl-1')} href={`https://whatismyipaddress.com/ip/${u['lastConnectIP']}`}>(Info)</a> : null}
-                                        </Info>
-                                        <Info label={'Last Connect Node'}>
-                                            <ServerNode serverId={u['lastConnectNode']}/>
-                                        </Info>
-                                        <Info label={'Created By'}>
-                                            {u.createdBy ?? '-'}
-                                        </Info>
-                                    </Infos>
-                                </td>
-                                <td className="whitespace-nowrap border-b-2 py-1 px-3">
-                                    <div className="flex flex-col xl:flex-row">
-                                        <Infos className="flex-1 grid md:grid-cols-2 gap-x-4">
-                                            <Info label={'Create'}>
-                                                <DateView precision={precision} full={fullTime} date={u.createDate}/>
-                                            </Info>
-                                            <Info label={'Billing'}>
-                                                <DateView precision={precision} full={fullTime} date={u.billingStartDate} removeFullMonths={!u.deActiveDate}/>
-                                            </Info>
-                                            <Info label={'DeActived'}>
-                                                <DateView precision={precision} full={fullTime} date={u.deActiveDate}/>
-                                            </Info>
-                                            <Info label={'Until Expire'}>
-                                                <DateView precision={precision} full={fullTime} date={u['expireDate']}/>
-                                            </Info>
-                                            <Info label={'Expired'}>
-                                                <DateView precision={precision} full={fullTime} date={u.expiredDate}/>
-                                            </Info>
-                                            <Info label={'First Connect'}>
-                                                <DateView precision={precision} full={fullTime} date={u.firstConnect}/>
-                                            </Info>
-                                            <Info label={'Last Connect'}>
-                                                <DateView precision={precision} full={fullTime} date={u['lastConnect']}/>
-                                            </Info>
-                                            {u['quotaUsageUpdate'] ? <Info label={'Bandwidth Update'}>
-                                                <DateView precision={precision} full={fullTime} date={u['quotaUsageUpdate']}/>
-                                            </Info> : null }
-                                            <Info label={'First Subscription Update'}>
-                                                <DateView precision={precision} full={fullTime} date={u['subscription']?.firstUpdate}/>
-                                            </Info>
-                                            <Info label={'Last Subscription Update'}>
-                                                <DateView precision={precision} full={fullTime} date={u['subscription']?.lastUpdate}/>
-                                            </Info>
-                                        </Infos>
-                                    </div>
-                                </td>
-                                <td className="whitespace-nowrap border-b-2 py-1 px-3">
-                                    <PopupMenu>
-                                        <PopupMenu.Item action={() => window.open(i.clientPanelUrl + '/account/' + u.id)} visible={!!i.clientPanelUrl && access('users', 'subscribeUrl')} icon={<UserCircleIcon className="w-4"/>}>
-                                            Open Client Panel
-                                        </PopupMenu.Item> 
-                                        <PopupMenu.Item visible={!!i.clientPanelUrl && access('users', 'subscribeUrl')} icon={<RssIcon className="w-4"/>}>
-                                            <Copy className="block text-inherit" notifyText={`User "${u.email}" subscription url copied`} data={i.clientPanelUrl + `/api/configs/${u.id}`}>
-                                                Copy Subscription Url
-                                            </Copy>
-                                        </PopupMenu.Item> 
-                                        <PopupMenu.Item visible={access('users', 'clientConfig')} icon={<DevicePhoneMobileIcon className="w-4"/>} action={() => clientConfigDialog.show(u, i.tag)}>
-                                            Client Config
-                                        </PopupMenu.Item>
-                                        <PopupMenu.Item visible={access('users', 'clientConfig')} icon={<QrCodeIcon className="w-4"/>} action={() => showQRCode(i.tag, u)}>
-                                            QR Code
-                                        </PopupMenu.Item>
-                                        <PopupMenu.Item icon={<DocumentDuplicateIcon className="w-4"/>}>
-                                            <Copy className="block text-inherit" notifyText={`User "${u.email}" ID copied`} data={u.id}>
-                                                Copy User ID
-                                            </Copy>
-                                        </PopupMenu.Item>
-                                        <PopupMenu.Item visible={access('users', 'clientConfig')} icon={<DocumentDuplicateIcon className="w-4"/>}>
-                                            <Copy className="block text-inherit" notifyText={`User "${u.email}" client config copied`} data={() => serverRequest(context.server, '/client_config?tag=' + i.tag, u).then(data => data.config)}>
-                                                Copy Config
-                                            </Copy>
-                                        </PopupMenu.Item>
-                                        <PopupMenu.Item icon={u.deActiveDate?<BoltIcon className="w-4"/>:<BoltSlashIcon className="w-4"/>} visible={access('users', 'active') && (!u.deActiveReason?.includes('Expired') || access('users', 'activeExpired'))} action={() => prompt(`Change user ${u.email} ${u.deActiveDate?'active':'de-active'} ?`, u.deActiveDate?'Active':'De-active', () => setActive(i.tag, u, u.deActiveDate ? true : false))}>
-                                            {u.deActiveDate? 'Active User' : 'De-Active User'}
-                                        </PopupMenu.Item>
-                                        <PopupMenu.Item icon={<TrashIcon className="w-4"/>} visible={(access('users', 'delete') && (!u.firstConnect || access('users', 'deleteConnected')))} action={() => prompt(`Delete user ${u.email} ?`, `Delete`,() => removeUser(i.protocol, i.tag, u))}>
-                                            Remove User
-                                        </PopupMenu.Item>
-                                        <PopupMenu.Item visible={access('users', 'regenerateId')} icon={<FireIcon className="w-4"/>} action={() => prompt(`Generate ID for ${u.email} ?`, `Generate`, () => reGenerateId(i.tag, u))}>
-                                            ReGenerate ID
-                                        </PopupMenu.Item>
-                                        <PopupMenu.Item visible={access('users', 'renew')} icon={<PlusIcon className="w-4"/>} action={() => prompt(`Add 1 Months to Expire Days for user "${u.email}" ?`, `Add Expire Days`, () => addDays(i.tag, u, 30))}>
-                                            +1 Months
-                                        </PopupMenu.Item>
-                                        <PopupMenu.Item visible={access('transactions', 'list')} action={() => router.push(`/transactions?user=${u.email}`)} icon={<CurrencyDollarIcon className="w-4"/>}>
-                                            Transactions
-                                        </PopupMenu.Item>
-                                        <PopupMenu.Item visible={access('users', 'dailyUsage')} icon={<CalendarDaysIcon className="w-4"/>} action={() => router.push(`/usages?user=${u.email}`)}>
-                                            Daily Usages
-                                        </PopupMenu.Item>
-                                        <PopupMenu.Item icon={<DocumentTextIcon className="w-4"/>} visible={access('users', 'logs')} action={() => router.push(`/logs?all=1&filter=`+u.email)}>
-                                            Logs
-                                        </PopupMenu.Item>
-                                        <PopupMenu.Item icon={<ClockIcon className="w-4"/>} visible={access('users', 'setFirstConnectionAsCreateDate')} action={() => prompt(`Set first connect date as create date for user "${u.email}" ?`, `Set Create Date`, () => setInfo(i.tag, u, 'createDate', u.firstConnect))}>
-                                            Set First Connect as Create Date
-                                        </PopupMenu.Item>
-                                        <PopupMenu.Item icon={u.private?<EyeIcon className="w-4"/>:<EyeSlashIcon className="w-4"/>} visible={access('users', 'changePrivate')} action={() => prompt(`Set user "${u.email}" ${u.private?"public":"private"}?`, `Change Private`, () => setInfo(i.tag, u, 'private', !u.private))}>
-                                            Set {u.private?'Public':'Private'}
-                                        </PopupMenu.Item>
-                                        <PopupMenu.Item icon={<CurrencyDollarIcon className="w-4"/>} visible={access('users', 'changeFree')} action={() => prompt(`Set user "${u.email}" as ${u.free?"Non-free":"Free"}?`, `Free/Paid`, () => setInfo(i.tag, u, 'free', !u.free))}>
-                                            Set {u.free?'Non-Free':'Free'}
-                                        </PopupMenu.Item>
-                                        <PopupMenu.Item visible={access('users', 'changeInbound')} icon={<ArrowsUpDownIcon className="w-4"/>} action={() => changeInboundDialog.show(context, inbounds, i.tag, u.email, () => refreshInbounds())}>
-                                            Change Inbound
-                                        </PopupMenu.Item>
-                                        <PopupMenu.Item icon={<DocumentPlusIcon className="w-4"/>} visible={access('users', 'copyUser')} action={() => copyUserDialog.show(context, inbounds, i.tag, u.email, () => refreshInbounds())}>
-                                            Copy User
-                                        </PopupMenu.Item>
-                                        <PopupMenu.Item icon={<DocumentPlusIcon className="w-4"/>} visible={access('users', 'otherNodes')} action={() => userNodesDialog.show(u)}>
-                                            View in other Servers
-                                        </PopupMenu.Item>
-                                        <PopupMenu.Item icon={<DocumentPlusIcon className="w-4"/>} visible={access('users', 'traffics')} action={() => router.push(`/usages/traffic?user=${u.email}`)}>
-                                            Traffic Usage
-                                        </PopupMenu.Item>
-                                        <PopupMenu.Item icon={<DocumentPlusIcon className="w-4"/>} visible={access('users', 'cancel')} action={() => clientCancelDialog.show(u)}>
-                                            Cancel and De-active
-                                        </PopupMenu.Item>
-                                    </PopupMenu>
-                                </td>
-                            </tr>
-                        })}
-                    </Fragment>
-                })}
-            </tbody>
-        </table>
+                                    </>
+                                    :null}
+                                    <Info label={u.deActiveReason ? "De-active reason" : null} className="ml-2">
+                                        <Popup popup={u.deActiveReason?.length ?? 0 > 30 ? u.deActiveReason : null}>
+                                            <Editable onEdit={value => setInfo(i.tag, u, 'deActiveReason', value)} value={u.deActiveReason}>{(u.deActiveReason?.length ?? 0) > 30 ? u.deActiveReason?.substring(0,30) + '...' : (u.deActiveReason ? u.deActiveReason : '-')}</Editable>
+                                        </Popup>
+                                    </Info>
+                                </Infos>
+                            </div>
+                        </div>,
+                        // Infos
+                        <Infos>
+                            <Info label={"Mobile"}>
+                                <Editable editable={access('users', 'edit')} onEdit={value => setInfo(i.tag, u, 'mobile', value)} value={u.mobile}>{u.mobile ?? 'N/A'}</Editable>
+                            </Info>
+                            <Info label={"Email"}>
+                                <Editable editable={access('users', 'edit')} onEdit={value => setInfo(i.tag, u, 'emailAddress', value)} value={u.emailAddress}>{u.emailAddress ?? 'N/A'}</Editable>
+                            </Info>
+                            <Info label={'Max Connections'}>
+                                <Editable editable={access('users', 'changeMaxConnections')} onEdit={value => setMaxConnection(i.tag, u, value)} value={u.maxConnections}>{u.maxConnections}</Editable>
+                            </Info>
+                            <Info label={'Expire Days'}>
+                                <Editable editable={access('users', 'changeExpireDays')} onEdit={value => setExpireDays(i.tag, u, value)} value={u.expireDays}>{u.expireDays}</Editable>
+                            </Info>
+                            <Info label={'Bandwidth (This Month)'}>
+                                <Editable input={{
+                                    type: 'number',
+                                    placeholder: '1'
+                                }} editable={access('users', 'changeBandwidth')} onEdit={value => setInfo(i.tag, u, 'quotaLimit', value * 1024 * 1024 * 1024)} value={u.quotaLimit} postfix={'GB'}>
+                                    <Size size={u['quotaUsage'] ?? 0}/> / {u.quotaLimit && u.quotaLimit > 0 ? <Size size={u.quotaLimit ?? 0}/> : '∞' }
+                                </Editable>
+                            </Info>
+                            <Info label={'Bandwidth (After Billing Date)'}>
+                                <Size size={u['quotaUsageAfterBilling'] ?? 0}/>
+                            </Info>
+                            <Info label={'Last Connected IP'}>
+                                {u['lastConnectIP'] ?? '-'}
+                                {u['lastConnectIP'] ? <a target={'_blank'} className={classNames(styles.link, 'pl-1')} href={`https://whatismyipaddress.com/ip/${u['lastConnectIP']}`}>(Info)</a> : null}
+                            </Info>
+                            <Info label={'Last Connect Node'}>
+                                <ServerNode serverId={u['lastConnectNode']}/>
+                            </Info>
+                            <Info label={'Created By'}>
+                                {u.createdBy ?? '-'}
+                            </Info>
+                        </Infos>,
+                        // Dates
+                        <div className="flex flex-col xl:flex-row">
+                            <Infos className="flex-1 grid md:grid-cols-2 gap-x-4">
+                                <Info label={'Create'}>
+                                    <DateView precision={precision} full={fullTime} date={u.createDate}/>
+                                </Info>
+                                <Info label={'Billing'}>
+                                    <DateView precision={precision} full={fullTime} date={u.billingStartDate} removeFullMonths={!u.deActiveDate}/>
+                                </Info>
+                                <Info label={'DeActived'}>
+                                    <DateView precision={precision} full={fullTime} date={u.deActiveDate}/>
+                                </Info>
+                                <Info label={'Until Expire'}>
+                                    <DateView precision={precision} full={fullTime} date={u['expireDate']}/>
+                                </Info>
+                                <Info label={'Expired'}>
+                                    <DateView precision={precision} full={fullTime} date={u.expiredDate}/>
+                                </Info>
+                                <Info label={'First Connect'}>
+                                    <DateView precision={precision} full={fullTime} date={u.firstConnect}/>
+                                </Info>
+                                <Info label={'Last Connect'}>
+                                    <DateView precision={precision} full={fullTime} date={u['lastConnect']}/>
+                                </Info>
+                                {u['quotaUsageUpdate'] ? <Info label={'Bandwidth Update'}>
+                                    <DateView precision={precision} full={fullTime} date={u['quotaUsageUpdate']}/>
+                                </Info> : null }
+                                <Info label={'First Subscription Update'}>
+                                    <DateView precision={precision} full={fullTime} date={u['subscription']?.firstUpdate}/>
+                                </Info>
+                                <Info label={'Last Subscription Update'}>
+                                    <DateView precision={precision} full={fullTime} date={u['subscription']?.lastUpdate}/>
+                                </Info>
+                            </Infos>
+                        </div>,
+                        // Actions
+                        <PopupMenu>
+                            <PopupMenu.Item action={() => window.open(i.clientPanelUrl + '/account/' + u.id)} visible={!!i.clientPanelUrl && access('users', 'subscribeUrl')} icon={<UserCircleIcon className="w-4"/>}>
+                                Open Client Panel
+                            </PopupMenu.Item> 
+                            <PopupMenu.Item visible={!!i.clientPanelUrl && access('users', 'subscribeUrl')} icon={<RssIcon className="w-4"/>}>
+                                <Copy className="block text-inherit" notifyText={`User "${u.email}" subscription url copied`} data={i.clientPanelUrl + `/api/configs/${u.id}`}>
+                                    Copy Subscription Url
+                                </Copy>
+                            </PopupMenu.Item> 
+                            <PopupMenu.Item visible={access('users', 'clientConfig')} icon={<DevicePhoneMobileIcon className="w-4"/>} action={() => clientConfigDialog.show(u, i.tag)}>
+                                Client Config
+                            </PopupMenu.Item>
+                            <PopupMenu.Item visible={access('users', 'clientConfig')} icon={<QrCodeIcon className="w-4"/>} action={() => showQRCode(i.tag, u)}>
+                                QR Code
+                            </PopupMenu.Item>
+                            <PopupMenu.Item icon={<DocumentDuplicateIcon className="w-4"/>}>
+                                <Copy className="block text-inherit" notifyText={`User "${u.email}" ID copied`} data={u.id}>
+                                    Copy User ID
+                                </Copy>
+                            </PopupMenu.Item>
+                            <PopupMenu.Item visible={access('users', 'clientConfig')} icon={<DocumentDuplicateIcon className="w-4"/>}>
+                                <Copy className="block text-inherit" notifyText={`User "${u.email}" client config copied`} data={() => serverRequest(context.server, '/client_config?tag=' + i.tag, u).then(data => data.config)}>
+                                    Copy Config
+                                </Copy>
+                            </PopupMenu.Item>
+                            <PopupMenu.Item icon={u.deActiveDate?<BoltIcon className="w-4"/>:<BoltSlashIcon className="w-4"/>} visible={access('users', 'active') && (!u.deActiveReason?.includes('Expired') || access('users', 'activeExpired'))} action={() => prompt(`Change user ${u.email} ${u.deActiveDate?'active':'de-active'} ?`, u.deActiveDate?'Active':'De-active', () => setActive(i.tag, u, u.deActiveDate ? true : false))}>
+                                {u.deActiveDate? 'Active User' : 'De-Active User'}
+                            </PopupMenu.Item>
+                            <PopupMenu.Item icon={<TrashIcon className="w-4"/>} visible={(access('users', 'delete') && (!u.firstConnect || access('users', 'deleteConnected')))} action={() => prompt(`Delete user ${u.email} ?`, `Delete`,() => removeUser(i.protocol, i.tag, u))}>
+                                Remove User
+                            </PopupMenu.Item>
+                            <PopupMenu.Item visible={access('users', 'regenerateId')} icon={<FireIcon className="w-4"/>} action={() => prompt(`Generate ID for ${u.email} ?`, `Generate`, () => reGenerateId(i.tag, u))}>
+                                ReGenerate ID
+                            </PopupMenu.Item>
+                            <PopupMenu.Item visible={access('users', 'renew')} icon={<PlusIcon className="w-4"/>} action={() => prompt(`Add 1 Months to Expire Days for user "${u.email}" ?`, `Add Expire Days`, () => addDays(i.tag, u, 30))}>
+                                +1 Months
+                            </PopupMenu.Item>
+                            <PopupMenu.Item visible={access('transactions', 'list')} action={() => router.push(`/transactions?user=${u.email}`)} icon={<CurrencyDollarIcon className="w-4"/>}>
+                                Transactions
+                            </PopupMenu.Item>
+                            <PopupMenu.Item visible={access('users', 'dailyUsage')} icon={<CalendarDaysIcon className="w-4"/>} action={() => router.push(`/usages?user=${u.email}`)}>
+                                Daily Usages
+                            </PopupMenu.Item>
+                            <PopupMenu.Item icon={<DocumentTextIcon className="w-4"/>} visible={access('users', 'logs')} action={() => router.push(`/logs?all=1&filter=`+u.email)}>
+                                Logs
+                            </PopupMenu.Item>
+                            <PopupMenu.Item icon={<ClockIcon className="w-4"/>} visible={access('users', 'setFirstConnectionAsCreateDate')} action={() => prompt(`Set first connect date as create date for user "${u.email}" ?`, `Set Create Date`, () => setInfo(i.tag, u, 'createDate', u.firstConnect))}>
+                                Set First Connect as Create Date
+                            </PopupMenu.Item>
+                            <PopupMenu.Item icon={u.private?<EyeIcon className="w-4"/>:<EyeSlashIcon className="w-4"/>} visible={access('users', 'changePrivate')} action={() => prompt(`Set user "${u.email}" ${u.private?"public":"private"}?`, `Change Private`, () => setInfo(i.tag, u, 'private', !u.private))}>
+                                Set {u.private?'Public':'Private'}
+                            </PopupMenu.Item>
+                            <PopupMenu.Item icon={<CurrencyDollarIcon className="w-4"/>} visible={access('users', 'changeFree')} action={() => prompt(`Set user "${u.email}" as ${u.free?"Non-free":"Free"}?`, `Free/Paid`, () => setInfo(i.tag, u, 'free', !u.free))}>
+                                Set {u.free?'Non-Free':'Free'}
+                            </PopupMenu.Item>
+                            <PopupMenu.Item visible={access('users', 'changeInbound')} icon={<ArrowsUpDownIcon className="w-4"/>} action={() => changeInboundDialog.show(context, inbounds, i.tag, u.email, () => refreshInbounds())}>
+                                Change Inbound
+                            </PopupMenu.Item>
+                            <PopupMenu.Item icon={<DocumentPlusIcon className="w-4"/>} visible={access('users', 'copyUser')} action={() => copyUserDialog.show(context, inbounds, i.tag, u.email, () => refreshInbounds())}>
+                                Copy User
+                            </PopupMenu.Item>
+                            <PopupMenu.Item icon={<DocumentPlusIcon className="w-4"/>} visible={access('users', 'otherNodes')} action={() => userNodesDialog.show(u)}>
+                                View in other Servers
+                            </PopupMenu.Item>
+                            <PopupMenu.Item icon={<DocumentPlusIcon className="w-4"/>} visible={access('users', 'traffics')} action={() => router.push(`/usages/traffic?user=${u.email}`)}>
+                                Traffic Usage
+                            </PopupMenu.Item>
+                            <PopupMenu.Item icon={<DocumentPlusIcon className="w-4"/>} visible={access('users', 'cancel')} action={() => clientCancelDialog.show(u)}>
+                                Cancel and De-active
+                            </PopupMenu.Item>
+                        </PopupMenu>
+                    ];
+                }}
+            />
         </div>
     </Container>
     

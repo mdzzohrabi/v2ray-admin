@@ -1,3 +1,4 @@
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import React, { createContext, FormEvent, Fragment, HTMLProps, useCallback, useContext, useState } from "react";
 
@@ -61,7 +62,9 @@ export function Dialog({ children, title = undefined, onClose = undefined, onSub
         <div className="flex flex-row px-1 pb-2">
             <span className="flex-1 font-bold">{title}</span>
             <div>
-                {onClose ? <span onClick={onClose} className="aspect-square bg-slate-200 rounded-full px-2 py-1 text-gray-600 cursor-pointer hover:bg-slate-900 hover:text-white">X</span> : null }
+                {onClose ? <div onClick={onClose} className="aspect-square flex items-center justify-center bg-slate-200 rounded-full px-2 py-1 text-gray-600 cursor-pointer hover:bg-red-900 hover:text-white">
+                    <XMarkIcon className="w-4"/>
+                </div> : null }
             </div>
         </div>
         <div className={classNames("overflow-auto", className)} {...props}>

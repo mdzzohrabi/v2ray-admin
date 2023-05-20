@@ -125,7 +125,7 @@ export function NodeSpeedTestDialog({ onClose, node }: { node: ServerNode, onClo
             ]}/>
             <Tabs>
                 <Tabs.Tab title="Infos">
-                    <Infos className="grid md:grid-cols-2 gap-2 items-center ">
+                    <Infos className="grid md:grid-cols-2 gap-x-2 items-center ">
                         <Info label={'Request ID'}>{download.id ?? '-'}</Info>
                         <Info label={'Status'}>{download.status ?? '-'}</Info>
                         <Info label={'Status Code'}>{download.statusCode ?? '-'}</Info>

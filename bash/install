@@ -105,13 +105,18 @@ if [ ! -z $CLONE_CONFIG ]; then
     echo "Configuration cloned from '$CLONE_CONFIG'"
 fi
 
+if [ ! -d /home/v2ray-admin/db ]; then
+    mkdir /home/v2ray-admin/db
+    chmod +777 /home/v2ray-admin/db
+fi
+
+if [ ! -d /home/v2ray-admin/var ]; then
+    mkdir /home/v2ray-admin/var
+    chmod +777 /home/v2ray-admin/var
+fi
+
 # Mirror node
 if [ ! -z $API_KEY ]; then
-    if [ ! -d /home/v2ray-admin/db ]; then
-        mkdir /home/v2ray-admin/db
-        chmod +777 /home/v2ray-admin/db
-    fi
-
     echo "[{\"name\":\"$SERVER_NAME\",\"id\":\"$NODE_ID\",\"apiKey\":\"$API_KEY\",\"address\":\"$SERVER_ADDRESS\",\"type\":\"server\",\"sync\":true}]" > /home/v2ray-admin/db/server-nodes.json
 
     # Restart services
