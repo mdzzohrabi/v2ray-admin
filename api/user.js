@@ -284,6 +284,8 @@ router.post('/inbounds', httpAction(async (req, res) => {
         let total = users.length;
         let totalActive = users.filter(x => !x.deActiveDate).length;
         let maxClientNumber = 0;
+
+        // Fill users fields
         for (let user of users) {
             let usage = user.email ? usages[user.email] : {};
             user.firstConnect = user.firstConnect ?? usage?.firstConnect;
@@ -311,6 +313,7 @@ router.post('/inbounds', httpAction(async (req, res) => {
                 }
                 return true;
             })
+            // Created by filter
             .filter(u => {
                 if (!createdBy) return true;
                 return u.createdBy == createdBy;
@@ -331,8 +334,11 @@ router.post('/inbounds', httpAction(async (req, res) => {
                 if (u.email?.toLowerCase().includes(filter.toLowerCase()) || (filter[0] == '=' && u.email == String(filter).substring(1))) return true;
                 return false;
             })
+            // Last Connect Node
             .filter(u => !serverNode ? true : serverNode == 'local' ? !u['lastConnectNode'] || u['lastConnectNode'] == 'local' : u['lastConnectNode'] == serverNode)
+            // Apply filters
             .filter(u => statusFilter.length == 0 || statusFilter.map(filter => statusFilters[filter]).every(filter => filter(u)))
+            // Sort
             .sort((a, b) => !sortColumn ? 0 : a[sortColumn] == b[sortColumn] ? 0 : a[sortColumn] < b[sortColumn] ? (sortAsc ? -1 : 1) : (sortAsc ? 1 : -1))
         ;
 
