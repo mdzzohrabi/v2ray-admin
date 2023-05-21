@@ -13,6 +13,7 @@ import classNames from "classnames";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useContextSWR, useUser } from "../lib/hooks";
+import { Select } from "@common/components/select";
 
 export default function HomePage() {
 
@@ -24,7 +25,8 @@ export default function HomePage() {
     let colors = ProgressColors;
 
     let [view, setView] = useStoredState('home-view', {
-        serversDetail: true
+        serversDetail: true,
+        transactionMonth: null
     });
 
     return <Container block={false}>
@@ -182,57 +184,69 @@ export default function HomePage() {
                     {access('home', 'transactions')?
                     <div>
                         <div className="bg-white shadow-md rounded-md py-3 px-4">
-                            <h1 className="text-lg mb-2 pb-2 border-b-2">Transactions (Month)</h1>
-                            <div className="py-4 px-0">
-                                <Progress
-                                    total={data?.transactions?.totalBillMonth}
-                                    bars={[
-                                        {
-                                            title: 'Renew',
-                                            value: data?.transactions?.totalRenewMonth
-                                        },
-                                        {
-                                            title: 'Create',
-                                            value: data?.transactions?.totalCreateMonth
-                                        },
-                                        {
-                                            title: 'Cost',
-                                            value: data?.transactions?.totalCostMonth
-                                        }
-                                    ]}
-                                    title={'Month Overview'}
-                                    renderValue={x => <Price value={x}/>}
+                            <h1 className="text-lg mb-2 pb-2 border-b-2 flex">
+                                <span className="flex-1">Transactions</span>
+                                <Select
+                                    className="text-xs"
+                                    items={data?.transactions?.map(x => x.jDate)}
+                                    value={view.transactionMonth}
+                                    onChange={e => setView({ ...view, transactionMonth: e.currentTarget.value })}
                                 />
-                            </div>
-                            <Infos>
-                                <Info className={'py-2'} label={"Un-Paid from Last Months"}>
-                                    <Price value={data?.transactions?.unPaidFromPast}/>
-                                </Info>
-                                <Info className={'py-2'} label={"Un-Paid this Month"}>
-                                    <Price value={data?.transactions?.totalRemainMonth}/>
-                                </Info>
-                                <Info className={'py-2 font-bold'} label={"Remain"}>
-                                    <Price value={data?.transactions?.totalRemainMonth + data?.transactions?.unPaidFromPast}/>
-                                </Info>
-                                <Info className={'py-2'} label={"Bill"}>
-                                    <Price value={data?.transactions?.totalBillMonth}/>
-                                </Info>
-                                <Info className={'py-2'} label={"Sell"}>
-                                    <Price value={data?.transactions?.totalSellMonth}/>
-                                </Info>
-                                <Info className={'py-2'} label={"Cost"}>
-                                    <Price value={data?.transactions?.totalCostMonth}/>
-                                </Info>
-                                <Info className={'py-2'} label={"Renew"}>
-                                    <Price value={data?.transactions?.totalRenewMonth}/>
-                                </Info>
-                                <Info className={'py-2'} label={"Create"}>
-                                    <Price value={data?.transactions?.totalCreateMonth}/>
-                                </Info>
-                                <Info className={'py-2'} label={"Paid"}>
-                                    <Price value={data?.transactions?.totalPaidMonth}/>
-                                </Info>
-                            </Infos>
+                            </h1>
+                            {data?.transactions?.filter(x => x.jDate == view.transactionMonth || !view.transactionMonth).slice(0,1).map(x => {
+                                return <div>
+                                    <div className="py-4 px-0">
+                                        <Progress
+                                            total={x?.totalBillMonth}
+                                            bars={[
+                                                {
+                                                    title: 'Renew',
+                                                    value: x?.totalRenewMonth
+                                                },
+                                                {
+                                                    title: 'Create',
+                                                    value: x?.totalCreateMonth
+                                                },
+                                                {
+                                                    title: 'Cost',
+                                                    value: x?.totalCostMonth
+                                                }
+                                            ]}
+                                            title={'Month Overview (' + x.jDate + ')'}
+                                            renderValue={x => <Price value={x}/>}
+                                        />
+                                    </div>
+                                    <Infos className="grid sm:grid-cols-2 gap-x-4">
+                                        <Info className={'py-2'} label={"Un-Paid from Last Months"}>
+                                            <Price value={x?.unPaidFromPast}/>
+                                        </Info>
+                                        <Info className={'py-2'} label={"Un-Paid this Month"}>
+                                            <Price value={x?.totalRemainMonth}/>
+                                        </Info>
+                                        <Info className={'py-2 font-bold'} label={"Remain"}>
+                                            <Price value={x?.totalRemainMonth + x?.unPaidFromPast}/>
+                                        </Info>
+                                        <Info className={'py-2'} label={"Bill"}>
+                                            <Price value={x?.totalBillMonth}/>
+                                        </Info>
+                                        <Info className={'py-2'} label={"Sell"}>
+                                            <Price value={x?.totalSellMonth}/>
+                                        </Info>
+                                        <Info className={'py-2'} label={"Cost"}>
+                                            <Price value={x?.totalCostMonth}/>
+                                        </Info>
+                                        <Info className={'py-2'} label={"Renew"}>
+                                            <Price value={x?.totalRenewMonth}/>
+                                        </Info>
+                                        <Info className={'py-2'} label={"Create"}>
+                                            <Price value={x?.totalCreateMonth}/>
+                                        </Info>
+                                        <Info className={'py-2'} label={"Paid"}>
+                                            <Price value={x?.totalPaidMonth}/>
+                                        </Info>
+                                    </Infos>
+                                </div>;
+                            })}
                         </div>
                     </div>: null}
                 </div>

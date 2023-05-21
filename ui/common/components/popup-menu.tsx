@@ -44,7 +44,7 @@ export function PopupMenu({ visible = false, text = 'Actions', emptyText = '-', 
     if (visibleItems.length == 0) return emptyText;
 
     return <div className="relative inline-block">
-        <span onClick={() => setVisible(!isVisible)} className={classNames(styles.link, { 'bg-slate-200': isVisible })}>{text}</span>
+        <span onClick={() => setVisible(!isVisible)} className={classNames(styles.link, 'px-2 py-1', { 'bg-slate-200': isVisible })}>{text}</span>
         {isVisible ? 
         <div ref={refPopup} className="min-w-[10rem] absolute z-50 right-0 top-full bg-white shadow-lg ring-1 ring-black ring-opacity-10 px-2 py-2 rounded-lg">
             {children}
