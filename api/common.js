@@ -1,6 +1,8 @@
 // @ts-check
 
-/** @type {{ [name: string]: (user: V2RayConfigInboundClient) => boolean }} */
+const { DateUtil } = require("../lib/util");
+
+/** @type {{ [name: string]: (user: import("../types").V2RayConfigInboundClient) => boolean }} */
 const statusFilters = {
     'Active': u => !u.deActiveDate,
     'De-Active': u => !!u.deActiveDate,
@@ -32,6 +34,11 @@ const statusFilters = {
     'Expiring (24 Hours)': u => !u.deActiveDate && !!u.billingStartDate && ((new Date(u.billingStartDate).getTime() + ((u.expireDays ?? 30) * 24 * 60 * 60 * 1000)) - Date.now() <= 1000 * 60 * 60 * 24),
     'Expiring (3 Days)': u => !u.deActiveDate && !!u.billingStartDate &&   ((new Date(u.billingStartDate).getTime() + ((u.expireDays ?? 30) * 24 * 60 * 60 * 1000)) - Date.now() <= 1000 * 60 * 60 * 24 * 3),
     'Expiring (1 Week)': u => !u.deActiveDate && !!u.billingStartDate &&   ((new Date(u.billingStartDate).getTime() + ((u.expireDays ?? 30) * 24 * 60 * 60 * 1000)) - Date.now() <= 1000 * 60 * 60 * 24 * 7),
+    'De-activated (6 Hours)': u => !!u.deActiveDate && (Date.now() - new Date(u.deActiveDate).getTime() <= 1000 * 60 * 60 * 6),
+    'De-activated (24 Hours)': u => !!u.deActiveDate && (Date.now() - new Date(u.deActiveDate).getTime() <= 1000 * 60 * 60 * 24),
+    'De-activated (3 Days)': u => !!u.deActiveDate && (Date.now() - new Date(u.deActiveDate).getTime() <= 1000 * 60 * 60 * 24 * 3),
+    'De-activated (1 Week)': u => !!u.deActiveDate && (Date.now() - new Date(u.deActiveDate).getTime() <= 1000 * 60 * 60 * 24 * 7),
+    'De-activated (1 Month)': u => !!u.deActiveDate && (Date.now() - new Date(u.deActiveDate).getTime() <= 1000 * 60 * 60 * 24 * 30),
     'Re-activated from Expire (1 Week)': u => !!u.billingStartDate && u.billingStartDate != u.firstConnect && (Date.now() - new Date(u.billingStartDate).getTime() <= 1000 * 60 * 60 * 24 * 7),
     'Unlimit Bandwidth': u => !u['quotaLimit'] || u['quotaLimit'] == 0,
     'Limited Bandwidth': u => (u['quotaLimit'] ?? 0) > 0,
