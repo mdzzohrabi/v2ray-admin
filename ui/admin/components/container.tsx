@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { ChangeEvent, useCallback, useContext, useMemo } from 'react';
 import useSWR from 'swr';
+import { ServerNode } from '../../../types';
 import { useUser } from '../lib/hooks';
 import { serverRequest } from '../lib/util';
 import { AppContext } from './app-context';

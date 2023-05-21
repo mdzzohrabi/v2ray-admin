@@ -1,5 +1,6 @@
 import { createContext, Dispatch, SetStateAction, useMemo } from "react";
 import { useStoredState } from "@common/lib/hooks";
+import { serverRequest } from "../lib/util";
 
 
 export interface ServerContext {
@@ -15,8 +16,8 @@ export interface AppContext {
     server: ServerContext,
     setServer: Dispatch<SetStateAction<ServerContext>>,
     isStoreLoaded: boolean
+    request: typeof serverRequest
 }
-
 
 export const AppContext = createContext<AppContext>({} as any);
 
@@ -24,7 +25,9 @@ export function AppContextContainer({ children }) {
     let [server, setServer, isStoreLoaded] = useStoredState('server', { url: '', token: '' });
 
     let context = useMemo(() => {
-        return {server, setServer, isStoreLoaded};
+        console.log('Context changed');
+        
+        return {server, setServer, isStoreLoaded, request: serverRequest.bind(this, server)};
     }, [server, setServer, isStoreLoaded]);
 
     return <AppContext.Provider value={context}>

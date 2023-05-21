@@ -1,21 +1,20 @@
-import React, { useContext } from 'react';
-import useSWR from 'swr';
-import { serverRequest } from "../lib/util";
-import { AppContext } from './app-context';
 import { Copy } from '@common/components/copy';
 import { Popup } from '@common/components/popup';
+import useSWR from 'swr';
+import { ServerNode } from '../../../types';
+import { useRequest } from '../lib/hooks';
 
-export function ServerNode({ serverId }) {
-
-    
-    let context = useContext(AppContext);
-    
-    /** @type {import("swr").SWRResponse<ServerNode[]>} */
-    let {data: nodes, mutate: refreshNodes, isValidating: isLoading} = useSWR('/nodes', serverRequest.bind(this, context.server));
+export function ServerNode({ serverId }) {   
+    const request = useRequest();
+    const {data: nodes, mutate: refreshNodes, isValidating: isLoading} = useSWR<ServerNode[]>('/nodes', request, {
+        revalidateIfStale: false,
+        revalidateOnFocus: false,
+        revalidateOnMount: false
+    });
     
     if (!serverId || serverId == 'local') return <>local</>;
 
-    let node = nodes?.find(x => x.id == serverId);
+    const node = nodes?.find(x => x.id == serverId);
 
     return <>{
         isLoading ? 'Loading...' : 

@@ -357,10 +357,18 @@ return <Container>
                             })}>{isCollapsed ? <FolderPlusIcon className="w-6"/> : <FolderMinusIcon className="w-6"/>}</span>
                             <span className="uppercase font-bold">{i.tag}</span>
                             <div className="text-xs gap-x-1 flex flex-1">
-                                <span className="inline-block border-[1px] px-2 rounded-lg border-slate-400 text-slate-500 uppercase">{i.protocol} - {i.streamSettings?.network}</span>
-                                <span className="ease-in-out duration-200 inline-block px-2 rounded-lg border-[1px] border-orange-700 text-orange-900 group-hover:bg-orange-700 group-hover:text-white">Filtered {totalFiltered} / Active {totalActiveFiltered}</span>
-                                <span className="ease-in-out duration-200 inline-block px-2 rounded-lg group-hover:bg-green-800 group-hover:text-white border-[1px] border-green-800 text-green-900">Total {totalUsers} / Active {totalActiveUsers}</span>
-                                <span className="opacity-0 group-hover:opacity-100 ease-in-out duration-200 inline-block px-2 rounded-lg bg-slate-600 text-white">Max Client Number : {settings['maxClientNumber']}</span>
+                                <span className="inline-block border-[1px] px-2 rounded-lg border-slate-400 text-slate-500 uppercase">
+                                    {[i.protocol, i.streamSettings?.network, i.streamSettings?.security].filter(x => !!x).join(' - ')}
+                                </span>
+                                <span className="ease-in-out duration-200 inline-block px-2 rounded-lg border-[1px] border-orange-700 text-orange-900 group-hover:bg-orange-700 group-hover:text-white">
+                                    <b>Filtered :</b> All {totalFiltered} / Active {totalActiveFiltered}
+                                </span>
+                                <span className="ease-in-out duration-200 inline-block px-2 rounded-lg group-hover:bg-green-800 group-hover:text-white border-[1px] border-green-800 text-green-900">
+                                    <b>Total :</b> All {totalUsers} / Active {totalActiveUsers}
+                                </span>
+                                <span className="opacity-0 group-hover:opacity-100 ease-in-out duration-200 inline-block px-2 rounded-lg bg-slate-600 text-white">
+                                    Max Client Number : {settings['maxClientNumber']}
+                                </span>
                             </div>
                             <div className="flex gap-x-2 items-center">
                                 <span className="ease-in-out duration-200 inline-block px-2 rounded-lg border-[1px] group-hover:bg-stone-600 group-hover:text-white border-stone-600 text-stone-900">From {from} To {to}</span>
@@ -388,16 +396,21 @@ return <Container>
                             <div className="flex-1">
                                 <div className="flex flex-row">
                                     <Editable editable={(!u.firstConnect && access('users', 'edit')) || access('isAdmin')} className={"font-semibold inline-block"} onEdit={value => setUsername(i.tag, u, value)} value={u.email}>{u.email}</Editable>
-                                    {u.private?<span className="ml-2 text-xs px-2 py-0 rounded-lg bg-gray-100 text-gray-500 cursor-default">Private</span>:null}
-                                    {u.free?<span className="ml-2 text-xs px-2 py-0 rounded-lg bg-green-100 text-green-500 cursor-default">Free</span>:null}
+                                    <div className="flex gap-x-1 text-xs cursor-default ml-2">
+                                        {u.private?<span className="px-2 py-0 rounded-lg bg-gray-200 text-gray-700">Private</span>:null}
+                                        {u.free?<span className="px-2 py-0 rounded-lg bg-teal-200 text-teal-800">Free</span>:null}
+                                        {u.serverNode?<Popup popup={<ServerNode serverId={u.serverNode}/>}><span className="px-2 py-0 rounded-lg bg-indigo-400 text-white">Mirror</span></Popup>:null}
+                                    </div>
                                 </div>
-                                <Editable editable={access('users', 'edit')} className="text-gray-600 inline-block" onEdit={value => setInfo(i.tag, u, 'fullName', value)} value={u.fullName}>{u.fullName ?? '-'}</Editable>
-                                <Infos className="mt-2">
+                                <Infos className="mt-2 ml-3">
+                                    <Info label="Name">
+                                        <Editable editable={access('users', 'edit')} className="text-gray-600 inline-block" onEdit={value => setInfo(i.tag, u, 'fullName', value)} value={u.fullName}>{u.fullName ?? '-'}</Editable>
+                                    </Info>
                                     {showId ? <>
-                                        <Info className="ml-3" label={"ID"}>
+                                        <Info label={"ID"}>
                                             <Editable editable={access('users', 'regenerateId')} onEdit={newId => setInfo(i.tag, u, 'id', newId)} value={u.id}>{u.id}</Editable>
                                         </Info>
-                                        <Info className="ml-3" label={"Flow"}>
+                                        <Info label={"Flow"}>
                                             <Editable editable={access('users', 'edit')} editor={(value, onChange) => <Select value={value} onChange={e => onChange(e)} items={[
                                                 'none',
                                                 'xtls-rprx-vision'
@@ -406,7 +419,7 @@ return <Container>
                                         </Info>
                                     </>
                                     :null}
-                                    <Info label={u.deActiveReason ? "De-active reason" : null} className="ml-2">
+                                    <Info label={u.deActiveReason ? "De-active reason" : null}>
                                         <Popup popup={u.deActiveReason?.length ?? 0 > 30 ? u.deActiveReason : null}>
                                             <Editable onEdit={value => setInfo(i.tag, u, 'deActiveReason', value)} value={u.deActiveReason}>{(u.deActiveReason?.length ?? 0) > 30 ? u.deActiveReason?.substring(0,30) + '...' : (u.deActiveReason ? u.deActiveReason : '-')}</Editable>
                                         </Popup>

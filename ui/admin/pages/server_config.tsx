@@ -20,16 +20,16 @@ export default function ServerConfig() {
     let [login, setLogin] = useState({ password: '' });
     let [servers, setServers] = useStoredState<ServerContext[]>('servers', []);
 
-    const connectTo = useCallback(async (server: ServerContext) => {
+    const connectTo = useCallback(async (server: ServerContext, mode: 'login' | 'token' = 'login') => {
 
-        let {url, token, mode, name, username} = server;
+        let {url, token, name, username} = server;
         let {password} = login;
 
         if (!url)
             return toast.error(`Server url not entered`);
 
         // Login (try to get token)
-        if (mode == 'login' || true) {
+        if (mode == 'login') {
             if (!username || !password)
                 return toast.error('Username or password is empty');
 
@@ -51,6 +51,9 @@ export default function ServerConfig() {
                 setLoading(false);
             }
         }
+
+        if (!token)
+            return toast.error('Token is empty');
         
         // Check authenticate by token
         setLoading(true);
@@ -73,7 +76,7 @@ export default function ServerConfig() {
                 }
                 // Insert
                 else {
-                    servers.push({ ...server, mode: 'token' });
+                    servers.push({ ...server, mode: 'token', token });
                 }
 
                 setLoadingMessage('OK, Redirect ...');
@@ -116,15 +119,15 @@ export default function ServerConfig() {
             </div>
             :
                 <>
-                <div className="flex flex-row px-1 border-b-[1px] pb-1 mb-1">
+                {/* <div className="flex flex-row px-1 border-b-[1px] pb-1 mb-1">
                     <label className={styles.label + ' flex-1'}>Mode</label>
                     <div className="flex flex-row gap-x-2 items-center text-sm">
                         <div className="flex flex-row border-[1px] border-slate-300 rounded-xl overflow-hidden text-slate-900 text-xs">
                             <span onClick={() => setServer({ ...server, mode: 'login' })} className={classNames("cursor-pointer px-3 py-1", { 'bg-slate-300': server.mode == 'login' })}>Login</span>
-                            {/* <span onClick={() => setServer({ ...server, mode: 'token' })} className={classNames("cursor-pointer px-3 py-1 border-l-[1px] border-l-slate-300", { 'bg-slate-300': server.mode == 'token' })}>Token</span> */}
+                            <span onClick={() => setServer({ ...server, mode: 'token' })} className={classNames("cursor-pointer px-3 py-1 border-l-[1px] border-l-slate-300", { 'bg-slate-300': server.mode == 'token' })}>Token</span>
                         </div>
                     </div>
-                </div>
+                </div> */}
                 <FieldsGroup data={server} dataSetter={setServer}>
                     <Field label="Server URL" htmlFor="url">
                         <input type="text" placeholder="http://" className={styles.input} id="url"/>
@@ -164,8 +167,8 @@ export default function ServerConfig() {
                 Servers
             </span>
             {servers.map((x, index) => <div key={index} className="text-sm py-2 px-2 hover:bg-slate-100 rounded-md cursor-pointer border-b-[1px] flex last:border-b-0 gap-x-4">
-                <ServerIcon onClick={() => connectTo(x)} className="w-6 text-slate-400"/>
-                <div onClick={() => connectTo(x)} className="flex flex-col flex-1">
+                <ServerIcon onClick={() => connectTo(x, 'token')} className="w-6 text-slate-400"/>
+                <div onClick={() => connectTo(x, 'token')} className="flex flex-col flex-1">
                     {x.name ? <span className="font-bold">{x.name} {x.username ? `(${x.username})` : null}</span> : null}
                     <span className="flex-1">{x.url}</span>
                 </div>
