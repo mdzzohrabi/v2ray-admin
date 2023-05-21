@@ -382,6 +382,7 @@ return <Container>
                         </div>
                     </td>
                 }}
+                loading={isLoading}
                 cells={u => {
 
                     const {showId, precision, fullTime} = view;

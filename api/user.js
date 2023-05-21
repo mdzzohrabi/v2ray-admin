@@ -339,7 +339,20 @@ router.post('/inbounds', httpAction(async (req, res) => {
             // Apply filters
             .filter(u => statusFilter.length == 0 || statusFilter.map(filter => statusFilters[filter]).every(filter => filter(u)))
             // Sort
-            .sort((a, b) => !sortColumn ? 0 : a[sortColumn] == b[sortColumn] ? 0 : a[sortColumn] < b[sortColumn] ? (sortAsc ? -1 : 1) : (sortAsc ? 1 : -1))
+            .sort((a, b) => {
+                if (!sortColumn) return 0;
+
+                let aValue = a[sortColumn];
+                let bValue = b[sortColumn];
+
+                try {
+                    aValue = aValue ? new Date(aValue) : null;
+                    bValue = bValue ? new Date(bValue) : null;
+                }
+                catch {}
+
+                return aValue == bValue ? 0 : aValue < bValue ? (sortAsc ? -1 : 1) : (sortAsc ? 1 : -1)
+            });
         ;
 
         if (inbound.settings) {
