@@ -9,7 +9,6 @@ export function ServerNode({ serverId }) {
     const {data: nodes, mutate: refreshNodes, isValidating: isLoading} = useSWR<ServerNode[]>('/nodes', request, {
         revalidateIfStale: false,
         revalidateOnFocus: false,
-        revalidateOnMount: false
     });
     
     if (!serverId || serverId == 'local') return <>local</>;
@@ -19,7 +18,7 @@ export function ServerNode({ serverId }) {
     return <>{
         isLoading ? 'Loading...' : 
         <Popup popup={node?.lastConnectIP}>
-            <Copy data={node?.id} copiedText="Node Server ID Copied">{node?.name}</Copy>
+            <Copy data={node?.id} copiedText="Node Server ID Copied">{node?.name ?? 'N/A'}</Copy>
         </Popup> ?? 'Not Found'}
     </>;
 }
