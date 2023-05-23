@@ -1,10 +1,11 @@
 import { Popup } from '@common/components/popup';
+import { useOutsideAlerter } from '@common/lib/hooks';
 import { ArrowRightOnRectangleIcon, ArrowsRightLeftIcon, BriefcaseIcon, ChartPieIcon, CircleStackIcon, CloudIcon, Cog6ToothIcon, ComputerDesktopIcon, CurrencyDollarIcon, HomeIcon, ServerIcon, UserGroupIcon, UsersIcon } from '@heroicons/react/24/outline';
 import classNames from 'classnames';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { ChangeEvent, useCallback, useContext, useMemo } from 'react';
+import { ChangeEvent, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import useSWR from 'swr';
 import { ServerNode } from '../../../types';
 import { useUser } from '../lib/hooks';
@@ -54,6 +55,11 @@ export function Container({ children, block = true, pageTitle }: ContainerProps)
         router.push(e.target.value);
     }, [router]);
 
+    const [showServerPopup, setShowServerPopup] = useState(false);
+    const refServerPopup = useRef();
+    
+    useOutsideAlerter(refServerPopup, () => setShowServerPopup(false));
+
     return <>
     {pageTitle?<Head><title>{pageTitle}</title></Head>:null}
     <div className="flex flex-col h-screen overflow-x-auto w-full text-xs xl:text-sm">
@@ -68,33 +74,40 @@ export function Container({ children, block = true, pageTitle }: ContainerProps)
             <ul className="px-2 py-3 hidden lg:flex flex-row xl:sticky top-0 z-50 bg-slate-100 flex-1 self-center">
                 {menu.map(x => x.show ? <MenuLink key={x.link} href={x.link} icon={x.icon} text={x.text}/> : null)}
             </ul>
-            <div className='flex select-none flex-row border-[1px] rounded-md border-slate-300 m-2 text-gray-400'>
-                <div className="self-center px-3 py-1 flex flex-col">
-                    <div className="flex flex-row gap-x-2 items-center">
-                        <ServerIcon className='w-4'/>
-                        <span className="font-bold">Server</span>
-                        <button onClick={() => router.push('/server_config')} className={'text-xs flex flex-row gap-x-2 hover:border-slate-600 duration-200 hover:text-slate-600 ease-in-out border-[1px] px-2 rounded-xl items-center'}>
-                            <ArrowsRightLeftIcon className='w-3'/>
-                            Change
-                        </button>
+            <div className='relative'>
+                <ServerIcon onClick={() => setShowServerPopup(!showServerPopup)} className='w-9 text-slate-500 bg-white rounded-full p-1 shadow-md mr-4'/>
+                <div ref={refServerPopup} className={classNames(' bg-white sm:flex select-none flex-row rounded-md m-2 ', {
+                    'absolute right-0 block': showServerPopup,
+                    'hidden': !showServerPopup,
+                    'sm:border-[1px] sm:bg-transparent sm:border-slate-300 sm:text-gray-400'
+                })}>
+                    <div className="self-center px-3 py-1 flex flex-col">
+                        <div className="flex flex-row gap-x-2 items-center">
+                            <ServerIcon className='w-4'/>
+                            <span className="font-bold">Server</span>
+                            <button onClick={() => router.push('/server_config')} className={'text-xs flex flex-row gap-x-2 hover:border-slate-600 duration-200 hover:text-slate-600 ease-in-out border-[1px] px-2 rounded-xl items-center'}>
+                                <ArrowsRightLeftIcon className='w-3'/>
+                                Change
+                            </button>
+                        </div>
+                        <div className="flex flex-row">
+                            <Popup popup={server?.url}>
+                                {server?.name ?? server?.url} ({user?.username})
+                            </Popup>
+                        </div>
                     </div>
-                    <div className="flex flex-row">
-                        <Popup popup={server?.url}>
-                            {server?.name ?? server?.url} ({user?.username})
-                        </Popup>
-                    </div>
+                    {access('serverNodes', 'list') ? 
+                    <div className="self-center px-3 py-1 flex flex-col border-l-[1px] border-l-slate-300">
+                        <div className="flex flex-row gap-x-2">
+                            <CircleStackIcon className='w-4'/>
+                            <span className="font-bold">Node</span>
+                        </div>
+                        <select className={'bg-transparent'} value={server?.node} onChange={onChangeNode}>
+                            <option value="">(main)</option>
+                            {nodes?.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}
+                        </select>
+                    </div> : null }
                 </div>
-                {access('serverNodes', 'list') ? 
-                <div className="self-center px-3 py-1 flex flex-col border-l-[1px] border-l-slate-300">
-                    <div className="flex flex-row gap-x-2">
-                        <CircleStackIcon className='w-4'/>
-                        <span className="font-bold">Node</span>
-                    </div>
-                    <select className={'bg-transparent'} value={server?.node} onChange={onChangeNode}>
-                        <option value="">(main)</option>
-                        {nodes?.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}
-                    </select>
-                </div> : null }
             </div>
         </div>
         {block ?
