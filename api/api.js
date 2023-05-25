@@ -112,7 +112,6 @@ router.get('/summary', httpAction(async (req, res) => {
             totalCreateMonth: monthTransactions.filter(x => !!x.user && x.remark?.includes('Create') && (Number(x.amount) || 0) > 0).reduce((s, t) => s + (Number(t.amount) || 0), 0),
             totalPaidMonth: Math.abs(monthTransactions.filter(x => (Number(x.amount) || 0) < 0).reduce((s, t) => s + (Number(t.amount) || 0), 0)),
         });
-        console.log(transactionDate.getDate());
 
         transactionDate.setDate(transactionDate.getDate() - 31);
     }

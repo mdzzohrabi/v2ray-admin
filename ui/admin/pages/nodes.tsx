@@ -9,6 +9,7 @@ import { ArrowPathIcon, BoltIcon, CloudIcon, ComputerDesktopIcon, PencilIcon, Pl
 import classNames from "classnames";
 import { FormEvent, useCallback, useContext, useEffect, useState } from 'react';
 import { toast } from "react-hot-toast";
+import { ServerNode } from "../../../types";
 import { AppContext } from "../components/app-context";
 import { Container } from "../components/container";
 import { NodeSpeedTestDialog } from "../components/dialog/node-speed-test-dialog";

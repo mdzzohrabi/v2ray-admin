@@ -76,10 +76,13 @@ export function Container({ children, block = true, pageTitle }: ContainerProps)
             </ul>
             <div className='relative'>
                 <ServerIcon onClick={() => setShowServerPopup(!showServerPopup)} className='w-9 text-slate-500 bg-white rounded-full p-1 shadow-md mr-4'/>
-                <div ref={refServerPopup} className={classNames(' bg-white sm:flex select-none flex-row rounded-md m-2 ', {
+                <div ref={refServerPopup} className={classNames('select-none flex', {
                     'absolute right-0 block': showServerPopup,
-                    'hidden': !showServerPopup,
-                    'sm:border-[1px] sm:bg-transparent sm:border-slate-300 sm:text-gray-400'
+                    'max-sm:hidden': !showServerPopup,
+                    // Large Screen
+                    'sm:border-[1px] sm:bg-transparent sm:border-slate-300 sm:text-gray-400': true,
+                    // Small Screen
+                    'bg-white flex-row rounded-md m-2': true
                 })}>
                     <div className="self-center px-3 py-1 flex flex-col">
                         <div className="flex flex-row gap-x-2 items-center">

@@ -1,8 +1,6 @@
-import React from "react";
-import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { deepCopy, store, stored } from "./util";
+import React, { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { toast as Toaster } from 'react-hot-toast';
-
+import { deepCopy, store, stored } from "./util";
 
 export let toast: typeof Toaster;
 
@@ -131,8 +129,8 @@ export function useObjectCRUD(initValue = null, setter = null) {
 
 
 export function useStoredState<T>(key: string, init: T): [T, Dispatch<SetStateAction<T>>, boolean] {
-	const [state, setState] = useState<T>(init);
-	const [loaded, setLoaded] = useState(false);
+	const [state, setState] = React.useState<T>(init);
+	const [loaded, setLoaded] = React.useState(false);
 	const firstRun = useRef(true);
 
 	useEffect(() => {
