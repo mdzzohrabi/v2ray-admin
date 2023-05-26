@@ -1,4 +1,5 @@
 {
+  "name": "xray-admin",
   "private": true,
   "scripts": {
     "dev": "next dev",
