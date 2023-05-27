@@ -1,4 +1,4 @@
-import { useStoredState } from "@common/lib/hooks";
+import { checkReact, useStoredState } from "@common/lib/hooks";
 import React, { createContext, Dispatch, SetStateAction, useMemo } from "react";
 import { serverRequest } from "../lib/util";
 
@@ -22,6 +22,7 @@ export interface AppContext {
 export const AppContext = createContext<AppContext>({} as any);
 
 export function AppContextContainer({ children }) {
+    checkReact(React);
     let [server, setServer, isStoreLoaded] = useStoredState('server', { url: '', token: '' });
     let context = useMemo(() => {
         console.log('Context changed');        

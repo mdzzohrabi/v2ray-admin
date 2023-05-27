@@ -74,15 +74,15 @@ export function Container({ children, block = true, pageTitle }: ContainerProps)
             <ul className="px-2 py-3 hidden lg:flex flex-row xl:sticky top-0 z-50 bg-slate-100 flex-1 self-center">
                 {menu.map(x => x.show ? <MenuLink key={x.link} href={x.link} icon={x.icon} text={x.text}/> : null)}
             </ul>
-            <div className='relative'>
-                <ServerIcon onClick={() => setShowServerPopup(!showServerPopup)} className='w-9 text-slate-500 bg-white rounded-full p-1 shadow-md mr-4'/>
-                <div ref={refServerPopup} className={classNames('select-none flex', {
-                    'absolute right-0 block': showServerPopup,
+            <div className='relative max-sm:mr-4'>
+                <ServerIcon onClick={() => setShowServerPopup(!showServerPopup)} className='sm:hidden w-9 text-slate-500 bg-white rounded-full p-1 shadow-md'/>
+                <div ref={refServerPopup} className={classNames('select-none flex rounded-md', {
+                    // Small Screen (Show)
+                    'max-sm:absolute max-sm:right-0 max-sm:block max-sm:flex-col max-sm:bg-white max-sm:shadow-lg': showServerPopup,
+                    // Small Screen (Hidden)
                     'max-sm:hidden': !showServerPopup,
                     // Large Screen
-                    'sm:border-[1px] sm:bg-transparent sm:border-slate-300 sm:text-gray-400': true,
-                    // Small Screen
-                    'bg-white flex-row rounded-md m-2': true
+                    'sm:border-[1px] sm:flex-row sm:border-slate-300 sm:text-gray-400 sm:m-2': true,
                 })}>
                     <div className="self-center px-3 py-1 flex flex-col">
                         <div className="flex flex-row gap-x-2 items-center">
@@ -100,7 +100,7 @@ export function Container({ children, block = true, pageTitle }: ContainerProps)
                         </div>
                     </div>
                     {access('serverNodes', 'list') ? 
-                    <div className="self-center px-3 py-1 flex flex-col border-l-[1px] border-l-slate-300">
+                    <div className="self-center px-3 py-1 flex flex-col max-sm:border-t-2 sm:border-l-[1px] border-l-slate-300">
                         <div className="flex flex-row gap-x-2">
                             <CircleStackIcon className='w-4'/>
                             <span className="font-bold">Node</span>

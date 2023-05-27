@@ -186,15 +186,16 @@ export default function HomePage() {
                         <div className="bg-white shadow-md rounded-md py-3 px-4">
                             <h1 className="text-lg mb-2 pb-2 border-b-2 flex">
                                 <span className="flex-1">Transactions</span>
-                                <Select
-                                    className="text-xs"
-                                    items={data?.transactions?.map(x => x.jDate)}
-                                    value={view.transactionMonth}
-                                    onChange={e => setView({ ...view, transactionMonth: e.currentTarget.value })}
-                                />
+                                <div className="text-xs">
+                                    <Select
+                                        items={data?.transactions?.map(x => x.jDate)}
+                                        value={view.transactionMonth}
+                                        onChange={e => setView({ ...view, transactionMonth: e.currentTarget.value })}
+                                    />
+                                </div>
                             </h1>
-                            {data?.transactions?.filter(x => x.jDate == view.transactionMonth || !view.transactionMonth).slice(0,1).map(x => {
-                                return <div>
+                            {data?.transactions?.filter(x => x.jDate == view.transactionMonth || !view.transactionMonth).slice(0,1).map((x, index) => {
+                                return <div key={index}>
                                     <div className="py-4 px-0">
                                         <Progress
                                             total={x?.totalBillMonth}

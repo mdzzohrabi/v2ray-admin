@@ -45,37 +45,19 @@ export function usePrompt() {
   }, []);
 }
 
-/**
- * @template T
- * @param {T[]} arr 
- * @param {(value: T[]) => any} setter 
- * @returns 
- */
-export function useArrayDelete(arr, setter) {
+export function useArrayDelete<T>(arr: T[], setter: ((value: T[]) => any)) {
   return useCallback((/** @type {T} */ deletedItem) => {
 	setter(arr.filter(x => x != deletedItem));
   }, [arr, setter]);
 }
 
-/**
- * @template T
- * @param {T[]} arr 
- * @param {(value: T[]) => any} setter 
- * @returns 
- */
-export function useArrayInsert(arr, setter) {
+export function useArrayInsert<T>(arr: T[], setter: ((value: T[]) => any)) {
   return useCallback((_, /** @type {T} */ newItem) => {
 	setter([ ...arr, newItem ]);
   }, [arr, setter]);
 }
 
-/**
- * @template T
- * @param {T[]} arr 
- * @param {(value: T[]) => any} setter 
- * @returns 
- */
-export function useArrayUpdate(arr, setter) {
+export function useArrayUpdate<T>(arr: T[], setter: ((value: T[]) => any)) {
   return useCallback((/** @type {T} */ item, /** @type {T} */ edit) => {
 	let index = arr.indexOf(item);
 	if (index >= 0)
@@ -89,15 +71,15 @@ export function useArrayUpdate(arr, setter) {
  * @param {T?} initValue Object value
  * @param {((value: T) => any)?} setter Setter function
  */
-export function useObjectCRUD(initValue = null, setter = null) {
+export function useObjectCRUD<T>(initValue?: T, setter?: ((value: T) => any)) {
 
-	/** @ts-ignore */
-	if (!initValue) initValue = {};
+	if (!initValue)
+		initValue = {} as T;
 
-	let [value, setValue] = useState(initValue);
+	let [value, setValue] = useState<T>(initValue);
 
 	useEffect(() => {
-		setValue(initValue);
+		setValue(initValue as T);
 	}, [initValue]);
 
 	let deleteKey = useCallback((key) => {
@@ -127,6 +109,9 @@ export function useObjectCRUD(initValue = null, setter = null) {
 	return { value, deleteKey, setKey, renameKey };
 }
 
+export function checkReact(_source) {
+	console.log(_source == React);
+}
 
 export function useStoredState<T>(key: string, init: T): [T, Dispatch<SetStateAction<T>>, boolean] {
 	const [state, setState] = React.useState<T>(init);
