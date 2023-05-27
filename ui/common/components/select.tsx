@@ -76,7 +76,12 @@ export function Select<T>({items, value, onChange, nullText = 'No item selected'
             <ChevronUpDownIcon className="w-4"/>
         </div>
         {showPopup ?
-        <div ref={refPopup} className="absolute top-0 min-w-full z-[1000] bg-white rounded-md shadow-lg ring-1 ring-gray-300 overflow-hidden">
+        <div ref={refPopup} className={classNames(
+            // Mobile
+            "max-sm:fixed absolute top-0 min-w-full z-[1000] bg-white rounded-md shadow-lg ring-1 ring-gray-300 overflow-hidden",
+            // Default
+            "max-sm:fixed absolute top-0 min-w-full z-[1000] bg-white rounded-md shadow-lg ring-1 ring-gray-300 overflow-hidden"
+        )}>
             <div className="border-b-2 flex flex-row items-center min-w-[150px]">
                 <MagnifyingGlassIcon className="w-6 ml-2"/>
                 <input ref={refSearch} onKeyDown={onKeyDown} value={filter} onChange={e => setFilter(e?.currentTarget?.value)} type="text" placeholder="Search ..." className="w-full px-3 py-2 outline-none"/>
