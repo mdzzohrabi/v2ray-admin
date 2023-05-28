@@ -242,7 +242,7 @@ router.get('/inbounds/:key', httpAction(async (req, res) => {
 router.post('/inbounds', httpAction(async (req, res) => {
 
     let {configPath, accessLogPath} = getPaths();
-    let {view, private} = req.body;
+    let {view, fields = [], flat = false} = req.body;
     let {sortColumn, sortAsc, filter, statusFilter, serverNode, showId, fullTime, precision, page = 1, limit = 20, createdBy} = view;
 
     let config = readConfig(configPath);
@@ -337,7 +337,7 @@ router.post('/inbounds', httpAction(async (req, res) => {
             // Last Connect Node
             .filter(u => !serverNode ? true : serverNode == 'local' ? !u['lastConnectNode'] || u['lastConnectNode'] == 'local' : u['lastConnectNode'] == serverNode)
             // Apply filters
-            .filter(u => statusFilter.length == 0 || statusFilter.map(filter => statusFilters[filter]).every(filter => filter(u)))
+            .filter(u => !Array.isArray(statusFilter) || statusFilter.length == 0 || statusFilter.map(filter => statusFilters[filter]).every(filter => filter(u)))
             // Sort
             .sort((a, b) => {
                 if (!sortColumn) return 0;
@@ -365,6 +365,25 @@ router.post('/inbounds', httpAction(async (req, res) => {
             inbound.settings['from'] = skip;
             inbound.settings['to'] = skip + limit;
         }
+    }
+
+    // Select fields
+    if (Array.isArray(fields) && fields.length > 0) {
+        inbounds?.forEach(inbound => {
+            if (inbound.settings?.clients) {
+                inbound.settings.clients = inbound?.settings?.clients.map(x => {
+                    return fields.reduce((obj, field) => {
+                        obj[field] = x[field];
+                        return obj;
+                    }, {});
+                });
+            }
+        })
+    }
+
+    if (flat) {
+        // @ts-ignore
+        inbounds = inbounds?.flatMap(i => i.settings?.clients ?? []).filter((x, index, arr) => arr.findIndex(a => a.email == x.email) == index);
     }
 
     res.json(inbounds);

@@ -61,6 +61,10 @@ interface V2RayConfigInboundClient {
     serverNodeInbound?: string
     createdBy?: string
     createdById?: string
+    /** Temp */
+    lastConnectIP?: string,
+    lastConnectNode?: string,
+    lastConnect?: string
 }
 
 interface V2RayConfigInboundSettings {

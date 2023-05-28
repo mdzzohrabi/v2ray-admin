@@ -22,10 +22,8 @@ export interface AppContext {
 export const AppContext = createContext<AppContext>({} as any);
 
 export function AppContextContainer({ children }) {
-    checkReact(React);
     let [server, setServer, isStoreLoaded] = useStoredState('server', { url: '', token: '' });
     let context = useMemo(() => {
-        console.log('Context changed');        
         return {server, setServer, isStoreLoaded, request: serverRequest.bind(this, server)};
     }, [server, setServer, isStoreLoaded]);
 
