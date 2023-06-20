@@ -2,9 +2,11 @@ import { Fragment, useMemo, useState } from "react";
 
 export function Interval({ children, interval }: { children: any, interval: number }) {
     let [counter, setCounter] = useState(0);
+    let timerId: NodeJS.Timer;
     
-    let timerId = useMemo(() => {
-        clearInterval(timerId);
+    timerId = useMemo(() => {
+        if (timerId)
+            clearInterval(timerId);
         return setInterval(() => setCounter(counter++), interval);
     }, [interval]);
 

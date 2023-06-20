@@ -25,7 +25,9 @@ export function ClientCancelDialog({user, onClose, onDone}: ClientCancelDialogPr
         transactionRemark: ''
     })
 
-    useEffect(() => transactions?.length > 0 ? setData({ ...data, transactionRemark: transactions[transactions.length-1].remark }) : null, [transactions]);
+    useEffect(() => {
+        transactions?.length > 0 ? setData({ ...data, transactionRemark: transactions[transactions.length-1].remark }) : null
+    }, [transactions]);
 
     const request = useRequest();
 
@@ -68,6 +70,7 @@ export function ClientCancelDialog({user, onClose, onDone}: ClientCancelDialogPr
         </div>
         </FieldsGroup>
         <Table
+            className="mb-8"
             rows={transactions ?? []}
             loading={isLoading}
             columns={['Date', 'Amount', 'Remark']}

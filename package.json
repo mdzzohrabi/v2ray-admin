@@ -4,6 +4,9 @@
   "main": "index.js",
   "license": "MIT",
   "types": "types.d.ts",
+  "scripts": {
+    "dev": "nodemon web.js -e js"
+  },
   "dependencies": {
     "crypto-js": "^4.1.1",
     "dotenv": "^16.0.3",
