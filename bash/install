@@ -19,11 +19,11 @@ if [ -z $webPort ]; then
     webPort=1254
 fi
 
-read -p "V2Ray Client Host: " v2rayServer
-read -p "Clone V2Ray Config and Certificates from server (host address): " cloneConfig
+read -p "XRay Client Host: " v2rayServer
+read -p "Clone XRay Config and Certificates from server (host address): " cloneConfig
 
 if [ ! -z $cloneConfig ]; then
-    read -p "Clone V2Ray Config and Certificates from server (user) (ubuntu): " cloneConfigUser
+    read -p "Clone XRay Config and Certificates from server (user) (ubuntu): " cloneConfigUser
     if [ -z $cloneConfigUser ]; then
         cloneConfigUser=ubuntu
     fi
@@ -97,7 +97,7 @@ sh bash/pm2
 # Copy configuration
 if [ ! -z $CLONE_CONFIG ]; then
     # Copy config
-    scp $CLONE_CONFIG_USER@$CLONE_CONFIG:/usr/local/etc/v2ray/config.json /usr/local/etc/xray/config.json
+    scp $CLONE_CONFIG_USER@$CLONE_CONFIG:/usr/local/etc/xray/config.json /usr/local/etc/xray/config.json
 
     # Copy certs
     scp -r $CLONE_CONFIG_USER@$CLONE_CONFIG:/home/certs /home/certs
