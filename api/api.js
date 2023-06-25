@@ -68,6 +68,7 @@ router.get('/summary', httpAction(async (req, res) => {
         .filter(x => systemUser?.acls?.isAdmin || systemUser?.acls?.users?.privateUsers || !x.private)
         // Owned users
         .filter(x => systemUser?.acls?.isAdmin || systemUser?.acls?.users?.allUsers || x.createdById == systemUser?.id)
+        .filter((x, index, arr) => arr.findIndex(a => a.email == x.email) == index)
         .map(user => {
             let usage = usages[user.email ?? ''];
             user.firstConnect = user.firstConnect ?? usage?.firstConnect;
