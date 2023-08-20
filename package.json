@@ -5,7 +5,8 @@
   "license": "MIT",
   "types": "types.d.ts",
   "scripts": {
-    "dev": "nodemon web.js -e js"
+    "dev": "nodemon web.js -e js",
+    "start": "node web"
   },
   "dependencies": {
     "crypto-js": "^4.1.1",

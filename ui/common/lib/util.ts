@@ -3,7 +3,7 @@ export function store(key: string, value: any) {
     localStorage[key] = value ? JSON.stringify(value) : undefined;
 }
 
-export function stored<T>(key: string, _default: T = null): T extends null ? any : T {
+export function stored<T>(key: string, _default: T | null = null): T extends null ? any : T {
     try {
         return localStorage[key] ? JSON.parse(localStorage[key]) : _default ?? null;
     } catch {
@@ -131,9 +131,8 @@ interface Change {
  * @param {any} modified Modified value
  * @returns
  */
-export function getChanges(base: any, modified: any, path = []) {
-    /** @type {Change[]} */
-    let changes = [];
+export function getChanges(base: any, modified: any, path: string[] = []) {
+    let changes: Change[] = [];
     let typeA = typeof base;
     let typeB = typeof modified;
 
@@ -194,7 +193,7 @@ export function getChanges(base: any, modified: any, path = []) {
                 if (change.path?.length == 0)
                     result = change.value;
                 else {
-                    let parentNode = [];
+                    let parentNode: any[] = [];
                     eval(`parentNode = result[${parentPath}]`);
                     if (Array.isArray(parentNode)) {
                         if (change.prevValue) {
