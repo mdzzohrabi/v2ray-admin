@@ -161,6 +161,14 @@ router.post('/change_user_inbound', async (req, res) => {
         if (!targetInbound.settings?.clients)
             targetInbound.settings.clients = [];
 
+        // Reality
+        if (targetInbound.streamSettings?.security == 'reality' && !sourceUser.flow) {
+            sourceUser.flow = 'xtls-rprx-vision';
+        } else if (sourceUser.flow) {
+            // @ts-ignore
+            delete sourceUser.flow;
+        }
+
         // Add to target
         targetInbound.settings.clients.push(sourceUser);
 
