@@ -13,6 +13,7 @@ import { useRouter } from "next/router";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { __ } from "../locale";
+import type { V2RayConfigInboundClient } from "../../../types";
 
 interface AccountInfoResponse {
      ok?: boolean

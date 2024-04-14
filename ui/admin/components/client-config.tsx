@@ -1,5 +1,5 @@
 // @ts-check
-import React, { useContext, useMemo } from "react";
+import React, { useContext, useEffect, useMemo, useRef } from "react";
 import { useState } from "react";
 import useSWR from "swr";
 import { styles } from "../lib/styles";
@@ -8,6 +8,7 @@ import { AppContext } from "./app-context";
 import { Copy } from "@common/components/copy";
 import { Dialog } from "@common/components/dialog";
 import { Field, FieldsGroup } from "@common/components/fields";
+import QRCode from 'react-qr-code';
 
 /**
  * Client Configuration
@@ -76,8 +77,10 @@ export function ClientConfig({ user, tag, onClose }) {
                 </div>
             </FieldsGroup>
             <div className="flex flex-col">
-                {isLoading || isLoadingConfig || isLoadingInbounds ? <span className="font-bold py-2">Loading ...</span> : null}
-                {config ? <img src={`https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=` + encodeURIComponent(config)} alt="QR Code" /> : <span className="text-gray-600 text-center py-4">Select an Inbound to Load Config QR Code</span>}
+                <div className="flex flex-row py-4 items-center justify-center">
+                    {isLoading || isLoadingConfig || isLoadingInbounds ? <span className="font-bold py-2">Loading ...</span> : null}
+                    {config ? <QRCode value={config}/> : <span className="text-gray-600 text-center py-4">Select an Inbound to Load Config QR Code</span>}
+                </div>
                 <div className="flex flex-row mt-2 pt-2 border-t-2">
                     <Copy className={styles.button} notifyText={`User "${user?.email}" config copied`} data={config}>
                         Copy Config
