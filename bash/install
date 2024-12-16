@@ -7,10 +7,10 @@ else
     buildUI=0
 fi
 
-read -p "Web Token (for management): " webToken
+#read -p "Web Token (for management): " webToken
 
 if [ -z $webToken ]; then
-    webToken=1254
+    webToken=my_web_token
 fi
 
 read -p "Web Port (1254): " webPort
@@ -20,7 +20,7 @@ if [ -z $webPort ]; then
 fi
 
 read -p "XRay Client Host: " v2rayServer
-read -p "Clone XRay Config and Certificates from server (host address): " cloneConfig
+read -p "Clone XRay Config and Certificates from server (host address, e.g 192.168.1.1): " cloneConfig
 
 if [ ! -z $cloneConfig ]; then
     read -p "Clone XRay Config and Certificates from server (user) (ubuntu): " cloneConfigUser
@@ -29,7 +29,7 @@ if [ ! -z $cloneConfig ]; then
     fi
 fi
 
-read -p "Main Server Address (if this node is client): " serverAddress
+read -p "Main Server Address (if this node is client, e.g https://users.domain.com): " serverAddress
 
 if [ ! -z $serverAddress ]; then
     read -p "Server Name (main-server) : " serverName
@@ -101,6 +101,9 @@ if [ ! -z $CLONE_CONFIG ]; then
 
     # Copy certs
     scp -r $CLONE_CONFIG_USER@$CLONE_CONFIG:/home/certs /home/certs
+
+    # Copy server nodes
+    scp $CLONE_CONFIG_USER@$CLONE_CONFIG:/home/v2ray-admin/db/server-nodes.json /home/v2ray-admin/db/server-nodes.json
 
     echo "Configuration cloned from '$CLONE_CONFIG'"
 fi
